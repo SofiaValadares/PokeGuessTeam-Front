@@ -1,0 +1,19 @@
+.alert {
+  padding: var(--ds-space-3) var(--ds-space-4);
+  border-radius: var(--ds-radius-md);
+  font-size: var(--ds-text-sm);
+  line-height: var(--ds-leading-relaxed);
+  margin: 0 0 var(--ds-space-4);
+}
+
+.success {
+  color: var(--ds-color-success);
+  background: var(--ds-color-success-muted);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+}
+
+.error {
+  color: var(--ds-color-danger);
+  background: var(--ds-color-danger-muted);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}

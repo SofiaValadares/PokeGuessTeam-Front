@@ -1,0 +1,100 @@
+/**
+ * Design tokens — PokeTeamGuess / alinhado ao espírito de um DS tipo TCG trade.
+ * Substitua valores pelos exatos do Figma (DS-TCGTrade) quando exportar variáveis.
+ */
+:root {
+  /* ——— Tipografia ——— */
+  --ds-font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --ds-font-display: 'Outfit', var(--ds-font-sans);
+  --ds-font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
+
+  --ds-text-xs: 0.75rem;
+  --ds-text-sm: 0.875rem;
+  --ds-text-md: 1rem;
+  --ds-text-lg: 1.125rem;
+  --ds-text-xl: 1.25rem;
+  --ds-text-2xl: 1.5rem;
+  --ds-text-3xl: 2rem;
+
+  --ds-leading-tight: 1.2;
+  --ds-leading-normal: 1.5;
+  --ds-leading-relaxed: 1.6;
+
+  --ds-weight-regular: 400;
+  --ds-weight-medium: 500;
+  --ds-weight-semibold: 600;
+  --ds-weight-bold: 700;
+
+  /* ——— Cores ——— */
+  --ds-color-bg-deep: #0c0f14;
+  --ds-color-bg-base: #12161e;
+  --ds-color-bg-raised: #181e29;
+  --ds-color-bg-elevated: #1e2633;
+  --ds-color-bg-input: #0f1319;
+
+  --ds-color-border-subtle: rgba(255, 255, 255, 0.06);
+  --ds-color-border-default: rgba(255, 255, 255, 0.1);
+  --ds-color-border-strong: rgba(255, 255, 255, 0.16);
+
+  --ds-color-text-primary: #f4f6fa;
+  --ds-color-text-secondary: #9aa3b2;
+  --ds-color-text-muted: #6b7280;
+  --ds-color-text-inverse: #0c0f14;
+
+  /* Acento “trade / energia” — ajuste ao token primário do Figma */
+  --ds-color-accent: #3d9cf0;
+  --ds-color-accent-hover: #5eb0f7;
+  --ds-color-accent-muted: rgba(61, 156, 240, 0.15);
+  --ds-color-accent-glow: rgba(61, 156, 240, 0.35);
+
+  --ds-color-gold: #e8c547;
+  --ds-color-gold-muted: rgba(232, 197, 71, 0.12);
+
+  --ds-color-success: #34d399;
+  --ds-color-success-muted: rgba(52, 211, 153, 0.12);
+
+  --ds-color-danger: #f87171;
+  --ds-color-danger-muted: rgba(248, 113, 113, 0.12);
+
+  /* Raridade (jogo) — opcional para cards futuros */
+  --ds-rarity-common: #94a3b8;
+  --ds-rarity-rare: #60a5fa;
+  --ds-rarity-legendary: #c084fc;
+  --ds-rarity-mythic: #fbbf24;
+
+  /* ——— Espaço & raio ——— */
+  --ds-space-0: 0;
+  --ds-space-1: 0.25rem;
+  --ds-space-2: 0.5rem;
+  --ds-space-3: 0.75rem;
+  --ds-space-4: 1rem;
+  --ds-space-5: 1.25rem;
+  --ds-space-6: 1.5rem;
+  --ds-space-8: 2rem;
+  --ds-space-10: 2.5rem;
+  --ds-space-12: 3rem;
+
+  --ds-radius-sm: 6px;
+  --ds-radius-md: 10px;
+  --ds-radius-lg: 14px;
+  --ds-radius-xl: 20px;
+  --ds-radius-full: 9999px;
+
+  /* ——— Sombra & profundidade ——— */
+  --ds-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --ds-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --ds-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --ds-shadow-glow: 0 0 24px var(--ds-color-accent-glow);
+
+  --ds-z-base: 0;
+  --ds-z-dropdown: 100;
+  --ds-z-modal: 200;
+
+  /* ——— Transição ——— */
+  --ds-duration-fast: 120ms;
+  --ds-duration-normal: 200ms;
+  --ds-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ——— Foco (a11y) ——— */
+  --ds-focus-ring: 0 0 0 3px var(--ds-color-accent-muted);
+}

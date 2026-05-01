@@ -1,0 +1,14 @@
+.shell {
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: var(--ds-space-8) var(--ds-space-4);
+}
+
+.shellWide {
+  max-width: 40rem;
+}
+
+.shellFull {
+  max-width: 72rem;
+}

@@ -11,11 +11,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
 
   if (sessionFetchStatus === FetchStatus.Loading) {
-    return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
-        Verificando sessão…
-      </div>
-    );
+    return <div className="ds-session-loading">Verificando sessão…</div>;
   }
 
   if (!authenticated) {

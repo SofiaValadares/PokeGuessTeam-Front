@@ -1,0 +1,22 @@
+.card {
+  background: var(--ds-color-bg-raised);
+  border: 1px solid var(--ds-color-border-subtle);
+  border-radius: var(--ds-radius-lg);
+  box-shadow: var(--ds-shadow-md);
+}
+
+.paddingSm {
+  padding: var(--ds-space-4);
+}
+
+.paddingMd {
+  padding: var(--ds-space-6);
+}
+
+.paddingLg {
+  padding: var(--ds-space-8);
+}
+
+.glow {
+  box-shadow: var(--ds-shadow-md), 0 0 40px rgba(61, 156, 240, 0.08);
+}
