@@ -1,19 +1,15 @@
 import { FormEvent, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { ApiError } from '../../api/http';
+import * as authService from '../../auth/authService';
 import { useAuth } from '../../auth/AuthContext';
 import { FetchStatus } from '../../types/fetchStatus';
 
-type LocationState = { from?: { pathname: string }; registeredEmail?: string };
-
-export default function LoginPage() {
-  const { login, sessionFetchStatus, authenticated } = useAuth();
+export default function RegisterPage() {
+  const { sessionFetchStatus, authenticated } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const state = location.state as LocationState | null;
-  const from = state?.from?.pathname ?? '/';
-
-  const [loginField, setLoginField] = useState(() => state?.registeredEmail ?? '');
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitStatus, setSubmitStatus] = useState(FetchStatus.Idle);
@@ -35,59 +31,75 @@ export default function LoginPage() {
     setError(null);
     setSubmitStatus(FetchStatus.Loading);
     try {
-      await login(loginField.trim(), password);
+      await authService.register({
+        username: username.trim(),
+        email: email.trim(),
+        password,
+      });
       setSubmitStatus(FetchStatus.Success);
-      navigate(from, { replace: true });
+      navigate('/login', {
+        replace: true,
+        state: { registeredEmail: email.trim() },
+      });
     } catch (err) {
       setSubmitStatus(FetchStatus.Error);
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError('Não foi possível entrar. Tente novamente.');
+        setError('Não foi possível cadastrar. Tente novamente.');
       }
     }
   }
 
   return (
     <div style={{ maxWidth: 400, margin: '3rem auto', padding: '0 1rem' }}>
-      <h1>Entrar</h1>
-      {state?.registeredEmail ? (
-        <p style={{ color: '#1b5e20', marginBottom: '1rem' }}>
-          Conta criada. Faça login com seu e-mail ou usuário.
-        </p>
-      ) : null}
-      <p style={{ color: '#555', fontSize: '0.95rem' }}>
-        Use seu e-mail ou nome de usuário (campo <code>login</code> da API).
-      </p>
+      <h1>Cadastro</h1>
       <form onSubmit={onSubmit}>
         <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="login" style={{ display: 'block', marginBottom: 4 }}>
-            E-mail ou usuário
+          <label htmlFor="username" style={{ display: 'block', marginBottom: 4 }}>
+            Nome de usuário
           </label>
           <input
-            id="login"
-            name="login"
+            id="username"
+            name="username"
             type="text"
             autoComplete="username"
-            value={loginField}
-            onChange={(e) => setLoginField(e.target.value)}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+            maxLength={100}
+            style={{ width: '100%', padding: '0.5rem', boxSizing: 'border-box' }}
+          />
+        </div>
+        <div style={{ marginBottom: '1rem' }}>
+          <label htmlFor="email" style={{ display: 'block', marginBottom: 4 }}>
+            E-mail
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
             style={{ width: '100%', padding: '0.5rem', boxSizing: 'border-box' }}
           />
         </div>
         <div style={{ marginBottom: '1rem' }}>
           <label htmlFor="password" style={{ display: 'block', marginBottom: 4 }}>
-            Senha
+            Senha (mín. 6 caracteres)
           </label>
           <input
             id="password"
             name="password"
             type="password"
-            autoComplete="current-password"
+            autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
+            maxLength={72}
             style={{ width: '100%', padding: '0.5rem', boxSizing: 'border-box' }}
           />
         </div>
@@ -101,11 +113,11 @@ export default function LoginPage() {
           disabled={submitStatus === FetchStatus.Loading}
           style={{ padding: '0.5rem 1rem' }}
         >
-          {submitStatus === FetchStatus.Loading ? 'Entrando…' : 'Entrar'}
+          {submitStatus === FetchStatus.Loading ? 'Cadastrando…' : 'Cadastrar'}
         </button>
       </form>
       <p style={{ marginTop: '1.5rem' }}>
-        <Link to="/register">Criar conta</Link>
+        <Link to="/login">Já tenho conta</Link>
       </p>
     </div>
   );
