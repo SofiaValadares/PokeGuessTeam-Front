@@ -1,8 +1,125 @@
 /**
- * Design tokens — PokeTeamGuess / alinhado ao espírito de um DS tipo TCG trade.
- * Substitua valores pelos exatos do Figma (DS-TCGTrade) quando exportar variáveis.
+ * Design system — tokens (Figma: paleta, escala, semântica escuro) + tipografia e sombras.
+ * Único ficheiro de tokens; edita aqui quando o design mudar.
  */
 :root {
+  /* ——— Paleta ——— */
+  --ds-palette-black-100: #000000;
+  --ds-palette-blue-100: #e3f2fd;
+  --ds-palette-blue-300: #64b5f6;
+  --ds-palette-blue-500: #2196f3;
+  --ds-palette-blue-700: #1565c0;
+  --ds-palette-cyan-50: #e6f9fc;
+  --ds-palette-cyan-100: #bff0f6;
+  --ds-palette-cyan-200: #99e7f0;
+  --ds-palette-cyan-300: #66d9e8;
+  --ds-palette-cyan-400: #3ec1d3;
+  --ds-palette-cyan-500: #2fafc0;
+  --ds-palette-cyan-600: #2799a8;
+  --ds-palette-cyan-700: #1f7f8c;
+  --ds-palette-cyan-800: #17666f;
+  --ds-palette-cyan-900: #0f4d53;
+  --ds-palette-dark-50: #edecf3;
+  --ds-palette-dark-100: #cfcbe0;
+  --ds-palette-dark-200: #b1aacd;
+  --ds-palette-dark-300: #9389ba;
+  --ds-palette-dark-400: #7568a7;
+  --ds-palette-dark-500: #5a4f8f;
+  --ds-palette-dark-600: #463c6f;
+  --ds-palette-dark-700: #332c52;
+  --ds-palette-dark-800: #1f1a36;
+  --ds-palette-dark-900: #0f0c1a;
+  --ds-palette-error-100: #fdecea;
+  --ds-palette-error-300: #e57373;
+  --ds-palette-error-500: #f44336;
+  --ds-palette-error-700: #c62828;
+  --ds-palette-gray-50: #f7f7fb;
+  --ds-palette-gray-100: #ececf3;
+  --ds-palette-gray-200: #d9d8e6;
+  --ds-palette-gray-300: #c5c4d9;
+  --ds-palette-gray-400: #a3a0b5;
+  --ds-palette-gray-500: #7f7c91;
+  --ds-palette-gray-600: #5f5b73;
+  --ds-palette-gray-700: #434059;
+  --ds-palette-gray-800: #2a273d;
+  --ds-palette-gray-900: #1a1628;
+  --ds-palette-green-100: #e6f4ea;
+  --ds-palette-green-300: #81c784;
+  --ds-palette-green-500: #4caf50;
+  --ds-palette-green-700: #2e7d32;
+  --ds-palette-red-50: #ffe5e5;
+  --ds-palette-red-100: #ffb8b8;
+  --ds-palette-red-200: #ff8a8a;
+  --ds-palette-red-300: #ff5c5c;
+  --ds-palette-red-400: #ff4d4d;
+  --ds-palette-red-500: #ff3b3b;
+  --ds-palette-red-600: #e04343;
+  --ds-palette-red-700: #c83737;
+  --ds-palette-red-800: #a32b2b;
+  --ds-palette-red-900: #7a1f1f;
+  --ds-palette-white-100: #ffffff;
+  --ds-palette-yellow-100: #fff4e5;
+  --ds-palette-yellow-200: #ffddbf;
+  --ds-palette-yellow-300: #ffd2aa;
+  --ds-palette-yellow-400: #ffd54f;
+  --ds-palette-yellow-500: #ffb020;
+  --ds-palette-yellow-700: #b26a00;
+
+  /* ——— Espaçamento (px, Figma) ——— */
+  --ds-space-0: 0;
+  --ds-space-1: 4px;
+  --ds-space-2: 8px;
+  --ds-space-3: 12px;
+  --ds-space-4: 16px;
+  --ds-space-5: 20px;
+  --ds-space-6: 24px;
+  --ds-space-8: 32px;
+  --ds-space-10: 40px;
+  --ds-space-12: 48px;
+  --ds-space-14: 56px;
+  --ds-space-16: 64px;
+  --ds-space-20: 80px;
+  --ds-space-24: 96px;
+  --ds-space-32: 128px;
+
+  /* ——— Raio (px, Figma) ——— */
+  --ds-radius-none: 0;
+  --ds-radius-xs: 4px;
+  --ds-radius-sm: 8px;
+  --ds-radius-md: 12px;
+  --ds-radius-lg: 16px;
+  --ds-radius-xl: 20px;
+  --ds-radius-2xl: 24px;
+  --ds-radius-3xl: 32px;
+  --ds-radius-full: 9999px;
+
+  /* ——— Espessura de borda (Figma) ——— */
+  --ds-border-width-none: 0;
+  --ds-border-width-hairline: 0.5px;
+  --ds-border-width-sm: 1px;
+  --ds-border-width-md: 2px;
+  --ds-border-width-lg: 4px;
+
+  /* ——— Opacidade 0–100 (Figma) ——— */
+  --ds-opacity-0: 0;
+  --ds-opacity-5: 5;
+  --ds-opacity-10: 10;
+  --ds-opacity-20: 20;
+  --ds-opacity-30: 30;
+  --ds-opacity-40: 40;
+  --ds-opacity-50: 50;
+  --ds-opacity-60: 60;
+  --ds-opacity-70: 70;
+  --ds-opacity-80: 80;
+  --ds-opacity-90: 90;
+  --ds-opacity-100: 100;
+
+  /* ——— Semântica (tema escuro, Figma) ——— */
+  --ds-backgroud: #0f0c1a;
+  --ds-backgroud-secondary: #2a273d;
+  --ds-text-primary: #fff4e5;
+  --ds-text-secondary: #c5c4d9;
+
   /* ——— Tipografia ——— */
   --ds-font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
   --ds-font-display: 'Outfit', var(--ds-font-sans);
@@ -25,76 +142,55 @@
   --ds-weight-semibold: 600;
   --ds-weight-bold: 700;
 
-  /* ——— Cores ——— */
-  --ds-color-bg-deep: #0c0f14;
-  --ds-color-bg-base: #12161e;
-  --ds-color-bg-raised: #181e29;
-  --ds-color-bg-elevated: #1e2633;
-  --ds-color-bg-input: #0f1319;
+  /* ——— Componentes / aliases ——— */
+  --ds-background: var(--ds-backgroud);
+  --ds-color-bg-deep: var(--ds-backgroud);
+  --ds-color-bg-base: var(--ds-backgroud-secondary);
+  --ds-color-bg-raised: var(--ds-palette-dark-800);
+  --ds-color-bg-elevated: var(--ds-palette-dark-700);
+  --ds-color-bg-input: var(--ds-palette-dark-900);
 
-  --ds-color-border-subtle: rgba(255, 255, 255, 0.06);
-  --ds-color-border-default: rgba(255, 255, 255, 0.1);
-  --ds-color-border-strong: rgba(255, 255, 255, 0.16);
+  --ds-color-text-primary: var(--ds-text-primary);
+  --ds-color-text-secondary: var(--ds-text-secondary);
+  --ds-color-text-muted: var(--ds-palette-gray-500);
+  --ds-color-text-inverse: var(--ds-palette-dark-900);
 
-  --ds-color-text-primary: #f4f6fa;
-  --ds-color-text-secondary: #9aa3b2;
-  --ds-color-text-muted: #6b7280;
-  --ds-color-text-inverse: #0c0f14;
+  --ds-color-border-subtle: color-mix(in srgb, var(--ds-palette-gray-300) 14%, transparent);
+  --ds-color-border-default: color-mix(in srgb, var(--ds-palette-gray-300) 22%, transparent);
+  --ds-color-border-strong: color-mix(in srgb, var(--ds-palette-gray-300) 35%, transparent);
 
-  /* Acento “trade / energia” — ajuste ao token primário do Figma */
-  --ds-color-accent: #3d9cf0;
-  --ds-color-accent-hover: #5eb0f7;
-  --ds-color-accent-muted: rgba(61, 156, 240, 0.15);
-  --ds-color-accent-glow: rgba(61, 156, 240, 0.35);
+  --ds-color-accent: var(--ds-palette-cyan-400);
+  --ds-color-accent-hover: var(--ds-palette-cyan-300);
+  --ds-color-accent-muted: color-mix(in srgb, var(--ds-palette-cyan-400) 18%, transparent);
+  --ds-color-accent-glow: color-mix(in srgb, var(--ds-palette-cyan-400) 35%, transparent);
 
-  --ds-color-gold: #e8c547;
-  --ds-color-gold-muted: rgba(232, 197, 71, 0.12);
+  --ds-color-gold: var(--ds-palette-yellow-500);
+  --ds-color-gold-muted: color-mix(in srgb, var(--ds-palette-yellow-500) 14%, transparent);
 
-  --ds-color-success: #34d399;
-  --ds-color-success-muted: rgba(52, 211, 153, 0.12);
+  --ds-color-success: var(--ds-palette-green-500);
+  --ds-color-success-muted: color-mix(in srgb, var(--ds-palette-green-500) 14%, transparent);
 
-  --ds-color-danger: #f87171;
-  --ds-color-danger-muted: rgba(248, 113, 113, 0.12);
+  --ds-color-danger: var(--ds-palette-error-500);
+  --ds-color-danger-muted: color-mix(in srgb, var(--ds-palette-error-500) 14%, transparent);
 
-  /* Raridade (jogo) — opcional para cards futuros */
-  --ds-rarity-common: #94a3b8;
-  --ds-rarity-rare: #60a5fa;
-  --ds-rarity-legendary: #c084fc;
-  --ds-rarity-mythic: #fbbf24;
-
-  /* ——— Espaço & raio ——— */
-  --ds-space-0: 0;
-  --ds-space-1: 0.25rem;
-  --ds-space-2: 0.5rem;
-  --ds-space-3: 0.75rem;
-  --ds-space-4: 1rem;
-  --ds-space-5: 1.25rem;
-  --ds-space-6: 1.5rem;
-  --ds-space-8: 2rem;
-  --ds-space-10: 2.5rem;
-  --ds-space-12: 3rem;
-
-  --ds-radius-sm: 6px;
-  --ds-radius-md: 10px;
-  --ds-radius-lg: 14px;
-  --ds-radius-xl: 20px;
-  --ds-radius-full: 9999px;
+  --ds-rarity-common: var(--ds-palette-gray-400);
+  --ds-rarity-rare: var(--ds-palette-blue-500);
+  --ds-rarity-legendary: var(--ds-palette-dark-400);
+  --ds-rarity-mythic: var(--ds-palette-yellow-500);
 
   /* ——— Sombra & profundidade ——— */
-  --ds-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --ds-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --ds-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --ds-shadow-sm: 0 1px 2px rgba(15, 12, 26, 0.45);
+  --ds-shadow-md: 0 4px 12px rgba(15, 12, 26, 0.5);
+  --ds-shadow-lg: 0 12px 40px rgba(15, 12, 26, 0.55);
   --ds-shadow-glow: 0 0 24px var(--ds-color-accent-glow);
 
   --ds-z-base: 0;
   --ds-z-dropdown: 100;
   --ds-z-modal: 200;
 
-  /* ——— Transição ——— */
   --ds-duration-fast: 120ms;
   --ds-duration-normal: 200ms;
   --ds-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* ——— Foco (a11y) ——— */
   --ds-focus-ring: 0 0 0 3px var(--ds-color-accent-muted);
 }

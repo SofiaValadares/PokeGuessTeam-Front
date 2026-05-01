@@ -29,16 +29,16 @@ export default function HomePage() {
           <ul
             style={{
               lineHeight: 'var(--ds-leading-relaxed)',
-              color: 'var(--ds-color-text-secondary)',
+              color: 'var(--ds-color-TextInput-secondary)',
               paddingLeft: 'var(--ds-space-6)',
               margin: '0 0 var(--ds-space-4)',
             }}
           >
             <li>
-              <strong style={{ color: 'var(--ds-color-text-primary)' }}>Conta:</strong> {me.authenticatedAs}
+              <strong style={{ color: 'var(--ds-color-TextInput-primary)' }}>Conta:</strong> {me.authenticatedAs}
             </li>
             <li>
-              <strong style={{ color: 'var(--ds-color-text-primary)' }}>ID:</strong> {String(me.userId)}
+              <strong style={{ color: 'var(--ds-color-TextInput-primary)' }}>ID:</strong> {String(me.userId)}
             </li>
           </ul>
         ) : (
