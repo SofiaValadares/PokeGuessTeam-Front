@@ -37,12 +37,13 @@ export type SessionResponse = {
 };
 
 /**
- * GET /api/me — ProtectedController.
- * `authenticatedAs` costuma ser o principal Spring (por vezes o e-mail); preferir `username` para exibição.
+ * GET /api/me — ProtectedController (200).
+ * `authenticatedAs`: principal Spring Security (no vosso caso, e-mail — compatibilidade).
+ * `username` / `email`: persistidos em UserModel.
  */
 export type MeResponse = {
   authenticatedAs: string;
   userId: string;
-  username?: string | null;
-  email?: string | null;
+  username: string;
+  email: string;
 };

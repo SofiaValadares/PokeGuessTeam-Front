@@ -11,6 +11,9 @@ import styles from './perfil.module.css';
 export default function PerfilPage() {
   const {
     me,
+    usernameEditorOpen,
+    openUsernameEditor,
+    cancelUsernameEditor,
     usernameForm,
     setUsernameForm,
     usernameDisplayErrors,
@@ -21,6 +24,9 @@ export default function PerfilPage() {
     handleUsernameSubmit,
     onUsernameNewBlur,
     onUsernamePassBlur,
+    passwordEditorOpen,
+    openPasswordEditor,
+    cancelPasswordEditor,
     passwordForm,
     setPasswordForm,
     passwordDisplayErrors,
@@ -38,8 +44,11 @@ export default function PerfilPage() {
     <Card padding="md">
       <h1 className="ds-h1">Perfil</h1>
       <p className={`ds-body-muted ${styles.intro}`}>
-        Conta atual:{' '}
+        Utilizador:{' '}
         <strong style={{ color: 'var(--ds-color-text-primary)' }}>{accountDisplayName(me)}</strong>
+        <br />
+        E-mail:{' '}
+        <span style={{ color: 'var(--ds-color-text-primary)' }}>{me?.email ?? '—'}</span>
       </p>
 
       <section className={styles.section} aria-labelledby="username-section-title">
@@ -49,45 +58,69 @@ export default function PerfilPage() {
         <p className={styles.sectionHint}>
           Para alterar o nome de usuário, confirme com a senha atual.
         </p>
-        <form noValidate onSubmit={handleUsernameSubmit}>
-          <TextField
-            label="Novo nome de usuário"
-            name="newUsername"
-            autoComplete="username"
-            value={usernameForm.newUsername}
-            onChange={(e) => setUsernameForm((prev) => ({ ...prev, newUsername: e.target.value }))}
-            onBlur={onUsernameNewBlur}
-            error={usernameDisplayErrors.newUsername}
-            maxLength={100}
-          />
-          <TextField
-            label="Senha atual"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            value={usernameForm.password}
-            onChange={(e) => setUsernameForm((prev) => ({ ...prev, password: e.target.value }))}
-            onBlur={onUsernamePassBlur}
-            error={usernameDisplayErrors.password}
-            passwordToggle
-          />
-          {usernameSubmitError ? (
-            <InlineAlert tone="error" role="alert">
-              {usernameSubmitError}
-            </InlineAlert>
-          ) : null}
-          {usernameSuccess ? (
-            <InlineAlert tone="success">Nome de usuário atualizado.</InlineAlert>
-          ) : null}
-          <Button
-            type="submit"
-            variant="primary"
-            size="md"
-            disabled={!canSubmitUsername || usernameSubmitting}
-          >
-            {usernameSubmitting ? 'A guardar…' : 'Guardar nome de usuário'}
+        {usernameSuccess && !usernameEditorOpen ? (
+          <InlineAlert tone="success" role="status">
+            Nome de usuário atualizado.
+          </InlineAlert>
+        ) : null}
+        {!usernameEditorOpen ? (
+          <Button type="button" variant="secondary" size="md" onClick={openUsernameEditor}>
+            Alterar nome de usuário
           </Button>
-        </form>
+        ) : (
+          <form
+            noValidate
+            onSubmit={handleUsernameSubmit}
+            autoComplete="off"
+            className={styles.editorForm}
+          >
+            <TextField
+              label="Novo nome de usuário"
+              name="newUsername"
+              autoComplete="off"
+              value={usernameForm.newUsername}
+              onChange={(e) => setUsernameForm((prev) => ({ ...prev, newUsername: e.target.value }))}
+              onBlur={onUsernameNewBlur}
+              error={usernameDisplayErrors.newUsername}
+              maxLength={100}
+            />
+            <TextField
+              label="Senha atual"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              value={usernameForm.password}
+              onChange={(e) => setUsernameForm((prev) => ({ ...prev, password: e.target.value }))}
+              onBlur={onUsernamePassBlur}
+              error={usernameDisplayErrors.password}
+              passwordToggle
+            />
+            {usernameSubmitError ? (
+              <InlineAlert tone="error" role="alert">
+                {usernameSubmitError}
+              </InlineAlert>
+            ) : null}
+            <div className={styles.formActions}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                disabled={usernameSubmitting}
+                onClick={cancelUsernameEditor}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="md"
+                disabled={!canSubmitUsername || usernameSubmitting}
+              >
+                {usernameSubmitting ? 'A guardar…' : 'Salvar'}
+              </Button>
+            </div>
+          </form>
+        )}
       </section>
 
       <section className={styles.section} aria-labelledby="password-section-title">
@@ -95,59 +128,78 @@ export default function PerfilPage() {
           Senha
         </h2>
         <p className={styles.sectionHint}>A nova senha deve ter entre 6 e 72 caracteres.</p>
-        <form noValidate onSubmit={handlePasswordSubmit}>
-          <TextField
-            label="Senha atual"
-            name="currentPassword"
-            type="password"
-            autoComplete="current-password"
-            value={passwordForm.currentPassword}
-            onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
-            onBlur={onCurrentPassBlur}
-            error={passwordDisplayErrors.currentPassword}
-            passwordToggle
-          />
-          <TextField
-            label="Nova senha"
-            name="newPassword"
-            type="password"
-            autoComplete="new-password"
-            value={passwordForm.newPassword}
-            onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
-            onBlur={onNewPassBlur}
-            error={passwordDisplayErrors.newPassword}
-            passwordToggle
-            maxLength={72}
-          />
-          <TextField
-            label="Confirmar nova senha"
-            name="confirmPassword"
-            type="password"
-            autoComplete="new-password"
-            value={passwordForm.confirmPassword}
-            onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-            onBlur={onConfirmPassBlur}
-            error={passwordDisplayErrors.confirmPassword}
-            passwordToggle
-            maxLength={72}
-          />
-          {passwordSubmitError ? (
-            <InlineAlert tone="error" role="alert">
-              {passwordSubmitError}
-            </InlineAlert>
-          ) : null}
-          {passwordSuccess ? (
-            <InlineAlert tone="success">Senha atualizada.</InlineAlert>
-          ) : null}
-          <Button
-            type="submit"
-            variant="primary"
-            size="md"
-            disabled={!canSubmitPassword || passwordSubmitting}
-          >
-            {passwordSubmitting ? 'A guardar…' : 'Guardar nova senha'}
+        {passwordSuccess && !passwordEditorOpen ? (
+          <InlineAlert tone="success" role="status">
+            Senha atualizada.
+          </InlineAlert>
+        ) : null}
+        {!passwordEditorOpen ? (
+          <Button type="button" variant="secondary" size="md" onClick={openPasswordEditor}>
+            Alterar senha
           </Button>
-        </form>
+        ) : (
+          <form noValidate onSubmit={handlePasswordSubmit} className={styles.editorForm}>
+            <TextField
+              label="Senha atual"
+              name="currentPassword"
+              type="password"
+              autoComplete="current-password"
+              value={passwordForm.currentPassword}
+              onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
+              onBlur={onCurrentPassBlur}
+              error={passwordDisplayErrors.currentPassword}
+              passwordToggle
+            />
+            <TextField
+              label="Nova senha"
+              name="newPassword"
+              type="password"
+              autoComplete="new-password"
+              value={passwordForm.newPassword}
+              onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
+              onBlur={onNewPassBlur}
+              error={passwordDisplayErrors.newPassword}
+              passwordToggle
+              maxLength={72}
+            />
+            <TextField
+              label="Confirmar nova senha"
+              name="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              value={passwordForm.confirmPassword}
+              onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+              onBlur={onConfirmPassBlur}
+              error={passwordDisplayErrors.confirmPassword}
+              passwordToggle
+              maxLength={72}
+            />
+            {passwordSubmitError ? (
+              <InlineAlert tone="error" role="alert">
+                {passwordSubmitError}
+              </InlineAlert>
+            ) : null}
+            <div className={styles.formActions}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                disabled={passwordSubmitting}
+                onClick={cancelPasswordEditor}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="md"
+                disabled={!canSubmitPassword || passwordSubmitting}
+              >
+                {passwordSubmitting ? 'A guardar…' : 'Salvar'}
+              </Button>
+            </div>
+          </form>
+        )}
       </section>
     </Card>
   );

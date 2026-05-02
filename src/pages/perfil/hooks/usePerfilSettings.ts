@@ -33,6 +33,7 @@ export function usePerfilSettings() {
   const [usernameSubmitStatus, setUsernameSubmitStatus] = useState(FetchStatus.Idle);
   const [usernameSubmitError, setUsernameSubmitError] = useState<string | null>(null);
   const [usernameSuccess, setUsernameSuccess] = useState(false);
+  const [usernameEditorOpen, setUsernameEditorOpen] = useState(false);
 
   const [passwordForm, setPasswordForm] = useState<PasswordChangeFields>({
     currentPassword: '',
@@ -47,6 +48,51 @@ export function usePerfilSettings() {
   const [passwordSubmitStatus, setPasswordSubmitStatus] = useState(FetchStatus.Idle);
   const [passwordSubmitError, setPasswordSubmitError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [passwordEditorOpen, setPasswordEditorOpen] = useState(false);
+
+  const resetUsernameFormState = useCallback(() => {
+    setUsernameForm({ newUsername: '', password: '' });
+    setUsernameTouched({ newUsername: false, password: false });
+    setUsernameSubmitError(null);
+    setUsernameSubmitStatus(FetchStatus.Idle);
+  }, []);
+
+  const resetPasswordFormState = useCallback(() => {
+    setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    setPasswordTouched({
+      currentPassword: false,
+      newPassword: false,
+      confirmPassword: false,
+    });
+    setPasswordSubmitError(null);
+    setPasswordSubmitStatus(FetchStatus.Idle);
+  }, []);
+
+  const openUsernameEditor = useCallback(() => {
+    setPasswordEditorOpen(false);
+    setPasswordSuccess(false);
+    setUsernameSuccess(false);
+    resetUsernameFormState();
+    setUsernameEditorOpen(true);
+  }, [resetUsernameFormState]);
+
+  const cancelUsernameEditor = useCallback(() => {
+    setUsernameEditorOpen(false);
+    resetUsernameFormState();
+  }, [resetUsernameFormState]);
+
+  const openPasswordEditor = useCallback(() => {
+    setUsernameEditorOpen(false);
+    setUsernameSuccess(false);
+    setPasswordSuccess(false);
+    resetPasswordFormState();
+    setPasswordEditorOpen(true);
+  }, [resetPasswordFormState]);
+
+  const cancelPasswordEditor = useCallback(() => {
+    setPasswordEditorOpen(false);
+    resetPasswordFormState();
+  }, [resetPasswordFormState]);
 
   const usernameFieldErrors = useMemo(
     () => getUsernameFieldErrors(usernameForm),
@@ -92,6 +138,7 @@ export function usePerfilSettings() {
         await refresh();
         setUsernameSubmitStatus(FetchStatus.Success);
         setUsernameSuccess(true);
+        setUsernameEditorOpen(false);
         setUsernameForm({ newUsername: '', password: '' });
         setUsernameTouched({ newUsername: false, password: false });
       } catch (err) {
@@ -131,6 +178,7 @@ export function usePerfilSettings() {
         await refresh();
         setPasswordSubmitStatus(FetchStatus.Success);
         setPasswordSuccess(true);
+        setPasswordEditorOpen(false);
         setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
         setPasswordTouched({
           currentPassword: false,
@@ -150,6 +198,9 @@ export function usePerfilSettings() {
 
   return {
     me,
+    usernameEditorOpen,
+    openUsernameEditor,
+    cancelUsernameEditor,
     usernameForm,
     setUsernameForm,
     usernameDisplayErrors,
@@ -160,6 +211,9 @@ export function usePerfilSettings() {
     handleUsernameSubmit,
     onUsernameNewBlur: () => setUsernameTouched((t) => ({ ...t, newUsername: true })),
     onUsernamePassBlur: () => setUsernameTouched((t) => ({ ...t, password: true })),
+    passwordEditorOpen,
+    openPasswordEditor,
+    cancelPasswordEditor,
     passwordForm,
     setPasswordForm,
     passwordDisplayErrors,

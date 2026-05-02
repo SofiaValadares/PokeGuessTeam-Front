@@ -19,8 +19,11 @@ export default function HomePage() {
             }}
           >
             <li>
-              <strong style={{ color: 'var(--ds-color-text-primary)' }}>Conta:</strong>{' '}
+              <strong style={{ color: 'var(--ds-color-text-primary)' }}>Utilizador:</strong>{' '}
               {accountDisplayName(me)}
+            </li>
+            <li>
+              <strong style={{ color: 'var(--ds-color-text-primary)' }}>E-mail:</strong> {me.email}
             </li>
             <li>
               <strong style={{ color: 'var(--ds-color-text-primary)' }}>ID:</strong> {String(me.userId)}
