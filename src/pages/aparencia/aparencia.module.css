@@ -1,0 +1,18 @@
+.sectionTitle {
+  font-size: var(--ds-text-sm);
+  font-weight: var(--ds-weight-semibold);
+  color: var(--ds-color-text-secondary);
+  margin: 0 0 var(--ds-space-3);
+}
+
+.toggleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.hint {
+  margin: var(--ds-space-4) 0 0;
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-muted);
+}

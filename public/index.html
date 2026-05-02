@@ -2,6 +2,17 @@
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('pokeguessteam-theme');
+          if (t !== 'light' && t !== 'dark') t = 'dark';
+          document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
     <!-- ico + png: muitos browsers ainda pedem /favicon.ico; só SVG deixava cache do CRA (React). -->
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/favicon-32.png" />

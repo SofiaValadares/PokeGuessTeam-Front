@@ -4,15 +4,18 @@ import { AuthProvider } from './auth/AuthContext';
 import './index.css';
 import { AppRouter } from './routes';
 import reportWebVitals from './reportWebVitals';
+import { ThemeProvider } from './theme';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <AuthProvider>
-      <AppRouter />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppRouter />
+      </AuthProvider>
+    </ThemeProvider>
   </React.StrictMode>
 );
 

@@ -1,3 +1,5 @@
+export { AppHeader } from './components/AppHeader';
+export type { AppHeaderProps } from './components/AppHeader';
 export { Button } from './components/Button';
 export type { ButtonProps } from './components/Button';
 export { Card } from './components/Card';
@@ -6,5 +8,7 @@ export { InlineAlert } from './components/InlineAlert';
 export type { InlineAlertProps } from './components/InlineAlert';
 export { PageShell } from './components/PageShell';
 export type { PageShellProps } from './components/PageShell';
+export { ThemeToggle } from './components/ThemeToggle';
+export type { ThemeToggleProps } from './components/ThemeToggle';
 export { TextField } from './components/TextField';
 export type { TextFieldProps } from './components/TextField';

@@ -1,6 +1,8 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
+import { AppHeader } from '../../ds';
 import { FetchStatus } from '../../types/fetchStatus';
+import styles from './ProtectedRoute.module.css';
 
 type ProtectedRouteProps = {
   children: React.ReactElement;
@@ -11,7 +13,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
 
   if (sessionFetchStatus === FetchStatus.Loading) {
-    return <div className="ds-session-loading">Verificando sessão…</div>;
+    return (
+      <div className={styles.layout}>
+        <AppHeader />
+        <div className={styles.loading}>Verificando sessão…</div>
+      </div>
+    );
   }
 
   if (!authenticated) {

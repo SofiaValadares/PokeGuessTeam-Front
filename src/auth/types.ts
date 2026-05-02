@@ -16,6 +16,18 @@ export type LoginRequest = {
   password: string;
 };
 
+/** PATCH /auth/username — confirma com a senha atual. */
+export type ChangeUsernameRequest = {
+  newUsername: string;
+  password: string;
+};
+
+/** PATCH /auth/password */
+export type ChangePasswordRequest = {
+  currentPassword: string;
+  newPassword: string;
+};
+
 /**
  * Resposta de GET /auth/session (Jackson pode omitir `userId` quando vazio).
  */
@@ -26,8 +38,11 @@ export type SessionResponse = {
 
 /**
  * GET /api/me — ProtectedController.
+ * `authenticatedAs` costuma ser o principal Spring (por vezes o e-mail); preferir `username` para exibição.
  */
 export type MeResponse = {
   authenticatedAs: string;
   userId: string;
+  username?: string | null;
+  email?: string | null;
 };

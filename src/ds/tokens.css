@@ -194,3 +194,42 @@
 
   --ds-focus-ring: 0 0 0 3px var(--ds-color-accent-muted);
 }
+
+/**
+ * Tema claro — ativo com <html data-theme="light">.
+ * O script em index.html e o ThemeProvider mantêm o atributo sincronizado com localStorage.
+ */
+html[data-theme='light'] {
+  --ds-backgroud: #eef0f8;
+  --ds-backgroud-secondary: #e2e4ef;
+
+  --ds-text-primary: #1a1628;
+  --ds-text-secondary: #434059;
+
+  --ds-background: var(--ds-backgroud);
+  --ds-color-bg-deep: #f4f5fb;
+  --ds-color-bg-base: var(--ds-backgroud-secondary);
+  --ds-color-bg-raised: #ffffff;
+  --ds-color-bg-elevated: #ececf3;
+  --ds-color-bg-input: #ffffff;
+
+  --ds-color-text-primary: var(--ds-text-primary);
+  --ds-color-text-secondary: var(--ds-text-secondary);
+  --ds-color-text-muted: var(--ds-palette-gray-600);
+  --ds-color-text-inverse: #fffefb;
+
+  --ds-color-border-subtle: color-mix(in srgb, var(--ds-palette-gray-700) 14%, transparent);
+  --ds-color-border-default: color-mix(in srgb, var(--ds-palette-gray-700) 26%, transparent);
+  --ds-color-border-strong: color-mix(in srgb, var(--ds-palette-gray-700) 42%, transparent);
+
+  --ds-color-accent: var(--ds-palette-cyan-700);
+  --ds-color-accent-hover: var(--ds-palette-cyan-600);
+  --ds-color-accent-muted: color-mix(in srgb, var(--ds-palette-cyan-600) 22%, transparent);
+  --ds-color-accent-glow: color-mix(in srgb, var(--ds-palette-cyan-600) 30%, transparent);
+
+  --ds-color-danger-muted: color-mix(in srgb, var(--ds-palette-error-500) 18%, transparent);
+
+  --ds-shadow-sm: 0 1px 2px rgba(26, 22, 40, 0.07);
+  --ds-shadow-md: 0 4px 14px rgba(26, 22, 40, 0.09);
+  --ds-shadow-lg: 0 12px 36px rgba(26, 22, 40, 0.11);
+}

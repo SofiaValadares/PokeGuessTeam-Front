@@ -1,0 +1,33 @@
+.layout {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.page {
+  box-sizing: border-box;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+}
+
+.loading {
+  box-sizing: border-box;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--ds-space-10);
+  text-align: center;
+  color: var(--ds-color-text-secondary);
+  font-size: var(--ds-text-sm);
+  min-height: 0;
+}
+
+.footer {
+  margin-top: var(--ds-space-6);
+  margin-bottom: 0;
+}
