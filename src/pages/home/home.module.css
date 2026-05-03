@@ -1,0 +1,46 @@
+.grid {
+  display: grid;
+  gap: var(--ds-space-6);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 52rem) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gridWide {
+    grid-column: 1 / -1;
+  }
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-3);
+  margin-top: var(--ds-space-4);
+}
+
+.fragBar {
+  height: 0.5rem;
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-color-border-default);
+  overflow: hidden;
+  margin-top: var(--ds-space-2);
+}
+
+.fragFill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ds-color-accent);
+  transition: width var(--ds-duration-fast) var(--ds-ease-standard);
+}
+
+.statRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--ds-space-4);
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-secondary);
+  margin-bottom: var(--ds-space-2);
+}

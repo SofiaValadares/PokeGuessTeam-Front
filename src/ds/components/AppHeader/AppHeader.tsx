@@ -1,47 +1,20 @@
+import { BookOpen, Home, Monitor, Trees } from 'lucide-react';
 import { ReactNode } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import styles from './AppHeader.module.css';
 
+const navIconProps = {
+  size: 22 as const,
+  strokeWidth: 2 as const,
+  'aria-hidden': true as const,
+};
+
 export type AppHeaderProps = {
   /** Conteúdo à direita (ex.: menu de utilizador). */
   end?: ReactNode;
-  /** Quando `false`, Início e Pokédex não são mostrados (visitante). Por omissão `true`. */
+  /** Quando `false`, os atalhos do nav principal não são mostrados (visitante). Por omissão `true`. */
   navEnabled?: boolean;
 };
-
-function IconHome({ className }: { className?: string }) {
-  return (
-    <svg className={className} width={22} height={22} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1V9.5z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconPokedex({ className }: { className?: string }) {
-  return (
-    <svg className={className} width={22} height={22} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <rect
-        x="5"
-        y="3"
-        width="14"
-        height="18"
-        rx="2"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
-      <circle cx="12" cy="13" r="3.5" stroke="currentColor" strokeWidth="2" />
-      <circle cx="10" cy="11" r="0.75" fill="currentColor" />
-      <circle cx="14" cy="11" r="0.75" fill="currentColor" />
-      <path d="M9 7h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
 
 export function AppHeader({ end, navEnabled = true }: AppHeaderProps) {
   const showTrailing = navEnabled || Boolean(end);
@@ -64,7 +37,27 @@ export function AppHeader({ end, navEnabled = true }: AppHeaderProps) {
                   }
                   aria-label="Início"
                 >
-                  <IconHome className={styles.navIcon} />
+                  <Home className={styles.navIcon} {...navIconProps} />
+                </NavLink>
+                <NavLink
+                  to="/pc"
+                  className={({ isActive }) =>
+                    [styles.navBtn, isActive ? styles.navBtnActive : ''].filter(Boolean).join(' ')
+                  }
+                  aria-label="PC — loja Pokémon"
+                  title="PC — loja Pokémon"
+                >
+                  <Monitor className={styles.navIcon} {...navIconProps} />
+                </NavLink>
+                <NavLink
+                  to="/wild-area"
+                  className={({ isActive }) =>
+                    [styles.navBtn, isActive ? styles.navBtnActive : ''].filter(Boolean).join(' ')
+                  }
+                  aria-label="Wild Area"
+                  title="Wild Area"
+                >
+                  <Trees className={styles.navIcon} {...navIconProps} />
                 </NavLink>
                 <NavLink
                   to="/pokedex"
@@ -73,7 +66,7 @@ export function AppHeader({ end, navEnabled = true }: AppHeaderProps) {
                   }
                   aria-label="Pokédex"
                 >
-                  <IconPokedex className={styles.navIcon} />
+                  <BookOpen className={styles.navIcon} {...navIconProps} />
                 </NavLink>
               </nav>
             ) : null}

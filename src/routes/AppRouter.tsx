@@ -4,8 +4,10 @@ import AparienciaPage from '../pages/aparencia/aparencia';
 import ConfiguracoesLayout from '../pages/configuracoes/ConfiguracoesLayout';
 import HomePage from '../pages/home/home';
 import LoginPage from '../pages/login/login';
+import PcPage from '../pages/pc/pc';
 import PerfilPage from '../pages/perfil/perfil';
 import PokedexPage from '../pages/pokedex/pokedex';
+import WildAreaPage from '../pages/wild-area/wild-area';
 import RegisterPage from '../pages/register/register';
 import { ProtectedRoute } from './guards';
 
@@ -24,6 +26,8 @@ export function AppRouter() {
           }
         >
           <Route index element={<HomePage />} />
+          <Route path="pc" element={<PcPage />} />
+          <Route path="wild-area" element={<WildAreaPage />} />
           <Route path="pokedex" element={<PokedexPage />} />
           <Route path="configuracoes" element={<ConfiguracoesLayout />}>
             <Route index element={<Navigate to="perfil" replace />} />

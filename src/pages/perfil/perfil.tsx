@@ -1,14 +1,18 @@
 import { accountDisplayName } from '../../auth/accountDisplay';
+import { formatRegisterDate } from '../../lib/formatRegisterDate';
+import { useProfileMe } from '../../hooks/useProfileMe';
 import {
   Button,
   Card,
   InlineAlert,
   TextField,
 } from '../../ds';
+import { FetchStatus } from '../../types/fetchStatus';
 import { usePerfilSettings } from './hooks';
 import styles from './perfil.module.css';
 
 export default function PerfilPage() {
+  const { profileMe, status: profileGameStatus, errorMessage: profileGameError } = useProfileMe();
   const {
     me,
     usernameEditorOpen,
@@ -49,7 +53,45 @@ export default function PerfilPage() {
         <br />
         E-mail:{' '}
         <span style={{ color: 'var(--ds-color-text-primary)' }}>{me?.email ?? '—'}</span>
+        {me?.emailVerified ? (
+          <>
+            {' '}
+            <span className="ds-body-muted">(verificado)</span>
+          </>
+        ) : null}
+        <br />
+        Registo:{' '}
+        <span style={{ color: 'var(--ds-color-text-primary)' }}>
+          {formatRegisterDate(me?.registerDate) ?? '—'}
+        </span>
       </p>
+
+      <section className={styles.section} aria-labelledby="game-profile-section-title">
+        <h2 id="game-profile-section-title" className={styles.sectionTitle}>
+          Perfil de jogo
+        </h2>
+        {profileGameStatus === FetchStatus.Loading ? (
+          <p className="ds-body-muted" style={{ margin: 0 }}>
+            A carregar…
+          </p>
+        ) : profileGameError ? (
+          <InlineAlert tone="error" role="alert">
+            {profileGameError}
+          </InlineAlert>
+        ) : (
+          <p className="ds-body-muted" style={{ margin: 0 }}>
+            Pokémon favorito:{' '}
+            {profileMe?.favoritePokemonName ? (
+              <strong style={{ color: 'var(--ds-color-text-primary)' }}>
+                {profileMe.favoritePokemonName}{' '}
+                <span style={{ fontWeight: 400 }}>(#{profileMe.favoritePokemonId})</span>
+              </strong>
+            ) : (
+              '—'
+            )}
+          </p>
+        )}
+      </section>
 
       <section className={styles.section} aria-labelledby="username-section-title">
         <h2 id="username-section-title" className={styles.sectionTitle}>

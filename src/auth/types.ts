@@ -37,13 +37,14 @@ export type SessionResponse = {
 };
 
 /**
- * GET /api/me — ProtectedController (200).
- * `authenticatedAs`: principal Spring Security (no vosso caso, e-mail — compatibilidade).
- * `username` / `email`: persistidos em UserModel.
+ * GET /api/me — MeResponse com UserDto “unwrapped” + authenticatedAs (feat/userInventory).
  */
 export type MeResponse = {
   authenticatedAs: string;
   userId: string;
   username: string;
   email: string;
+  emailVerified?: boolean;
+  /** ISO-8601 (LocalDateTime serializado pelo Jackson). */
+  registerDate?: string;
 };

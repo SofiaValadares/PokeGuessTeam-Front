@@ -1,17 +1,10 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
-import { FetchStatus } from '../types/fetchStatus';
-import * as authService from './authService';
+import React, { useCallback, useEffect } from 'react';
+import { hydrateAuth, loginUser, logoutUser } from '../store/slices/authSlice';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import type { FetchStatus } from '../types/fetchStatus';
 import type { MeResponse } from './types';
 
-type AuthContextValue = {
-  /** Hidratação da sessão (`/auth/session` + `/api/me`). */
+export type AuthContextValue = {
   sessionFetchStatus: FetchStatus;
   authenticated: boolean;
   me: MeResponse | null;
@@ -20,65 +13,44 @@ type AuthContextValue = {
   logout: () => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextValue | null>(null);
-
+/** Garante a primeira hidratação da sessão (`/auth/session` + `/api/me`). Coloque dentro de `Provider store={store}`. */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [sessionFetchStatus, setSessionFetchStatus] = useState(FetchStatus.Loading);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [me, setMe] = useState<MeResponse | null>(null);
-
-  const refresh = useCallback(async () => {
-    setSessionFetchStatus(FetchStatus.Loading);
-    try {
-      const session = await authService.getSession();
-      if (!session.authenticated) {
-        setMe(null);
-        setAuthenticated(false);
-        setSessionFetchStatus(FetchStatus.Success);
-        return;
-      }
-      const profile = await authService.getMe();
-      setMe(profile);
-      setAuthenticated(true);
-      setSessionFetchStatus(FetchStatus.Success);
-    } catch {
-      setMe(null);
-      setAuthenticated(false);
-      setSessionFetchStatus(FetchStatus.Success);
-    }
-  }, []);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    void dispatch(hydrateAuth());
+  }, [dispatch]);
 
-  const login = useCallback(async (login: string, password: string) => {
-    await authService.login({ login, password });
-    await refresh();
-  }, [refresh]);
-
-  const logout = useCallback(async () => {
-    try {
-      await authService.logout();
-    } finally {
-      setMe(null);
-      setAuthenticated(false);
-      setSessionFetchStatus(FetchStatus.Success);
-    }
-  }, []);
-
-  const value = useMemo(
-    () => ({ sessionFetchStatus, authenticated, me, refresh, login, logout }),
-    [sessionFetchStatus, authenticated, me, refresh, login, logout],
-  );
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <>{children}</>;
 }
 
 export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return ctx;
+  const dispatch = useAppDispatch();
+  const sessionFetchStatus = useAppSelector((s) => s.auth.sessionFetchStatus);
+  const authenticated = useAppSelector((s) => s.auth.authenticated);
+  const me = useAppSelector((s) => s.auth.me);
+
+  const refresh = useCallback(async () => {
+    await dispatch(hydrateAuth());
+  }, [dispatch]);
+
+  const login = useCallback(
+    async (loginStr: string, password: string) => {
+      await dispatch(loginUser({ login: loginStr, password })).unwrap();
+    },
+    [dispatch],
+  );
+
+  const logout = useCallback(async () => {
+    await dispatch(logoutUser()).unwrap();
+  }, [dispatch]);
+
+  return {
+    sessionFetchStatus,
+    authenticated,
+    me,
+    refresh,
+    login,
+    logout,
+  };
 }
