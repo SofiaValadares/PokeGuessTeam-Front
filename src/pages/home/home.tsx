@@ -3,7 +3,6 @@ import { accountDisplayName } from '../../auth/accountDisplay';
 import { useAuth } from '../../auth/AuthContext';
 import { formatRegisterDate } from '../../lib/formatRegisterDate';
 import { pokeballLabel } from '../../lib/pokeballLabels';
-import { pokemonSpriteUrl } from '../../lib/pokemonSprites';
 import { useProfileDashboard } from '../../hooks/useProfileDashboard';
 import { Button, Card, InlineAlert, PageShell } from '../../ds';
 import { FetchStatus } from '../../types/fetchStatus';
@@ -12,18 +11,13 @@ import styles from './home.module.css';
 export default function HomePage() {
   const navigate = useNavigate();
   const { me } = useAuth();
-  const { profileMe, collection, status: profileStatus, errorMessage } = useProfileDashboard();
+  const { profileMe, collection, pcLineCount, status: profileStatus, errorMessage } = useProfileDashboard();
 
   const pokeballs =
-    collection?.variant === 'pokeballs'
-      ? collection.pokeballs
-      : null;
+    collection?.variant === 'pokeballs' ? collection.pokeballs : null;
   const frags = pokeballs?.pokeballFragments ?? 0;
   const perBall = pokeballs?.fragmentsPerPokeBall ?? 10;
   const fragPct = Math.min(100, Math.round((frags / perBall) * 100));
-
-  const pokemonLines = collection?.variant === 'pokemon' ? collection.lines : [];
-  const lineCount = pokemonLines.length;
 
   return (
     <PageShell width="wide">
@@ -94,59 +88,34 @@ export default function HomePage() {
           ) : null}
         </Card>
 
-        <Card padding="md" className={styles.gridWide}>
+        <Card padding="md">
           <h2 className="ds-h2" style={{ marginTop: 0 }}>
-            {collection?.variant === 'pokemon' ? 'Coleção Pokémon' : 'Inventário de captura'}
+            PC — Coleção
           </h2>
           {profileStatus === FetchStatus.Loading ? (
             <p className="ds-body-muted">A carregar…</p>
-          ) : errorMessage ? null : collection?.variant === 'pokemon' ? (
+          ) : errorMessage ? null : (
             <>
-              <p style={{ margin: '0 0 var(--ds-space-3)', color: 'var(--ds-color-text-secondary)' }}>
-                <strong style={{ color: 'var(--ds-color-text-primary)' }}>{lineCount}</strong>{' '}
-                {lineCount === 1 ? 'linha evolutiva na coleção.' : 'linhas evolutivas na coleção.'}
+              <p style={{ margin: '0 0 var(--ds-space-4)', color: 'var(--ds-color-text-secondary)' }}>
+                <strong style={{ color: 'var(--ds-color-text-primary)' }}>
+                  {pcLineCount?.toLocaleString('pt-PT') ?? '—'}
+                </strong>{' '}
+                {pcLineCount === 1 ? 'linha evolutiva no inventário.' : 'linhas evolutivas no inventário.'}
               </p>
-              {lineCount > 0 ? (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 'var(--ds-space-2)',
-                    marginBottom: 'var(--ds-space-4)',
-                  }}
-                  aria-hidden
-                >
-                  {pokemonLines.slice(0, 8).map((line) => {
-                    const head = line.members[0];
-                    if (head == null) return null;
-                    return (
-                      <img
-                        key={line.evolutionLineKey}
-                        src={pokemonSpriteUrl(head)}
-                        alt=""
-                        width={40}
-                        height={40}
-                        style={{
-                          width: 40,
-                          height: 40,
-                          imageRendering: 'pixelated',
-                          borderRadius: 'var(--ds-radius-sm)',
-                        }}
-                        loading="lazy"
-                      />
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="ds-body-muted" style={{ marginBottom: 'var(--ds-space-4)' }}>
-                  Ainda sem espécies registadas — entra no PC quando tiveres linhas na coleção.
-                </p>
-              )}
               <Button type="button" variant="secondary" size="md" onClick={() => navigate('/pc')}>
                 Abrir PC
               </Button>
             </>
-          ) : collection?.variant === 'pokeballs' && pokeballs ? (
+          )}
+        </Card>
+
+        <Card padding="md">
+          <h2 className="ds-h2" style={{ marginTop: 0 }}>
+            Esferas de captura
+          </h2>
+          {profileStatus === FetchStatus.Loading ? (
+            <p className="ds-body-muted">A carregar…</p>
+          ) : errorMessage ? null : pokeballs ? (
             <>
               <div className={styles.statRow}>
                 <span>Fragmentos para a próxima Poké Bola</span>
@@ -174,17 +143,10 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <Button
-                type="button"
-                variant="secondary"
-                size="md"
-                style={{ marginTop: 'var(--ds-space-4)' }}
-                onClick={() => navigate('/pc')}
-              >
-                Abrir PC
-              </Button>
             </>
-          ) : null}
+          ) : (
+            <p className="ds-body-muted">Sem dados de esferas.</p>
+          )}
         </Card>
 
         <Card padding="md" className={styles.gridWide}>
@@ -192,7 +154,7 @@ export default function HomePage() {
             Explorar
           </h2>
           <p className="ds-body-muted" style={{ marginTop: 0 }}>
-            Consulta a Pokédex nacional, gere a tua coleção no PC e prepara-te para a Wild Area.
+            Consulta a Pokédex (com registo pessoal), gere o inventário no PC e prepara-te para a Wild Area.
           </p>
           <div className={styles.links}>
             <Button type="button" variant="secondary" size="md" onClick={() => navigate('/pokedex')}>

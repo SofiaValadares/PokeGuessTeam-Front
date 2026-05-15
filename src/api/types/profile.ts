@@ -6,10 +6,7 @@ export type ProfileMeResponse = {
   favoritePokemonName: string | null;
 };
 
-/**
- * GET /api/profile/collection — inventário por linha evolutiva (README / modelo de domínio).
- * O backend pode ainda devolver o formato antigo de esferas; ver `parseProfileCollection`.
- */
+/** GET /api/profile/collection — inventário de esferas + fragmentos (gacha). */
 export type PokemonInventoryLineDto = {
   evolutionLineKey: number;
   members: number[];

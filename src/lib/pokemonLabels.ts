@@ -27,6 +27,19 @@ const RARITY_PT: Record<string, string> = {
   MYTHICAL: 'Mítico',
 };
 
+const COLOR_PT: Record<string, string> = {
+  BLACK: 'Preto',
+  BLUE: 'Azul',
+  BROWN: 'Castanho',
+  GRAY: 'Cinzento',
+  GREEN: 'Verde',
+  PINK: 'Rosa',
+  PURPLE: 'Roxo',
+  RED: 'Vermelho',
+  WHITE: 'Branco',
+  YELLOW: 'Amarelo',
+};
+
 export function pokemonTypeLabel(code: string): string {
   return TYPE_PT[code] ?? code.replace(/_/g, ' ');
 }
@@ -34,3 +47,10 @@ export function pokemonTypeLabel(code: string): string {
 export function pokemonRarityLabel(code: string): string {
   return RARITY_PT[code] ?? code.replace(/_/g, ' ');
 }
+
+export function pokemonColorLabel(code: string | null): string {
+  if (!code) return '—';
+  return COLOR_PT[code] ?? code.replace(/_/g, ' ');
+}
+
+export const POKEMON_MYSTERY_LABEL = '???';

@@ -1,0 +1,8 @@
+.sprite {
+  image-rendering: pixelated;
+  display: block;
+}
+
+.silhouette {
+  filter: brightness(0);
+}

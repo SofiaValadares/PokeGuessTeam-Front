@@ -1,0 +1,22 @@
+import { apiFetchJson } from './http';
+import type { PcPageResponse, PokemonDto } from './types/pokemon';
+
+export const PC_DEFAULT_PAGE_SIZE = 50;
+export const PC_MAX_PAGE_SIZE = 50;
+
+export async function getPokemonPcPage(
+  page = 0,
+  size = PC_DEFAULT_PAGE_SIZE,
+): Promise<PcPageResponse> {
+  const safeSize = Math.min(Math.max(size, 1), PC_MAX_PAGE_SIZE);
+  const params = new URLSearchParams({
+    page: String(page),
+    size: String(safeSize),
+  });
+  return apiFetchJson<PcPageResponse>(`/api/pokemon/pc?${params.toString()}`, { method: 'GET' });
+}
+
+/** GET /api/pokemon/species/{pokedexNumber} — metadados da espécie (incl. evolutionLevel). */
+export async function getPokemonSpecies(pokedexNumber: number): Promise<PokemonDto> {
+  return apiFetchJson<PokemonDto>(`/api/pokemon/species/${pokedexNumber}`, { method: 'GET' });
+}
