@@ -11,11 +11,17 @@ export function usePokemonPcPage(initialPage = 0, pageSize = PC_DEFAULT_PAGE_SIZ
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const load = useCallback(
-    async (p: number) => {
+    async (p: number, size: number) => {
       setStatus(FetchStatus.Loading);
       setErrorMessage(null);
       try {
-        const res = await getPokemonPcPage(p, pageSize);
+        const res = await getPokemonPcPage(p, size);
+
+        if (res.totalPages > 0 && p >= res.totalPages) {
+          setPage(res.totalPages - 1);
+          return;
+        }
+
         setData(res);
         setStatus(FetchStatus.Success);
       } catch (e) {
@@ -26,12 +32,12 @@ export function usePokemonPcPage(initialPage = 0, pageSize = PC_DEFAULT_PAGE_SIZ
         setStatus(FetchStatus.Error);
       }
     },
-    [pageSize],
+    [],
   );
 
   useEffect(() => {
-    void load(page);
-  }, [load, page]);
+    void load(page, pageSize);
+  }, [load, page, pageSize]);
 
   useEffect(() => {
     setPage(0);
@@ -43,6 +49,6 @@ export function usePokemonPcPage(initialPage = 0, pageSize = PC_DEFAULT_PAGE_SIZ
     data,
     status,
     errorMessage,
-    refresh: () => load(page),
+    refresh: () => load(page, pageSize),
   };
 }

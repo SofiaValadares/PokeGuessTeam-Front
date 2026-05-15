@@ -78,17 +78,6 @@ export default function PokedexPage() {
       <Card padding="md" className={styles.card}>
         <h1 className="ds-h1">Pokédex</h1>
 
-        <div className={styles.filters}>
-          <label className={styles.filter}>
-            <input
-              type="checkbox"
-              checked={onlyRegistered}
-              onChange={(e) => setOnlyRegistered(e.target.checked)}
-            />
-            Só registados (nesta página)
-          </label>
-        </div>
-
         {error ? (
           <InlineAlert tone="error" role="alert">
             {error}

@@ -1,8 +1,9 @@
 import { apiFetchJson } from './http';
 import type { PcPageResponse, PokemonDto } from './types/pokemon';
 
-export const PC_DEFAULT_PAGE_SIZE = 50;
-export const PC_MAX_PAGE_SIZE = 50;
+/** Alinhado com GET /api/pokemon/pc e GET /api/profile/pokemon (branch feat/userInventory). */
+export const PC_DEFAULT_PAGE_SIZE = 20;
+export const PC_MAX_PAGE_SIZE = 100;
 
 export async function getPokemonPcPage(
   page = 0,
