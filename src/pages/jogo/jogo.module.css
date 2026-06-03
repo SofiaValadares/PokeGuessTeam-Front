@@ -1,0 +1,30 @@
+.shell {
+  width: 100%;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-3);
+  margin-bottom: var(--ds-space-6);
+}
+
+.setupBlock {
+  margin-bottom: var(--ds-space-8);
+}
+
+.setupBlock h2 {
+  margin: 0 0 var(--ds-space-4);
+  font-size: var(--ds-text-lg);
+}
+
+.finishedPanel {
+  padding: var(--ds-space-6);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-color-accent-muted);
+  margin-bottom: var(--ds-space-6);
+}
+
+.finishedPanel h2 {
+  margin: 0 0 var(--ds-space-2);
+}

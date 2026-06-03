@@ -151,20 +151,23 @@ export default function HomePage() {
 
         <Card padding="md" className={styles.gridWide}>
           <h2 className="ds-h2" style={{ marginTop: 0 }}>
-            Explorar
+            Jogar — PokeTeamGuess
           </h2>
           <p className="ds-body-muted" style={{ marginTop: 0 }}>
-            Consulta a Pokédex (com registo pessoal), gere o inventário no PC e prepara-te para a Wild Area.
+            Duelos por dedução (Bot, local ou amigo) com regras no servidor, gacha de captura e histórico de partidas.
           </p>
           <div className={styles.links}>
+            <Button type="button" variant="primary" size="md" onClick={() => navigate('/jogo')}>
+              Duelos
+            </Button>
+            <Button type="button" variant="secondary" size="md" onClick={() => navigate('/jogo/bot')}>
+              vs Bot
+            </Button>
             <Button type="button" variant="secondary" size="md" onClick={() => navigate('/pokedex')}>
               Pokédex
             </Button>
             <Button type="button" variant="secondary" size="md" onClick={() => navigate('/pc')}>
               PC
-            </Button>
-            <Button type="button" variant="secondary" size="md" onClick={() => navigate('/wild-area')}>
-              Wild Area
             </Button>
             <Button type="button" variant="ghost" size="md" onClick={() => navigate('/configuracoes/perfil')}>
               Configurações

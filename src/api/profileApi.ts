@@ -10,3 +10,7 @@ export async function getProfileCollection(): Promise<ProfileCollectionResult> {
   const raw = await apiFetchJson<unknown>('/api/profile/collection', { method: 'GET' });
   return parseProfileCollection(raw);
 }
+
+export async function getTrainingTeam(): Promise<import('./types/game').TrainingTeamResponse> {
+  return apiFetchJson('/api/profile/training-team', { method: 'GET' });
+}

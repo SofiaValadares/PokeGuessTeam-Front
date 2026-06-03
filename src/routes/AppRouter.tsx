@@ -8,6 +8,12 @@ import PcPage from '../pages/pc/pc';
 import PerfilPage from '../pages/perfil/perfil';
 import PokedexPage from '../pages/pokedex/pokedex';
 import WildAreaPage from '../pages/wild-area/wild-area';
+import GachaPage from '../pages/wild-area/gacha';
+import JogoHubPage from '../pages/jogo/jogo-hub';
+import BotMatchPage from '../pages/jogo/bot-match';
+import LocalMatchPage from '../pages/jogo/local-match';
+import FriendMatchPage from '../pages/jogo/friend-match';
+import HistoricoPage from '../pages/jogo/historico';
 import RegisterPage from '../pages/register/register';
 import { ProtectedRoute } from './guards';
 
@@ -28,6 +34,12 @@ export function AppRouter() {
           <Route index element={<HomePage />} />
           <Route path="pc" element={<PcPage />} />
           <Route path="wild-area" element={<WildAreaPage />} />
+          <Route path="wild-area/gacha" element={<GachaPage />} />
+          <Route path="jogo" element={<JogoHubPage />} />
+          <Route path="jogo/bot" element={<BotMatchPage />} />
+          <Route path="jogo/local" element={<LocalMatchPage />} />
+          <Route path="jogo/amigo" element={<FriendMatchPage />} />
+          <Route path="jogo/historico" element={<HistoricoPage />} />
           <Route path="pokedex" element={<PokedexPage />} />
           <Route path="configuracoes" element={<ConfiguracoesLayout />}>
             <Route index element={<Navigate to="perfil" replace />} />

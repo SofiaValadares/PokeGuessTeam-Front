@@ -1,4 +1,4 @@
-import { BookOpen, Home, Monitor, Trees } from 'lucide-react';
+import { BookOpen, Home, Monitor, Swords } from 'lucide-react';
 import { ReactNode } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import styles from './AppHeader.module.css';
@@ -50,14 +50,14 @@ export function AppHeader({ end, navEnabled = true }: AppHeaderProps) {
                   <Monitor className={styles.navIcon} {...navIconProps} />
                 </NavLink>
                 <NavLink
-                  to="/wild-area"
+                  to="/jogo"
                   className={({ isActive }) =>
                     [styles.navBtn, isActive ? styles.navBtnActive : ''].filter(Boolean).join(' ')
                   }
-                  aria-label="Wild Area"
-                  title="Wild Area"
+                  aria-label="Duelos"
+                  title="Duelos e Gacha"
                 >
-                  <Trees className={styles.navIcon} {...navIconProps} />
+                  <Swords className={styles.navIcon} {...navIconProps} />
                 </NavLink>
                 <NavLink
                   to="/pokedex"

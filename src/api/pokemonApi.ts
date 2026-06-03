@@ -1,4 +1,5 @@
 import { apiFetchJson } from './http';
+import type { PokeballDrawResponse } from './types/game';
 import type { PcPageResponse, PokemonDto } from './types/pokemon';
 
 /** Alinhado com GET /api/pokemon/pc e GET /api/profile/pokemon (branch feat/userInventory). */
@@ -20,4 +21,20 @@ export async function getPokemonPcPage(
 /** GET /api/pokemon/species/{pokedexNumber} — metadados da espécie (incl. evolutionLevel). */
 export async function getPokemonSpecies(pokedexNumber: number): Promise<PokemonDto> {
   return apiFetchJson<PokemonDto>(`/api/pokemon/species/${pokedexNumber}`, { method: 'GET' });
+}
+
+/** GET /api/pokemon/search?q= — autocomplete para palpites na partida. */
+export async function searchPokemon(query: string, limit = 30): Promise<PokemonDto[]> {
+  const q = query.trim();
+  if (!q) return [];
+  const params = new URLSearchParams({ q, limit: String(limit) });
+  return apiFetchJson<PokemonDto[]>(`/api/pokemon/search?${params.toString()}`, { method: 'GET' });
+}
+
+/** POST /api/pokemon/draw — gacha (consome Pokébola). */
+export async function drawPokemon(pokeballType: string): Promise<PokeballDrawResponse> {
+  return apiFetchJson(`/api/pokemon/draw`, {
+    method: 'POST',
+    body: JSON.stringify({ pokeballType }),
+  });
 }
