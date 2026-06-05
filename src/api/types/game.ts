@@ -1,7 +1,7 @@
 import type { PokemonDto } from './pokemon';
 
 export type MatchStatus = 'SETUP' | 'ACTIVE' | 'FINISHED';
-export type MatchPlayerSide = 'USER' | 'BOT';
+export type MatchPlayerSide = 'HOST' | 'OPPONENT';
 export type GuessOutcome =
   | 'KEEP_TURN'
   | 'SWITCH_TURN'
@@ -14,7 +14,9 @@ export type GameMode = 'BOT' | 'LOCAL' | 'FRIEND';
 export type GameResult = 'WIN' | 'LOSE' | 'DRAW' | 'DESISTENCE';
 
 export type OpponentKnowledgeSlotDto = {
+  slot: number;
   pokedexNumber: number | null;
+  name: string | null;
   revealed: boolean;
   primaryType: string | null;
   secondaryType: string | null;
@@ -22,6 +24,7 @@ export type OpponentKnowledgeSlotDto = {
   generation: string | null;
   heightM: string | null;
   weightKg: string | null;
+  evolutionStage: string | null;
 };
 
 export type BotMatchGuessFeedbackDto = {
@@ -34,6 +37,8 @@ export type BotMatchGuessFeedbackDto = {
   outcome: GuessOutcome;
   message: string;
   createdAt: string;
+  timedOut?: boolean;
+  autoSelected?: boolean;
 };
 
 export type GameHistoryPlayerDto = {
@@ -52,15 +57,49 @@ export type GameHistoryEntryDto = {
   players: GameHistoryPlayerDto[];
 };
 
+export type MatchRewardDto = {
+  trainingTeamXpGranted: number;
+  pokeBallsGranted: number;
+  pokeballFragmentsGranted: number;
+};
+
+export type GameFinishResponse = {
+  historyEntry: GameHistoryEntryDto;
+  reward: MatchRewardDto;
+};
+
+export type GameBotFinishRequest = {
+  userCorrectGuesses: number;
+  opponentCorrectGuesses: number;
+  result: GameResult;
+};
+
+export type GameLocalFinishRequest = GameBotFinishRequest & {
+  opponentName: string;
+};
+
+export type BotMatchSetupResponse = {
+  hostTeam: number[];
+  opponentTeam: number[];
+};
+
+export type LocalMatchSetupRequest = {
+  opponentName: string;
+  hostTeam: number[];
+  opponentTeam: number[];
+};
+
 export type BotMatchStateDto = {
   matchId: string;
   status: MatchStatus;
   currentTurn: MatchPlayerSide;
   startingPlayer: MatchPlayerSide;
   finalResponseFor: MatchPlayerSide | null;
-  userTeam: number[];
-  userHits: number[];
-  userCorrectGuesses: number;
+  hostTeam: number[];
+  hostHits: number[];
+  opponentTeam: number[];
+  opponentHits: number[];
+  hostCorrectGuesses: number;
   opponentCorrectGuesses: number;
   opponentKnowledge: OpponentKnowledgeSlotDto[];
   recentGuesses: BotMatchGuessFeedbackDto[];
@@ -77,15 +116,19 @@ export type BotMatchActionResponse = {
 
 export type LocalMatchStateDto = {
   matchId: string;
-  opponentName: string;
+  hostDisplayName: string;
+  localOpponentName: string;
   status: MatchStatus;
   currentTurn: MatchPlayerSide;
   startingPlayer: MatchPlayerSide;
   finalResponseFor: MatchPlayerSide | null;
-  playerTeamReady: boolean;
+  hostTeamReady: boolean;
   opponentTeamReady: boolean;
-  playerTeam: number[];
-  playerCorrectGuesses: number;
+  hostTeam: number[];
+  opponentTeam: number[];
+  hostHits: number[];
+  opponentHits: number[];
+  hostCorrectGuesses: number;
   opponentCorrectGuesses: number;
   opponentKnowledge: OpponentKnowledgeSlotDto[];
   recentGuesses: BotMatchGuessFeedbackDto[];
@@ -104,6 +147,7 @@ export type FriendMatchParticipantDto = {
   userId: string;
   username: string;
   teamReady: boolean;
+  timeoutPenalties?: number;
 };
 
 export type FriendMatchStateDto = {
@@ -117,6 +161,7 @@ export type FriendMatchStateDto = {
   finalResponseFor: MatchPlayerSide | null;
   yourTeam: number[];
   yourHits: number[];
+  opponentHitsOnYourTeam: number[];
   yourCorrectGuesses: number;
   opponentCorrectGuesses: number;
   host: FriendMatchParticipantDto;
@@ -127,6 +172,9 @@ export type FriendMatchStateDto = {
   startedAt: string | null;
   finishedAt: string | null;
   historyEntry: GameHistoryEntryDto | null;
+  turnDeadlineAt?: string | null;
+  yourTimeoutPenalties?: number;
+  opponentReplacedByBot?: boolean;
 };
 
 export type FriendMatchActionResponse = {
@@ -142,6 +190,30 @@ export type GameHistoryPageResponse = {
   totalPages: number;
   first: boolean;
   last: boolean;
+};
+
+export type MatchRealtimeEventType =
+  | 'PLAYER_GUESS'
+  | 'BOT_TURN_START'
+  | 'BOT_GUESS'
+  | 'MATCH_STATE'
+  | 'TURN_TIMER'
+  | 'TIMEOUT_PENALTY'
+  | 'OPPONENT_REPLACED_BY_BOT'
+  | 'MATCH_FINISHED';
+
+export type MatchRealtimeMessage = {
+  type: MatchRealtimeEventType;
+  matchId: string;
+  botMatch?: BotMatchStateDto;
+  friendMatch?: FriendMatchStateDto;
+  feedback?: BotMatchGuessFeedbackDto;
+  currentTurn?: MatchPlayerSide;
+  turnDeadlineAt?: string;
+  turnTimeoutSeconds?: number;
+  timeoutPenalties?: number;
+  maxTimeoutPenalties?: number;
+  message?: string;
 };
 
 export type GameMetaResponse = {
@@ -168,7 +240,8 @@ export type PokeballDrawResponse = {
 
 export type TrainingTeamSlotDto = {
   slot: number;
-  pokemon: PokemonDto | null;
+  evolutionLineKey: number | null;
+  line: import('./pokemon').PcLineDto | null;
 };
 
 export type TrainingTeamResponse = {

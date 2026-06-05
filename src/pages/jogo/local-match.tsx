@@ -1,19 +1,35 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  getLocalMatch,
-  startLocalMatch,
-  submitLocalGuess,
-  submitLocalTeam,
-  surrenderLocalMatch,
-} from '../../api/gameApi';
-import type { BotMatchGuessFeedbackDto, LocalMatchStateDto } from '../../api/types/game';
+import { finishLocalMatch, validateLocalSetup } from '../../api/gameApi';
+import type { BotMatchGuessFeedbackDto, LocalMatchStateDto, MatchPlayerSide } from '../../api/types/game';
 import { ApiError } from '../../api/http';
+import { useAuth } from '../../auth/AuthContext';
+import { accountDisplayName } from '../../auth/accountDisplay';
 import { MatchBoard } from '../../components/game/MatchBoard';
+import { MatchResultModal } from '../../components/game/MatchResultModal';
 import { TeamPicker } from '../../components/game/TeamPicker';
-import { gameResultLabel, playerSideLabel } from '../../lib/gameLabels';
+import { TeamSetupScreen } from '../../components/game/TeamSetupScreen';
+import { gameResultLabel } from '../../lib/gameLabels';
+import { guessedDexNumbersForSide } from '../../lib/matchGuesses';
+import { resolvePokemonForMatch } from '../../lib/matchPokemonResolve';
+import { useMatchFinishRedirect } from '../../hooks/useMatchFinishRedirect';
+import {
+  resolveLocalUserResult,
+  resolveUserResult,
+  type ClientMatchState,
+} from '../../lib/clientMatchTypes';
+import { loadMatchPokemonDex, toLocalMatchView } from '../../lib/clientMatchView';
+import { LOCAL_OPPONENT_NAME_MIN } from '../../lib/gameConstants';
+import {
+  applyGuess,
+  applySurrender,
+  createClientMatch,
+  isGuessAlreadyUsed,
+} from '../../lib/matchEngine';
 import { Button, Card, InlineAlert, PageShell, TextField } from '../../ds';
 import hubStyles from './jogo.module.css';
+
+type SetupPhase = 'idle' | 'host-team' | 'guest-team' | 'playing';
 
 function appendLog(prev: BotMatchGuessFeedbackDto[], added: BotMatchGuessFeedbackDto[]) {
   const ids = new Set(prev.map((g) => g.id));
@@ -25,113 +41,160 @@ function appendLog(prev: BotMatchGuessFeedbackDto[], added: BotMatchGuessFeedbac
 }
 
 export default function LocalMatchPage() {
-  const [match, setMatch] = useState<LocalMatchStateDto | null>(null);
-  const [guessLog, setGuessLog] = useState<BotMatchGuessFeedbackDto[]>([]);
+  const { me } = useAuth();
+  const hostName = accountDisplayName(me);
+
+  const [phase, setPhase] = useState<SetupPhase>('idle');
   const [opponentName, setOpponentName] = useState('Ash');
   const [player1Team, setPlayer1Team] = useState<number[]>([]);
   const [player2Team, setPlayer2Team] = useState<number[]>([]);
-  const [, setLoading] = useState(true);
+  const [clientState, setClientState] = useState<ClientMatchState | null>(null);
+  const [matchView, setMatchView] = useState<LocalMatchStateDto | null>(null);
+  const [guessLog, setGuessLog] = useState<BotMatchGuessFeedbackDto[]>([]);
+  const [pokemonDex, setPokemonDex] = useState<Awaited<ReturnType<typeof loadMatchPokemonDex>> | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const applyAction = useCallback(
-    (state: LocalMatchStateDto, feedbacks: BotMatchGuessFeedbackDto[]) => {
-      setMatch(state);
-      if (feedbacks.length) setGuessLog((prev) => appendLog(prev, feedbacks));
-      else if (state.recentGuesses.length) setGuessLog(state.recentGuesses);
-    },
-    [],
-  );
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const m = await getLocalMatch();
-      setMatch(m);
-      setOpponentName(m.opponentName);
-      setGuessLog(m.recentGuesses ?? []);
-      if (m.playerTeam.length) setPlayer1Team(m.playerTeam);
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 404) {
-        setMatch(null);
-      } else {
-        setError(e instanceof ApiError ? e.message : 'Erro ao carregar.');
-      }
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    void loadMatchPokemonDex().then(setPokemonDex).catch(() => {
+      setError('Não foi possível carregar os Pokémon.');
+    });
   }, []);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const viewerSide: MatchPlayerSide = clientState?.currentTurn ?? 'HOST';
 
-  const start = async () => {
+  const syncView = useCallback(
+    (
+      state: ClientMatchState,
+      side: MatchPlayerSide,
+      historyEntry: LocalMatchStateDto['historyEntry'] = null,
+    ) => {
+      if (!pokemonDex) return;
+      setMatchView(toLocalMatchView(state, pokemonDex, side, historyEntry));
+    },
+    [pokemonDex],
+  );
+
+  useEffect(() => {
+    if (!clientState || !pokemonDex || phase !== 'playing') return;
+    syncView(clientState, viewerSide);
+  }, [clientState, viewerSide, phase, pokemonDex, syncView]);
+
+  const finishOnServer = useCallback(
+    async (state: ClientMatchState, surrenderSide: MatchPlayerSide | null) => {
+      const result =
+        surrenderSide != null
+          ? resolveLocalUserResult(state, surrenderSide)
+          : resolveUserResult(state, false);
+      const response = await finishLocalMatch({
+        opponentName: state.localOpponentName ?? opponentName.trim(),
+        userCorrectGuesses: state.hostHits.length,
+        opponentCorrectGuesses: state.opponentHits.length,
+        result,
+      });
+      setClientState(state);
+      syncView(state, viewerSide, response.historyEntry);
+    },
+    [opponentName, syncView, viewerSide],
+  );
+
+  const startSetup = () => {
     const name = opponentName.trim();
-    if (name.length < 3) {
-      setError('Nome do jogador 2: mínimo 3 caracteres.');
+    if (name.length < LOCAL_OPPONENT_NAME_MIN) {
+      setError(`Nome do jogador 2: mínimo ${LOCAL_OPPONENT_NAME_MIN} caracteres.`);
       return;
     }
-    setBusy(true);
     setError(null);
-    try {
-      const m = await startLocalMatch(name);
-      setMatch(m);
-      setGuessLog([]);
-      setPlayer1Team([]);
-      setPlayer2Team([]);
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Não foi possível iniciar.');
-    } finally {
-      setBusy(false);
-    }
+    setPhase('host-team');
   };
 
-  const sendTeam = async (side: 'USER' | 'BOT', team: number[]) => {
+  const confirmGuestTeam = async () => {
+    const name = opponentName.trim();
+    if (name.length < LOCAL_OPPONENT_NAME_MIN) {
+      setError(`Nome do jogador 2: mínimo ${LOCAL_OPPONENT_NAME_MIN} caracteres.`);
+      return;
+    }
+
     setBusy(true);
     setError(null);
     try {
-      const res = await submitLocalTeam(side, team);
-      applyAction(res.match, res.turnFeedbacks);
+      await validateLocalSetup({
+        opponentName: name,
+        hostTeam: player1Team,
+        opponentTeam: player2Team,
+      });
+      const state = createClientMatch(player1Team, player2Team, {
+        localOpponentName: name,
+        hostDisplayName: hostName,
+      });
+      setClientState(state);
+      setGuessLog([]);
+      syncView(state, state.currentTurn);
+      setPhase('playing');
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Equipa inválida.');
+      setError(e instanceof ApiError ? e.message : 'Equipas inválidas.');
     } finally {
       setBusy(false);
     }
   };
 
   const guess = async (dex: number) => {
+    if (!clientState || !pokemonDex) return;
+    if (clientState.status !== 'ACTIVE') return;
+    if (isGuessAlreadyUsed(clientState, viewerSide, dex)) return;
+
     setBusy(true);
+    setError(null);
     try {
-      const res = await submitLocalGuess(dex);
-      applyAction(res.match, res.turnFeedbacks);
+      const pokemon = await resolvePokemonForMatch(dex, pokemonDex, setPokemonDex);
+      const { feedback, state } = applyGuess(clientState, viewerSide, pokemon);
+      setClientState(state);
+      syncView(state, state.currentTurn);
+      setGuessLog((prev) => appendLog(prev, [feedback]));
+
+      if (state.status === 'FINISHED') {
+        await finishOnServer(state, null);
+      }
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Palpite inválido.');
+      setError(e instanceof ApiError ? e.message : e instanceof Error ? e.message : 'Palpite inválido.');
     } finally {
       setBusy(false);
     }
   };
 
   const surrender = async () => {
+    if (!clientState) return;
     setBusy(true);
+    setError(null);
     try {
-      const res = await surrenderLocalMatch();
-      applyAction(res.match, res.turnFeedbacks);
+      const state = applySurrender(clientState, viewerSide);
+      setClientState(state);
+      await finishOnServer(state, viewerSide);
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Erro.');
+      setError(e instanceof ApiError ? e.message : 'Erro ao terminar a partida.');
     } finally {
       setBusy(false);
     }
   };
 
-  if (!match) {
+  const excludedGuesses = useMemo(
+    () => guessedDexNumbersForSide(guessLog, viewerSide),
+    [guessLog, viewerSide],
+  );
+
+  const matchEnded = clientState?.status === 'FINISHED';
+  const resultReady = Boolean(matchView?.historyEntry);
+  const showResultModal = matchEnded && resultReady;
+  const pendingServerFinish = matchEnded && !resultReady;
+  const { secondsLeft, goHomeNow } = useMatchFinishRedirect(showResultModal);
+
+  if (phase === 'idle') {
     return (
       <PageShell width="wide">
         <Card padding="md">
-          <Link to="/jogo">← Duelos</Link>
+          <Link to="/">← Início</Link>
           <h1 className="ds-h1">Duelo local</h1>
-          <p className="ds-body-muted">Dois jogadores no mesmo ecrã — regras no servidor.</p>
+          <p className="ds-body-muted">Dois jogadores no mesmo ecrã — regras no cliente.</p>
           {error ? <InlineAlert tone="error">{error}</InlineAlert> : null}
           <div style={{ maxWidth: '20rem', marginTop: 'var(--ds-space-6)' }}>
             <TextField
@@ -146,7 +209,7 @@ export default function LocalMatchPage() {
             size="md"
             style={{ marginTop: 'var(--ds-space-4)' }}
             disabled={busy}
-            onClick={() => void start()}
+            onClick={startSetup}
           >
             Iniciar partida local
           </Button>
@@ -155,74 +218,114 @@ export default function LocalMatchPage() {
     );
   }
 
-  const finished = match.status === 'FINISHED';
-  const setup = match.status === 'SETUP';
-  const activePlayerName =
-    match.currentTurn === 'USER' ? 'Jogador 1' : match.opponentName;
-  const isPlayer1Turn = match.currentTurn === 'USER';
+  if (phase === 'host-team') {
+    return (
+      <TeamSetupScreen error={error}>
+        <TeamPicker
+          value={player1Team}
+          onChange={setPlayer1Team}
+          onSubmit={() => setPhase('guest-team')}
+          onBack={() => setPhase('idle')}
+          loading={busy}
+        />
+      </TeamSetupScreen>
+    );
+  }
 
-  const finishedMsg = match.historyEntry
-    ? match.historyEntry.players.map((p) => gameResultLabel(p.result)).join(' · ')
-    : null;
+  if (phase === 'guest-team') {
+    return (
+      <TeamSetupScreen error={error}>
+        <p className="ds-body-muted" style={{ marginBottom: 'var(--ds-space-4)' }}>
+          Equipa de <strong>{opponentName.trim()}</strong>
+        </p>
+        <TeamPicker
+          value={player2Team}
+          onChange={setPlayer2Team}
+          onSubmit={() => void confirmGuestTeam()}
+          onBack={() => setPhase('host-team')}
+          loading={busy}
+        />
+      </TeamSetupScreen>
+    );
+  }
+
+  if (!matchView || !clientState) {
+    return (
+      <div className={hubStyles.matchScreen}>
+        <p className="ds-body-muted">A preparar partida…</p>
+      </div>
+    );
+  }
+
+  const isGuestView = viewerSide === 'OPPONENT';
+  const activePlayerName =
+    viewerSide === 'HOST' ? matchView.hostDisplayName : matchView.localOpponentName;
+  const opponentNameForBoard =
+    viewerSide === 'HOST' ? matchView.localOpponentName : matchView.hostDisplayName;
+  const myTeam = viewerSide === 'HOST' ? matchView.hostTeam : matchView.opponentTeam;
+  const opponentHitsOnMyTeam =
+    viewerSide === 'HOST' ? matchView.opponentHits : matchView.hostHits;
+
+  const finishedLines = matchView.historyEntry
+    ? matchView.historyEntry.players.map(
+        (p) => `${p.username ?? 'Jogador'}: ${gameResultLabel(p.result)} (${p.correctGuesses}/6)`,
+      )
+    : ['Partida terminada.'];
+
+  const awaitingFinalResponse =
+    clientState.status === 'ACTIVE' &&
+    clientState.finalResponseFor != null &&
+    clientState.currentTurn === clientState.finalResponseFor;
 
   return (
-    <PageShell width="fluid" className={hubStyles.shell}>
-      <Card padding="md">
-        <Link to="/jogo">← Duelos</Link>
-        <h1 className="ds-h1">Duelo local — {match.opponentName}</h1>
-        {error ? <InlineAlert tone="error">{error}</InlineAlert> : null}
+    <div
+      className={[hubStyles.matchScreen, isGuestView ? hubStyles.matchScreenGuest : '']
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <MatchResultModal
+        open={showResultModal}
+        lines={finishedLines}
+        secondsLeft={secondsLeft}
+        onGoHome={goHomeNow}
+      />
 
-        {setup ? (
-          <>
-            {!match.playerTeamReady ? (
-              <section className={hubStyles.setupBlock}>
-                <h2>Equipa do jogador 1</h2>
-                <TeamPicker
-                  value={player1Team}
-                  onChange={setPlayer1Team}
-                  onSubmit={() => void sendTeam('USER', player1Team)}
-                  loading={busy}
-                />
-              </section>
-            ) : null}
-            {!match.opponentTeamReady ? (
-              <section className={hubStyles.setupBlock}>
-                <h2>Equipa do jogador 2 ({match.opponentName})</h2>
-                <TeamPicker
-                  value={player2Team}
-                  onChange={setPlayer2Team}
-                  onSubmit={() => void sendTeam('BOT', player2Team)}
-                  submitLabel="Confirmar equipa do jogador 2"
-                  loading={busy}
-                />
-              </section>
-            ) : null}
-            {match.playerTeamReady && match.opponentTeamReady ? (
-              <p className="ds-body-muted">A iniciar partida…</p>
-            ) : null}
-          </>
-        ) : (
+      {error ? <InlineAlert tone="error">{error}</InlineAlert> : null}
+
+      {awaitingFinalResponse ? (
+        <p className="ds-body-muted" role="status">
+          Rodada extra — {activePlayerName} tenta o empate.
+        </p>
+      ) : null}
+
+      {pendingServerFinish ? (
+        <p className="ds-body-muted">A guardar resultado…</p>
+      ) : null}
+
+      {!matchEnded || pendingServerFinish ? (
+        <div className={hubStyles.matchBoardWrap}>
           <MatchBoard
-            playerName={isPlayer1Turn ? 'Jogador 1' : match.opponentName}
-            opponentName={isPlayer1Turn ? match.opponentName : 'Jogador 1'}
-            userScore={isPlayer1Turn ? match.playerCorrectGuesses : match.opponentCorrectGuesses}
-            opponentScore={isPlayer1Turn ? match.opponentCorrectGuesses : match.playerCorrectGuesses}
-            isYourTurn
-            status={finished ? 'FINISHED' : 'ACTIVE'}
-            opponentKnowledge={match.opponentKnowledge}
-            guessLog={guessLog}
+            playerName={activePlayerName ?? 'Jogador'}
+            opponentName={opponentNameForBoard ?? 'Adversário'}
+            userScore={
+              viewerSide === 'HOST' ? matchView.hostCorrectGuesses : matchView.opponentCorrectGuesses
+            }
+            opponentScore={
+              viewerSide === 'HOST' ? matchView.opponentCorrectGuesses : matchView.hostCorrectGuesses
+            }
+            isYourTurn={clientState.status === 'ACTIVE' && !busy && !pendingServerFinish}
+            status={matchEnded ? 'FINISHED' : 'ACTIVE'}
+            opponentKnowledge={matchView.opponentKnowledge}
+            myTeam={myTeam}
+            opponentHitsOnMyTeam={opponentHitsOnMyTeam}
             onGuess={guess}
             onSurrender={() => void surrender()}
-            busy={busy}
-            localLabels
-            finishedMessage={
-              finished
-                ? `${finishedMsg ?? 'Fim'} — última vez: ${playerSideLabel(match.currentTurn, 'local')}`
-                : `Vez de ${activePlayerName}`
-            }
+            busy={busy || pendingServerFinish}
+            excludedPokedexNumbers={excludedGuesses}
+            playerTheme={isGuestView ? 'guest' : 'default'}
           />
-        )}
-      </Card>
-    </PageShell>
+        </div>
+      ) : null}
+    </div>
   );
 }

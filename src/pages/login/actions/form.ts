@@ -1,5 +1,5 @@
 import type { NavigateFunction } from 'react-router-dom';
-import { ApiError } from '../../../api/http';
+import { isEmailNotVerifiedError, authErrorMessage } from '../../../auth/authErrors';
 import { FetchStatus } from '../../../types/fetchStatus';
 
 export type LoginFormState = {
@@ -59,9 +59,11 @@ export async function submitLogin(
   navigate(redirectTo, { replace: true });
 }
 
+export { isEmailNotVerifiedError } from '../../../auth/authErrors';
+
 export function mapLoginSubmitError(err: unknown): string {
-  if (err instanceof ApiError) {
-    return err.message;
+  if (isEmailNotVerifiedError(err)) {
+    return 'E-mail não verificado. Confirma o código enviado para o teu e-mail.';
   }
-  return 'Não foi possível entrar. Tente novamente.';
+  return authErrorMessage(err, 'Não foi possível entrar. Tente novamente.');
 }

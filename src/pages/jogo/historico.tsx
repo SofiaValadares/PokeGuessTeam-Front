@@ -40,7 +40,7 @@ export default function HistoricoPage() {
   return (
     <PageShell width="fluid" className={hubStyles.shell}>
       <Card padding="md">
-        <Link to="/jogo">← Duelos</Link>
+        <Link to="/">← Início</Link>
         <h1 className="ds-h1">Histórico de partidas</h1>
 
         {error ? <InlineAlert tone="error">{error}</InlineAlert> : null}

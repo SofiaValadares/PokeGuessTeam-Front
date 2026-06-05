@@ -8,13 +8,14 @@ import PcPage from '../pages/pc/pc';
 import PerfilPage from '../pages/perfil/perfil';
 import PokedexPage from '../pages/pokedex/pokedex';
 import WildAreaPage from '../pages/wild-area/wild-area';
-import GachaPage from '../pages/wild-area/gacha';
-import JogoHubPage from '../pages/jogo/jogo-hub';
 import BotMatchPage from '../pages/jogo/bot-match';
 import LocalMatchPage from '../pages/jogo/local-match';
 import FriendMatchPage from '../pages/jogo/friend-match';
 import HistoricoPage from '../pages/jogo/historico';
+import ForgotPasswordPage from '../pages/forgot-password/forgot-password';
 import RegisterPage from '../pages/register/register';
+import ResetPasswordPage from '../pages/reset-password/reset-password';
+import VerifyEmailPage from '../pages/verify-email/verify-email';
 import { ProtectedRoute } from './guards';
 
 export function AppRouter() {
@@ -23,6 +24,9 @@ export function AppRouter() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route
           path="/"
           element={
@@ -33,9 +37,10 @@ export function AppRouter() {
         >
           <Route index element={<HomePage />} />
           <Route path="pc" element={<PcPage />} />
-          <Route path="wild-area" element={<WildAreaPage />} />
-          <Route path="wild-area/gacha" element={<GachaPage />} />
-          <Route path="jogo" element={<JogoHubPage />} />
+          <Route path="area-selvagem" element={<WildAreaPage />} />
+          <Route path="wild-area" element={<Navigate to="/area-selvagem" replace />} />
+          <Route path="wild-area/gacha" element={<Navigate to="/area-selvagem" replace />} />
+          <Route path="jogo" element={<Navigate to="/" replace />} />
           <Route path="jogo/bot" element={<BotMatchPage />} />
           <Route path="jogo/local" element={<LocalMatchPage />} />
           <Route path="jogo/amigo" element={<FriendMatchPage />} />

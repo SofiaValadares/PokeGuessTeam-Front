@@ -27,7 +27,8 @@ export type ProfilePokeballRow = {
   quantity: number;
 };
 
-/** Resposta normalizada de GET /api/profile/collection */
-export type ProfileCollectionResult =
-  | { variant: 'pokemon'; lines: PokemonInventoryLineDto[] }
-  | { variant: 'pokeballs'; pokeballs: ProfilePokeballPayload };
+/** Resposta normalizada de GET /api/profile/collection (apenas Pokébolas). */
+export type ProfileCollectionResult = {
+  variant: 'pokeballs';
+  pokeballs: ProfilePokeballPayload;
+};

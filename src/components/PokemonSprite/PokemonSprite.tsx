@@ -8,6 +8,10 @@ export type PokemonSpriteProps = {
   size?: number;
   variant?: PokemonSpriteVariant;
   className?: string;
+  /** Leve animação de “andar” (sobe/desce). */
+  animated?: boolean;
+  /** Preenche a altura do contentor pai; não define width/height inline. */
+  fillHeight?: boolean;
 };
 
 /**
@@ -20,9 +24,12 @@ export function PokemonSprite({
   size = 48,
   variant = 'default',
   className = '',
+  animated = false,
+  fillHeight = false,
 }: PokemonSpriteProps) {
   const classes = [
     styles.sprite,
+    animated ? styles.animated : '',
     registered ? '' : styles.silhouette,
     className,
   ]
@@ -34,8 +41,7 @@ export function PokemonSprite({
       className={classes}
       src={pokemonSpriteUrl(dex, variant)}
       alt={registered ? name : 'Pokémon não registado'}
-      width={size}
-      height={size}
+      {...(fillHeight ? {} : { width: size, height: size })}
       loading="lazy"
       decoding="async"
     />

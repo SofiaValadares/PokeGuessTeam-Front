@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
-import type { BotMatchGuessFeedbackDto, OpponentKnowledgeSlotDto } from '../../api/types/game';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { OpponentKnowledgeSlotDto } from '../../api/types/game';
 import { searchPokemon } from '../../api/pokemonApi';
 import type { PokemonDto } from '../../api/types/pokemon';
-import { pokemonColorLabel, pokemonTypeLabel } from '../../lib/pokemonLabels';
 import { PokemonSprite } from '../PokemonSprite';
 import { Button } from '../../ds';
-import { GuessLogTable } from './GuessLogTable';
+import { OpponentClueCard } from './OpponentClueCard';
+import { PokemonSearchField } from './PokemonSearchField';
 import styles from './game.module.css';
 
 type MatchBoardProps = {
@@ -17,12 +17,16 @@ type MatchBoardProps = {
   isYourTurn: boolean;
   status: 'ACTIVE' | 'FINISHED';
   opponentKnowledge: OpponentKnowledgeSlotDto[];
-  guessLog: BotMatchGuessFeedbackDto[];
+  myTeam?: number[];
+  opponentHitsOnMyTeam?: number[];
   onGuess: (pokedexNumber: number) => Promise<void>;
   onSurrender: () => void;
   busy?: boolean;
-  localLabels?: boolean;
   finishedMessage?: string | null;
+  playerAvatarDex?: number | null;
+  opponentAvatarDex?: number | null;
+  excludedPokedexNumbers?: number[];
+  playerTheme?: 'default' | 'guest' | 'waiting';
 };
 
 export function MatchBoard({
@@ -34,158 +38,202 @@ export function MatchBoard({
   isYourTurn,
   status,
   opponentKnowledge,
-  guessLog,
+  myTeam,
+  opponentHitsOnMyTeam,
   onGuess,
   onSurrender,
   busy = false,
-  localLabels = false,
   finishedMessage,
+  playerAvatarDex,
+  opponentAvatarDex,
+  excludedPokedexNumbers = [],
+  playerTheme = 'default',
 }: MatchBoardProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PokemonDto[]>([]);
-  const [selected, setSelected] = useState<PokemonDto | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const excludedDex = useMemo(() => new Set(excludedPokedexNumbers), [excludedPokedexNumbers]);
 
   const search = useCallback(async (q: string) => {
-    if (q.trim().length < 2) {
+    if (q.trim().length < 1) {
       setResults([]);
       return;
     }
     try {
-      setResults(await searchPokemon(q, 15));
+      setResults(await searchPokemon(q, 20));
     } catch {
       setResults([]);
     }
   }, []);
 
   useEffect(() => {
-    const t = window.setTimeout(() => void search(query), 280);
+    const t = window.setTimeout(() => void search(query), 220);
     return () => window.clearTimeout(t);
   }, [query, search]);
 
-  const canGuess = status === 'ACTIVE' && isYourTurn && !busy;
+  const canGuess = status === 'ACTIVE' && isYourTurn && !busy && !submitting;
 
-  const submitGuess = async () => {
-    if (!selected || !canGuess) return;
-    await onGuess(selected.number);
-    setQuery('');
-    setResults([]);
-    setSelected(null);
+  const submitGuess = async (pokemon: PokemonDto) => {
+    if (!canGuess || excludedDex.has(pokemon.number)) return;
+    setSubmitting(true);
+    try {
+      await onGuess(pokemon.number);
+      setQuery('');
+      setResults([]);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
+  const revealedCount = opponentKnowledge.filter((s) => s.revealed).length;
+  const opponentHitSet = useMemo(
+    () => new Set(opponentHitsOnMyTeam ?? []),
+    [opponentHitsOnMyTeam],
+  );
+  const myTeamSlots = myTeam?.length ? myTeam : Array.from({ length: maxScore }, () => null);
+
   return (
-    <div className={styles.matchBoard}>
-      <div
-        className={[
-          styles.scoreboard,
-          isYourTurn && status === 'ACTIVE' ? styles.scoreboardYourTurn : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-      >
-        <div className={styles.scoreCol}>
-          <span className={styles.scoreName}>{playerName}</span>
-          <span className={styles.scoreValue}>
-            {userScore}/{maxScore}
-          </span>
-        </div>
-        <span className={styles.scoreVs}>vs</span>
-        <div className={styles.scoreCol}>
-          <span className={styles.scoreName}>{opponentName}</span>
-          <span className={styles.scoreValue}>
-            {opponentScore}/{maxScore}
-          </span>
-        </div>
-      </div>
+    <div
+      className={[
+        styles.matchShell,
+        playerTheme === 'guest' ? styles.matchShellGuest : '',
+        playerTheme === 'waiting' ? styles.matchShellWaiting : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <header className={styles.matchShellHeader}>
+        <span className={styles.matchShellTitle}>PokéTeamGuess · Partida</span>
+      </header>
 
-      {status === 'ACTIVE' ? (
-        <p className={[styles.turnBanner, isYourTurn ? styles.turnBannerActive : styles.turnBannerWait]
-          .join(' ')}>
-          {isYourTurn ? 'É a tua vez — confirma um palpite.' : `Aguarda a vez de ${opponentName}.`}
-        </p>
-      ) : (
-        <p className={styles.turnBanner}>{finishedMessage ?? 'Partida terminada.'}</p>
-      )}
+      <div className={styles.matchLayout}>
+        <section className={styles.matchLeft} aria-label="Campos de adivinhação">
+          <div className={styles.matchLeftHead}>
+            <h2 className={styles.matchPanelTitle}>Campos de adivinhação</h2>
+            <p className={styles.matchPanelSub}>
+              Pistas reais de cada slot do adversário · {revealedCount}/{maxScore} revelados
+            </p>
+          </div>
 
-      <section className={styles.knowledgeSection} aria-label="Pistas sobre o adversário">
-        <h3 className={styles.sectionTitle}>Equipa adversária (pistas)</h3>
-        <ol className={styles.knowledgeGrid}>
-          {opponentKnowledge.map((slot, index) => (
-            <li
-              key={index}
-              className={slot.revealed ? styles.knowledgeSlotRevealed : styles.knowledgeSlotHidden}
+          <div className={styles.clueList}>
+            {opponentKnowledge.map((slot) => (
+              <OpponentClueCard key={slot.slot} slot={slot} />
+            ))}
+          </div>
+
+          {status === 'ACTIVE' ? (
+            <div className={styles.matchGuessBar}>
+              <PokemonSearchField
+                query={query}
+                onQueryChange={setQuery}
+                results={results}
+                selected={null}
+                onSelect={(p) => void submitGuess(p)}
+                onPick={(p) => void submitGuess(p)}
+                disabled={!canGuess}
+                excludedDexNumbers={excludedDex}
+                placeholder="Busque um pokémon e clique ou pressione Enter"
+                overlay
+              />
+            </div>
+          ) : (
+            <p className={styles.matchFinishedBanner}>{finishedMessage ?? 'Partida terminada.'}</p>
+          )}
+        </section>
+
+        <aside className={styles.matchRight} aria-label="Controle de turnos">
+          <h2 className={styles.matchPanelTitle}>Controle de turnos</h2>
+
+          {status === 'ACTIVE' ? (
+            <p
+              className={[
+                styles.turnBanner,
+                isYourTurn ? styles.turnBannerActive : styles.turnBannerWait,
+              ].join(' ')}
             >
-              {slot.revealed && slot.pokedexNumber != null ? (
-                <>
-                  <PokemonSprite dex={slot.pokedexNumber} name={`#${slot.pokedexNumber}`} size={40} />
-                  <ul className={styles.knowledgeMeta}>
-                    {slot.primaryType ? <li>{pokemonTypeLabel(slot.primaryType)}</li> : null}
-                    {slot.secondaryType && slot.secondaryType !== 'NONE' ? (
-                      <li>{pokemonTypeLabel(slot.secondaryType)}</li>
-                    ) : null}
-                    {slot.generation ? <li>Gen {slot.generation}</li> : null}
-                    {slot.color ? <li>{pokemonColorLabel(slot.color)}</li> : null}
-                    {slot.heightM ? <li>{slot.heightM} m</li> : null}
-                    {slot.weightKg ? <li>{slot.weightKg} kg</li> : null}
-                  </ul>
-                </>
-              ) : (
-                <span className={styles.knowledgeHidden}>?</span>
-              )}
-            </li>
-          ))}
-        </ol>
-      </section>
+              {isYourTurn
+                ? 'É a tua vez — escolhe um pokémon na busca.'
+                : `Aguarda a vez de ${opponentName}.`}
+            </p>
+          ) : null}
 
-      {status === 'ACTIVE' ? (
-        <section className={styles.guessSection}>
-          <h3 className={styles.sectionTitle}>Palpite</h3>
-          <input
-            className={styles.searchInput}
-            type="search"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setSelected(null);
-            }}
-            placeholder="Pesquisar Pokémon…"
-            disabled={!canGuess}
-          />
-          {results.length > 0 ? (
-            <ul className={styles.searchResults}>
-              {results.map((p) => (
-                <li key={p.id}>
-                  <button
-                    type="button"
-                    className={[
-                      styles.searchResultBtn,
-                      selected?.id === p.id ? styles.searchResultSelected : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
-                    onClick={() => setSelected(p)}
-                    disabled={!canGuess}
-                  >
-                    {p.name} (#{p.number})
-                  </button>
+          <div className={styles.matchPlayers}>
+            <div
+              className={[
+                styles.matchPlayerCard,
+                isYourTurn && status === 'ACTIVE' ? styles.matchPlayerCardActive : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              <div className={styles.matchPlayerAvatar}>
+                {playerAvatarDex != null ? (
+                  <PokemonSprite dex={playerAvatarDex} name={playerName} size={48} />
+                ) : (
+                  <span className={styles.clueUnknownSprite}>?</span>
+                )}
+              </div>
+              <span className={styles.matchPlayerName}>{playerName}</span>
+              <span className={styles.matchPlayerScore}>
+                {userScore}/{maxScore}
+              </span>
+            </div>
+            <div
+              className={[
+                styles.matchPlayerCard,
+                !isYourTurn && status === 'ACTIVE' ? styles.matchPlayerCardActive : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              <div className={styles.matchPlayerAvatar}>
+                {opponentAvatarDex != null ? (
+                  <PokemonSprite dex={opponentAvatarDex} name={opponentName} size={48} />
+                ) : (
+                  <span className={styles.clueUnknownSprite}>?</span>
+                )}
+              </div>
+              <span className={styles.matchPlayerName}>{opponentName}</span>
+              <span className={styles.matchPlayerScore}>
+                {opponentScore}/{maxScore}
+              </span>
+            </div>
+          </div>
+
+          <section className={styles.matchHitsSection}>
+            <h3 className={styles.matchHitsTitle}>Descobertos pelo adversário</h3>
+            <p className={styles.matchHitsSub}>Na sua equipe · {opponentName}</p>
+            <ul className={styles.matchHitsGrid}>
+              {myTeamSlots.map((dex, index) => (
+                <li key={`${index}-${dex ?? 'empty'}`} className={styles.matchHitCell}>
+                  {dex != null && opponentHitSet.has(dex) ? (
+                    <PokemonSprite
+                      dex={dex}
+                      name={`#${dex}`}
+                      size={64}
+                    />
+                  ) : (
+                    <span className={styles.matchHitUnknown}>???</span>
+                  )}
                 </li>
               ))}
             </ul>
-          ) : null}
-          <div className={styles.guessActions}>
-            <Button type="button" variant="primary" size="md" disabled={!selected || !canGuess} onClick={() => void submitGuess()}>
-              {busy ? 'A processar…' : 'Confirmar palpite'}
-            </Button>
-            <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={onSurrender}>
-              Desistir
-            </Button>
-          </div>
-        </section>
-      ) : null}
+          </section>
 
-      <section>
-        <h3 className={styles.sectionTitle}>Histórico de palpites</h3>
-        <GuessLogTable rows={guessLog} localLabels={localLabels} />
-      </section>
+          {status === 'ACTIVE' ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="md"
+              className={styles.matchSurrenderBtn}
+              disabled={busy || submitting}
+              onClick={onSurrender}
+            >
+              DESISTIR DA PARTIDA
+            </Button>
+          ) : null}
+        </aside>
+      </div>
     </div>
   );
 }

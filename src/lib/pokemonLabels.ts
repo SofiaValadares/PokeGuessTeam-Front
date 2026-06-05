@@ -53,4 +53,14 @@ export function pokemonColorLabel(code: string | null): string {
   return COLOR_PT[code] ?? code.replace(/_/g, ' ');
 }
 
+export function pokemonEvolutionStageLabel(code: string | null | undefined): string {
+  if (!code) return '—';
+  const STAGE_PT: Record<string, string> = {
+    BASE: 'Base',
+    FIRST_STAGE: '1ª evolução',
+    SECOND_STAGE: '2ª evolução',
+  };
+  return STAGE_PT[code] ?? code.replace(/_/g, ' ');
+}
+
 export const POKEMON_MYSTERY_LABEL = '???';

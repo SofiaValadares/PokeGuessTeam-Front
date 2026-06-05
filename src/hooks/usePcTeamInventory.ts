@@ -1,25 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getPokemonPcPage, PC_MAX_PAGE_SIZE } from '../api/pokemonApi';
-import type { PcLineDto, PokemonDto } from '../api/types/pokemon';
 import { ApiError } from '../api/http';
+import type { PcLineDto, PokemonDto } from '../api/types/pokemon';
+import { fetchAllPcLines } from '../lib/fetchAllPcLines';
 import { resolveCurrentMemberDex } from '../lib/pcCurrentForm';
 import { useSpeciesMeta } from './useSpeciesMeta';
 import { FetchStatus } from '../types/fetchStatus';
-
-async function fetchAllPcLines(): Promise<PcLineDto[]> {
-  const lines: PcLineDto[] = [];
-  let page = 0;
-  let totalPages = 1;
-
-  while (page < totalPages) {
-    const res = await getPokemonPcPage(page, PC_MAX_PAGE_SIZE);
-    lines.push(...res.content);
-    totalPages = Math.max(res.totalPages, 1);
-    page += 1;
-  }
-
-  return lines;
-}
 
 export function usePcTeamInventory() {
   const [lines, setLines] = useState<PcLineDto[]>([]);
@@ -73,6 +58,7 @@ export function usePcTeamInventory() {
   const ready = status === FetchStatus.Success && !metaLoading;
 
   return {
+    lines,
     availablePokemon,
     lineCount: lines.length,
     loading,

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getPokemonSpecies } from '../api/pokemonApi';
+import { getPokemonSpeciesBatch } from '../api/pokemonApi';
 import type { PokemonDto } from '../api/types/pokemon';
 
 type SpeciesMetaState = {
@@ -13,6 +13,20 @@ const emptyState: SpeciesMetaState = {
   evolutionLevelByDex: new Map(),
   loading: false,
 };
+
+/** Evita pedidos duplicados quando o Strict Mode remonta com a mesma lista de dex. */
+const batchInflight = new Map<string, Promise<Map<number, PokemonDto>>>();
+
+function loadSpeciesBatch(uniqueKey: string, dexList: number[]): Promise<Map<number, PokemonDto>> {
+  const existing = batchInflight.get(uniqueKey);
+  if (existing) return existing;
+
+  const promise = getPokemonSpeciesBatch(dexList).finally(() => {
+    batchInflight.delete(uniqueKey);
+  });
+  batchInflight.set(uniqueKey, promise);
+  return promise;
+}
 
 export function useSpeciesMeta(dexNumbers: number[]): SpeciesMetaState {
   const uniqueKey = useMemo(() => {
@@ -32,26 +46,20 @@ export function useSpeciesMeta(dexNumbers: number[]): SpeciesMetaState {
     let cancelled = false;
     setState((prev) => ({ ...prev, loading: true }));
 
-    void (async () => {
-      const speciesByDex = new Map<number, PokemonDto>();
-      const evolutionLevelByDex = new Map<number, number | null>();
-
-      await Promise.all(
-        unique.map(async (dex) => {
-          try {
-            const species = await getPokemonSpecies(dex);
-            speciesByDex.set(dex, species);
-            evolutionLevelByDex.set(dex, species.evolutionLevel);
-          } catch {
-            evolutionLevelByDex.set(dex, null);
-          }
-        }),
-      );
-
-      if (!cancelled) {
+    void loadSpeciesBatch(uniqueKey, unique)
+      .then((speciesByDex) => {
+        if (cancelled) return;
+        const evolutionLevelByDex = new Map<number, number | null>();
+        for (const dex of unique) {
+          evolutionLevelByDex.set(dex, speciesByDex.get(dex)?.evolutionLevel ?? null);
+        }
         setState({ speciesByDex, evolutionLevelByDex, loading: false });
-      }
-    })();
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setState({ speciesByDex: new Map(), evolutionLevelByDex: new Map(), loading: false });
+        }
+      });
 
     return () => {
       cancelled = true;

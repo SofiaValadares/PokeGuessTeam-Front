@@ -19,7 +19,7 @@ export default function JogoHubPage() {
         <h1 className="ds-h1">Duelos — PokeTeamGuess</h1>
         <p className="ds-body-muted">
           {meta?.summary ??
-            'Monta uma equipa secreta de 6 Pokémon e descobre a do adversário com pistas de tipo, geração, cor, altura e peso. A lógica da partida corre no servidor (AV2).'}
+            'Monte uma equipe secreta de 6 Pokémon e descubra a do adversário com pistas de tipo, geração, cor, altura e peso. A lógica da partida roda no servidor (AV2).'}
         </p>
 
         <div className={styles.modeGrid}>

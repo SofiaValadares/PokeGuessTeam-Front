@@ -1,4 +1,4 @@
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/AuthContext';
 import { AppHeader, Button, Card, InlineAlert, PageShell, TextField } from '../../ds';
 import { FetchStatus } from '../../types/fetchStatus';
@@ -6,12 +6,15 @@ import styles from './login.module.css';
 import { useLoginForm } from './hooks';
 
 export default function LoginPage() {
+  const navigate = useNavigate();
   const { sessionFetchStatus, authenticated } = useAuth();
   const {
     form,
     setForm,
     handleSubmit,
-    registeredEmail,
+    emailVerified,
+    passwordResetSuccess,
+    accountDeleted,
     loginFieldError,
     passwordFieldError,
     canSubmit,
@@ -42,8 +45,14 @@ export default function LoginPage() {
       <PageShell className={styles.page}>
         <Card padding="lg" glow>
           <h1 className="ds-h1">Entrar</h1>
-          {registeredEmail ? (
-            <InlineAlert tone="success">Conta criada. Faça login com seu e-mail ou usuário.</InlineAlert>
+          {accountDeleted ? (
+            <InlineAlert tone="success">Conta excluída com sucesso.</InlineAlert>
+          ) : null}
+          {passwordResetSuccess ? (
+            <InlineAlert tone="success">{passwordResetSuccess}</InlineAlert>
+          ) : null}
+          {emailVerified ? (
+            <InlineAlert tone="success">E-mail verificado. Já podes entrar.</InlineAlert>
           ) : null}
           <p className="ds-body-muted">Use seu e-mail ou nome de usuário.</p>
           <form noValidate onSubmit={handleSubmit}>
@@ -75,9 +84,19 @@ export default function LoginPage() {
             <Button type="submit" variant="primary" size="md" fullWidth disabled={!canSubmit || isSubmitting}>
               {isSubmitting ? 'Entrando…' : 'Entrar'}
             </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="md"
+              fullWidth
+              className={styles.createAccountBtn}
+              onClick={() => navigate('/register')}
+            >
+              Criar conta
+            </Button>
           </form>
           <p className={`ds-body-muted ${styles.footer}`}>
-            <Link to="/register">Criar conta</Link>
+            <Link to="/forgot-password">Esqueci a senha</Link>
           </p>
         </Card>
       </PageShell>

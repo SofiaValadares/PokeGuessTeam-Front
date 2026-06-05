@@ -31,3 +31,7 @@
   margin-top: var(--ds-space-6);
   margin-bottom: 0;
 }
+
+.createAccountBtn {
+  margin-top: var(--ds-space-3);
+}

@@ -1,10 +1,7 @@
-import { ApiError } from '../../../api/http';
+import { toFriendlyUserMessage } from '../../../api/http';
 
 export function mapProfileSubmitError(err: unknown): string {
-  if (err instanceof ApiError) {
-    return err.message;
-  }
-  return 'Não foi possível concluir a operação.';
+  return toFriendlyUserMessage(err, 'Não foi possível concluir a operação.');
 }
 
 export type UsernameChangeFields = {
@@ -62,4 +59,72 @@ export function getPasswordFieldErrors(v: PasswordChangeFields): Partial<
 
 export function isPasswordFormValid(v: PasswordChangeFields): boolean {
   return Object.keys(getPasswordFieldErrors(v)).length === 0;
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export type EmailChangeRequestFields = {
+  newEmail: string;
+  currentPassword: string;
+};
+
+export type EmailChangeConfirmFields = {
+  code: string;
+  currentPassword: string;
+};
+
+export function getEmailChangeRequestErrors(
+  v: EmailChangeRequestFields,
+  currentEmail?: string,
+): Partial<Record<'newEmail' | 'currentPassword', string>> {
+  const errors: Partial<Record<'newEmail' | 'currentPassword', string>> = {};
+  const email = v.newEmail.trim();
+  if (!email) {
+    errors.newEmail = 'Informe o novo e-mail.';
+  } else if (!EMAIL_RE.test(email)) {
+    errors.newEmail = 'E-mail inválido.';
+  } else if (currentEmail && email.toLowerCase() === currentEmail.toLowerCase()) {
+    errors.newEmail = 'O novo e-mail deve ser diferente do atual.';
+  }
+  if (!v.currentPassword) {
+    errors.currentPassword = 'Informe a senha atual para confirmar.';
+  }
+  return errors;
+}
+
+export function isEmailChangeRequestValid(v: EmailChangeRequestFields, currentEmail?: string): boolean {
+  return Object.keys(getEmailChangeRequestErrors(v, currentEmail)).length === 0;
+}
+
+export function getEmailChangeConfirmErrors(
+  v: EmailChangeConfirmFields,
+): Partial<Record<'code' | 'currentPassword', string>> {
+  const errors: Partial<Record<'code' | 'currentPassword', string>> = {};
+  if (!/^\d{8}$/.test(v.code.trim())) {
+    errors.code = 'Informe o código de 8 dígitos.';
+  }
+  if (!v.currentPassword) {
+    errors.currentPassword = 'Informe a senha atual para confirmar.';
+  }
+  return errors;
+}
+
+export function isEmailChangeConfirmValid(v: EmailChangeConfirmFields): boolean {
+  return Object.keys(getEmailChangeConfirmErrors(v)).length === 0;
+}
+
+export type DeleteAccountFields = {
+  password: string;
+};
+
+export function getDeleteAccountErrors(v: DeleteAccountFields): Partial<Record<'password', string>> {
+  const errors: Partial<Record<'password', string>> = {};
+  if (!v.password) {
+    errors.password = 'Informe a senha para confirmar a exclusão.';
+  }
+  return errors;
+}
+
+export function isDeleteAccountValid(v: DeleteAccountFields): boolean {
+  return Object.keys(getDeleteAccountErrors(v)).length === 0;
 }

@@ -32,7 +32,7 @@ export function matchStatusLabel(status: MatchStatus): string {
 
 export function playerSideLabel(side: MatchPlayerSide, context?: 'bot' | 'local'): string {
   if (context === 'local') {
-    return side === 'USER' ? 'Jogador 1' : 'Jogador 2';
+    return side === 'HOST' ? 'Jogador 1' : 'Jogador 2';
   }
-  return side === 'USER' ? 'Tu' : 'Rival';
+  return side === 'HOST' ? 'Tu' : 'Rival';
 }

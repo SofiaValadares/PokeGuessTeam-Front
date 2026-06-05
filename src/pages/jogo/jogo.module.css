@@ -18,6 +18,73 @@
   font-size: var(--ds-text-lg);
 }
 
+.setupScreen {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+  padding: var(--ds-space-6) var(--ds-space-4);
+  box-sizing: border-box;
+  background: var(--ds-color-bg-base);
+}
+
+@media (min-width: 48rem) {
+  .setupScreen {
+    padding: var(--ds-space-8) var(--ds-space-6);
+  }
+}
+
+.setupContent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  max-width: 56rem;
+  width: 100%;
+  margin: 0 auto;
+  gap: var(--ds-space-4);
+}
+
+.setupTitle {
+  margin: 0;
+  font-size: var(--ds-text-xl);
+  font-weight: var(--ds-weight-semibold);
+  color: var(--ds-color-text-primary);
+}
+
+.setupExtra {
+  margin: 0;
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-muted);
+}
+
+.setupBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
+.matchScreen {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  padding: var(--ds-space-4);
+  box-sizing: border-box;
+}
+
+@media (min-width: 48rem) {
+  .matchScreen {
+    padding: var(--ds-space-6);
+  }
+}
+
 .finishedPanel {
   padding: var(--ds-space-6);
   border-radius: var(--ds-radius-md);
@@ -27,4 +94,20 @@
 
 .finishedPanel h2 {
   margin: 0 0 var(--ds-space-2);
+}
+
+.matchScreenGuest {
+  background: linear-gradient(180deg, #2a0f0f 0%, #140606 100%);
+}
+
+.matchScreenWaiting {
+  background: linear-gradient(180deg, #2e2e32 0%, #1a1a1d 100%);
+}
+
+.matchBoardWrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }

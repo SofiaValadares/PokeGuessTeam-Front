@@ -1,5 +1,5 @@
 import type { NavigateFunction } from 'react-router-dom';
-import { ApiError } from '../../../api/http';
+import { toFriendlyUserMessage } from '../../../api/http';
 import { register as registerUser } from '../../../auth/authService';
 import { FetchStatus } from '../../../types/fetchStatus';
 
@@ -74,7 +74,7 @@ export function isRegisterFormValid(
 }
 
 /**
- * Cria a conta e envia para o login com e-mail para pré-preencher o campo.
+ * Cria a conta e envia para verificação de e-mail.
  */
 export async function submitRegister(
   values: Pick<RegisterFormState, 'username' | 'email' | 'password'>,
@@ -85,15 +85,12 @@ export async function submitRegister(
     email: values.email.trim(),
     password: values.password,
   });
-  deps.navigate('/login', {
+  deps.navigate('/verify-email', {
     replace: true,
-    state: { registeredEmail: values.email.trim() },
+    state: { email: values.email.trim(), fromRegister: true },
   });
 }
 
 export function mapRegisterSubmitError(err: unknown): string {
-  if (err instanceof ApiError) {
-    return err.message;
-  }
-  return 'Não foi possível cadastrar. Tente novamente.';
+  return toFriendlyUserMessage(err, 'Não foi possível cadastrar. Tente novamente.');
 }

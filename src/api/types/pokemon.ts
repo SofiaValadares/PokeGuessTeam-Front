@@ -46,6 +46,8 @@ export type PcLineDto = {
   xpToNextLevel: number;
   xpForCurrentStep: number;
   timesObtained: number;
+  claimedMilestones: number[];
+  pendingMilestones: number[];
 };
 
 export type PcPageResponse = {

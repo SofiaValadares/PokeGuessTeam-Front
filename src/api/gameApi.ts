@@ -1,111 +1,113 @@
-import { apiFetch, apiFetchJson } from './http';
+import { ApiError, apiFetch, apiFetchJson } from './http';
+import {
+  normalizeFriendMatchState,
+  normalizeGuessFeedback,
+} from '../lib/matchNormalize';
 import type {
-  BotMatchActionResponse,
-  BotMatchStateDto,
+  BotMatchSetupResponse,
   FriendMatchActionResponse,
   FriendMatchStateDto,
+  GameBotFinishRequest,
+  GameFinishResponse,
   GameHistoryPageResponse,
-  LocalMatchActionResponse,
-  LocalMatchStateDto,
+  GameLocalFinishRequest,
+  LocalMatchSetupRequest,
 } from './types/game';
 
 const BOT = '/api/game/bot/match';
 const LOCAL = '/api/game/local/match';
 const FRIEND = '/api/game/friend/match';
 
-export async function startBotMatch(): Promise<BotMatchStateDto> {
-  return apiFetchJson<BotMatchStateDto>(BOT, { method: 'POST' });
-}
-
-export async function getBotMatch(): Promise<BotMatchStateDto> {
-  return apiFetchJson<BotMatchStateDto>(BOT, { method: 'GET' });
-}
-
-export async function submitBotTeam(team: number[]): Promise<BotMatchActionResponse> {
-  return apiFetchJson<BotMatchActionResponse>(`${BOT}/team`, {
+export async function validateBotTeam(team: number[]): Promise<BotMatchSetupResponse> {
+  return apiFetchJson(`${BOT}/team`, {
     method: 'PUT',
     body: JSON.stringify({ team }),
   });
 }
 
-export async function submitBotGuess(pokedexNumber: number): Promise<BotMatchActionResponse> {
-  return apiFetchJson<BotMatchActionResponse>(`${BOT}/guess`, {
+export async function finishBotMatch(payload: GameBotFinishRequest): Promise<GameFinishResponse> {
+  return apiFetchJson(`${BOT}/finish`, {
     method: 'POST',
-    body: JSON.stringify({ pokedexNumber }),
+    body: JSON.stringify(payload),
   });
 }
 
-export async function surrenderBotMatch(): Promise<BotMatchActionResponse> {
-  return apiFetchJson<BotMatchActionResponse>(`${BOT}/surrender`, { method: 'POST' });
-}
-
-export async function abandonBotMatch(): Promise<void> {
-  await apiFetch(BOT, { method: 'DELETE' });
-}
-
-export async function startLocalMatch(opponentName: string): Promise<LocalMatchStateDto> {
-  return apiFetchJson<LocalMatchStateDto>(LOCAL, {
-    method: 'POST',
-    body: JSON.stringify({ opponentName }),
-  });
-}
-
-export async function getLocalMatch(): Promise<LocalMatchStateDto> {
-  return apiFetchJson<LocalMatchStateDto>(LOCAL, { method: 'GET' });
-}
-
-export async function submitLocalTeam(
-  playerSide: 'USER' | 'BOT',
-  team: number[],
-): Promise<LocalMatchActionResponse> {
-  return apiFetchJson<LocalMatchActionResponse>(`${LOCAL}/team`, {
+export async function validateLocalSetup(payload: LocalMatchSetupRequest): Promise<void> {
+  const res = await apiFetch(`${LOCAL}/setup`, {
     method: 'PUT',
-    body: JSON.stringify({ playerSide, team }),
+    body: JSON.stringify(payload),
   });
+  if (!res.ok) {
+    const text = await res.text();
+    let body: { message?: string } | null = null;
+    try {
+      body = text ? (JSON.parse(text) as { message?: string }) : null;
+    } catch {
+      body = text ? { message: text } : null;
+    }
+    throw new ApiError(res.status, body?.message ?? res.statusText, body);
+  }
 }
 
-export async function submitLocalGuess(pokedexNumber: number): Promise<LocalMatchActionResponse> {
-  return apiFetchJson<LocalMatchActionResponse>(`${LOCAL}/guess`, {
+export async function finishLocalMatch(payload: GameLocalFinishRequest): Promise<GameFinishResponse> {
+  return apiFetchJson(`${LOCAL}/finish`, {
     method: 'POST',
-    body: JSON.stringify({ pokedexNumber }),
+    body: JSON.stringify(payload),
   });
 }
 
-export async function surrenderLocalMatch(): Promise<LocalMatchActionResponse> {
-  return apiFetchJson<LocalMatchActionResponse>(`${LOCAL}/surrender`, { method: 'POST' });
+function normalizeFriendAction(raw: FriendMatchActionResponse): FriendMatchActionResponse {
+  return {
+    match: normalizeFriendMatchState(raw.match),
+    turnFeedbacks: Array.isArray(raw.turnFeedbacks)
+      ? raw.turnFeedbacks.map((f) => normalizeGuessFeedback(f))
+      : [],
+  };
 }
 
 export async function createFriendMatch(): Promise<FriendMatchStateDto> {
-  return apiFetchJson<FriendMatchStateDto>(FRIEND, { method: 'POST' });
+  const raw = await apiFetchJson<FriendMatchStateDto>(FRIEND, { method: 'POST' });
+  return normalizeFriendMatchState(raw);
 }
 
 export async function joinFriendMatch(joinCode: string): Promise<FriendMatchStateDto> {
-  return apiFetchJson<FriendMatchStateDto>(`${FRIEND}/join`, {
+  const raw = await apiFetchJson<FriendMatchStateDto>(`${FRIEND}/join`, {
     method: 'POST',
     body: JSON.stringify({ joinCode: joinCode.trim().toUpperCase() }),
   });
+  return normalizeFriendMatchState(raw);
 }
 
 export async function getFriendMatch(): Promise<FriendMatchStateDto> {
-  return apiFetchJson<FriendMatchStateDto>(FRIEND, { method: 'GET' });
+  const raw = await apiFetchJson<FriendMatchStateDto>(FRIEND, { method: 'GET' });
+  return normalizeFriendMatchState(raw);
 }
 
 export async function submitFriendTeam(team: number[]): Promise<FriendMatchActionResponse> {
-  return apiFetchJson<FriendMatchActionResponse>(`${FRIEND}/team`, {
+  const raw = await apiFetchJson<FriendMatchActionResponse>(`${FRIEND}/team`, {
     method: 'PUT',
     body: JSON.stringify({ team }),
   });
+  return normalizeFriendAction(raw);
 }
 
 export async function submitFriendGuess(pokedexNumber: number): Promise<FriendMatchActionResponse> {
-  return apiFetchJson<FriendMatchActionResponse>(`${FRIEND}/guess`, {
+  const raw = await apiFetchJson<FriendMatchActionResponse>(`${FRIEND}/guess`, {
     method: 'POST',
     body: JSON.stringify({ pokedexNumber }),
   });
+  return normalizeFriendAction(raw);
 }
 
 export async function surrenderFriendMatch(): Promise<FriendMatchActionResponse> {
-  return apiFetchJson<FriendMatchActionResponse>(`${FRIEND}/surrender`, { method: 'POST' });
+  const raw = await apiFetchJson<FriendMatchActionResponse>(`${FRIEND}/surrender`, {
+    method: 'POST',
+  });
+  return normalizeFriendAction(raw);
+}
+
+export async function abandonFriendMatch(): Promise<void> {
+  await apiFetchJson(`${FRIEND}`, { method: 'DELETE' });
 }
 
 export async function getGameHistory(page = 0, size = 20): Promise<GameHistoryPageResponse> {
@@ -113,4 +115,15 @@ export async function getGameHistory(page = 0, size = 20): Promise<GameHistoryPa
   return apiFetchJson<GameHistoryPageResponse>(`/api/game/history?${params.toString()}`, {
     method: 'GET',
   });
+}
+
+export function isMatchAlreadyInProgressError(err: unknown): boolean {
+  if (err instanceof ApiError && err.status === 409) {
+    return true;
+  }
+  if (err && typeof err === 'object' && 'body' in err) {
+    const body = (err as { body: { code?: string } | null }).body;
+    return body?.code === 'GAME_MATCH_ALREADY_IN_PROGRESS';
+  }
+  return false;
 }

@@ -45,6 +45,9 @@ export default function RegisterPage() {
       <PageShell className={styles.page}>
         <Card padding="lg" glow>
           <h1 className="ds-h1">Cadastro</h1>
+          <p className="ds-body-muted">
+            Após o registo, enviaremos um código de 8 dígitos para verificar o teu e-mail e entrares na app.
+          </p>
           <form noValidate onSubmit={handleSubmit}>
             <TextField
               label="Nome de usuário"

@@ -1,6 +1,7 @@
-/** Valores de `pokeballType` se GET /api/profile/collection ainda usar o formato legado de esferas (enum Java). */
+/** Valores de `pokeballType` do enum Java (POKEBALL, GREAT_BALL, …). */
 export function pokeballLabel(type: string): string {
   switch (type) {
+    case 'POKEBALL':
     case 'POKE_BALL':
       return 'Poké Bola';
     case 'GREAT_BALL':

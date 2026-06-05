@@ -4,6 +4,8 @@ export { Button } from './components/Button';
 export type { ButtonProps } from './components/Button';
 export { Card } from './components/Card';
 export type { CardProps } from './components/Card';
+export { ConfirmModal } from './components/ConfirmModal';
+export type { ConfirmModalProps } from './components/ConfirmModal';
 export { InlineAlert } from './components/InlineAlert';
 export type { InlineAlertProps } from './components/InlineAlert';
 export { PageShell } from './components/PageShell';

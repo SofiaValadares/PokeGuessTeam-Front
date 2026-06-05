@@ -4,15 +4,27 @@ import { useProfileMe } from '../../hooks/useProfileMe';
 import {
   Button,
   Card,
+  ConfirmModal,
   InlineAlert,
   TextField,
 } from '../../ds';
 import { FetchStatus } from '../../types/fetchStatus';
-import { usePerfilSettings } from './hooks';
+import { PokemonSprite } from '../../components/PokemonSprite';
+import {
+  useDeleteAccount,
+  useFavoritePokemonEditor,
+  usePerfilEmailChange,
+  usePerfilSettings,
+} from './hooks';
 import styles from './perfil.module.css';
 
 export default function PerfilPage() {
-  const { profileMe, status: profileGameStatus, errorMessage: profileGameError } = useProfileMe();
+  const {
+    profileMe,
+    status: profileGameStatus,
+    errorMessage: profileGameError,
+    refresh: refreshProfileMe,
+  } = useProfileMe();
   const {
     me,
     usernameEditorOpen,
@@ -43,6 +55,67 @@ export default function PerfilPage() {
     onNewPassBlur,
     onConfirmPassBlur,
   } = usePerfilSettings();
+
+  const {
+    editorOpen: emailEditorOpen,
+    step: emailStep,
+    pendingEmail,
+    openEditor: openEmailEditor,
+    cancelEditor: cancelEmailEditor,
+    requestForm,
+    setRequestForm,
+    requestDisplayErrors,
+    canSubmitRequest,
+    requestSubmitting,
+    requestError,
+    requestInfo,
+    handleRequestSubmit,
+    onRequestEmailBlur,
+    onRequestPassBlur,
+    confirmForm,
+    setConfirmForm,
+    confirmDisplayErrors,
+    canSubmitConfirm,
+    confirmSubmitting,
+    confirmError,
+    handleConfirmSubmit,
+    onConfirmCodeBlur,
+    onConfirmPassBlur: onEmailConfirmPassBlur,
+    success: emailSuccess,
+  } = usePerfilEmailChange();
+
+  const {
+    modalOpen: deleteModalOpen,
+    modalStep: deleteModalStep,
+    openDeleteModal,
+    closeDeleteModal,
+    form: deleteForm,
+    setForm: setDeleteForm,
+    displayErrors: deleteDisplayErrors,
+    canSubmit: canSubmitDelete,
+    submitting: deleteSubmitting,
+    submitError: deleteSubmitError,
+    handleSubmit: handleDeleteSubmit,
+    handleModalConfirm: handleDeleteModalConfirm,
+    onPasswordBlur: onDeletePassBlur,
+  } = useDeleteAccount();
+
+  const {
+    editorOpen: favoriteEditorOpen,
+    openEditor: openFavoriteEditor,
+    cancelEditor: cancelFavoriteEditor,
+    query: favoriteQuery,
+    setQuery: setFavoriteQuery,
+    results: favoriteResults,
+    selected: favoriteSelected,
+    setSelected: setFavoriteSelected,
+    currentDex,
+    canSave: canSaveFavorite,
+    submitting: favoriteSubmitting,
+    submitError: favoriteSubmitError,
+    success: favoriteSuccess,
+    handleSave: handleFavoriteSave,
+  } = useFavoritePokemonEditor(profileMe, () => void refreshProfileMe());
 
   return (
     <Card padding="md">
@@ -79,17 +152,265 @@ export default function PerfilPage() {
             {profileGameError}
           </InlineAlert>
         ) : (
-          <p className="ds-body-muted" style={{ margin: 0 }}>
-            Pokémon favorito:{' '}
-            {profileMe?.favoritePokemonName ? (
-              <strong style={{ color: 'var(--ds-color-text-primary)' }}>
-                {profileMe.favoritePokemonName}{' '}
-                <span style={{ fontWeight: 400 }}>(#{profileMe.favoritePokemonId})</span>
-              </strong>
+          <>
+            {favoriteSuccess && !favoriteEditorOpen ? (
+              <InlineAlert tone="success" role="status">
+                Pokémon favorito atualizado.
+              </InlineAlert>
+            ) : null}
+            {!favoriteEditorOpen ? (
+              <>
+                {profileMe?.favoritePokemonName && currentDex ? (
+                  <p className={`ds-body-muted ${styles.favoritePreview}`}>
+                    <PokemonSprite
+                      dex={currentDex}
+                      name={profileMe.favoritePokemonName}
+                      size={48}
+                    />
+                    <span>
+                      Pokémon favorito:{' '}
+                      <strong style={{ color: 'var(--ds-color-text-primary)' }}>
+                        {profileMe.favoritePokemonName}{' '}
+                        <span style={{ fontWeight: 400 }}>(#{profileMe.favoritePokemonId})</span>
+                      </strong>
+                    </span>
+                  </p>
+                ) : (
+                  <p className="ds-body-muted" style={{ margin: 0 }}>
+                    Pokémon favorito: —
+                  </p>
+                )}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="md"
+                  onClick={openFavoriteEditor}
+                  style={{ marginTop: 'var(--ds-space-4)' }}
+                >
+                  Alterar Pokémon favorito
+                </Button>
+              </>
             ) : (
-              '—'
+              <form
+                noValidate
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void handleFavoriteSave();
+                }}
+                className={styles.editorForm}
+              >
+                <p className={styles.sectionHint} style={{ margin: 0 }}>
+                  Pesquisa pelo nome ou número da Pokédex.
+                </p>
+                <input
+                  className={styles.pokemonSearch}
+                  type="search"
+                  value={favoriteQuery}
+                  onChange={(e) => {
+                    setFavoriteQuery(e.target.value);
+                    setFavoriteSelected(null);
+                  }}
+                  placeholder="Pesquisar Pokémon…"
+                  aria-label="Pesquisar Pokémon"
+                />
+                {favoriteResults.length > 0 ? (
+                  <ul className={styles.pokemonResults}>
+                    {favoriteResults.map((p) => (
+                      <li key={p.id}>
+                        <button
+                          type="button"
+                          className={[
+                            styles.pokemonResultBtn,
+                            favoriteSelected?.id === p.id ? styles.pokemonResultSelected : '',
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
+                          onClick={() => setFavoriteSelected(p)}
+                        >
+                          {p.name} (#{p.number})
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {favoriteSelected ? (
+                  <p className={`ds-body-muted ${styles.favoritePreview}`}>
+                    <PokemonSprite
+                      dex={favoriteSelected.number}
+                      name={favoriteSelected.name}
+                      size={40}
+                    />
+                    <span>
+                      Selecionado:{' '}
+                      <strong style={{ color: 'var(--ds-color-text-primary)' }}>
+                        {favoriteSelected.name} (#{favoriteSelected.number})
+                      </strong>
+                    </span>
+                  </p>
+                ) : null}
+                {favoriteSubmitError ? (
+                  <InlineAlert tone="error" role="alert">
+                    {favoriteSubmitError}
+                  </InlineAlert>
+                ) : null}
+                <div className={styles.formActions}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="md"
+                    disabled={favoriteSubmitting}
+                    onClick={cancelFavoriteEditor}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="md"
+                    disabled={!canSaveFavorite || favoriteSubmitting}
+                  >
+                    {favoriteSubmitting ? 'A guardar…' : 'Salvar'}
+                  </Button>
+                </div>
+              </form>
             )}
-          </p>
+          </>
+        )}
+      </section>
+
+      <section className={styles.section} aria-labelledby="email-section-title">
+        <h2 id="email-section-title" className={styles.sectionTitle}>
+          E-mail
+        </h2>
+        <p className={styles.sectionHint}>
+          Para alterar o e-mail, confirma com a senha atual e valida o código enviado ao novo endereço.
+        </p>
+        {emailSuccess && !emailEditorOpen ? (
+          <InlineAlert tone="success" role="status">
+            E-mail atualizado com sucesso.
+          </InlineAlert>
+        ) : null}
+        {!emailEditorOpen ? (
+          <Button type="button" variant="secondary" size="md" onClick={openEmailEditor}>
+            Alterar e-mail
+          </Button>
+        ) : emailStep === 'request' ? (
+          <form noValidate onSubmit={handleRequestSubmit} className={styles.editorForm}>
+            <TextField
+              label="Novo e-mail"
+              name="newEmail"
+              type="email"
+              autoComplete="email"
+              value={requestForm.newEmail}
+              onChange={(e) => setRequestForm((prev) => ({ ...prev, newEmail: e.target.value }))}
+              onBlur={onRequestEmailBlur}
+              error={requestDisplayErrors.newEmail}
+            />
+            <TextField
+              label="Senha atual"
+              name="currentPassword"
+              type="password"
+              autoComplete="current-password"
+              value={requestForm.currentPassword}
+              onChange={(e) => setRequestForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
+              onBlur={onRequestPassBlur}
+              error={requestDisplayErrors.currentPassword}
+              passwordToggle
+            />
+            {requestInfo ? (
+              <InlineAlert tone="success" role="status">
+                {requestInfo}
+              </InlineAlert>
+            ) : null}
+            {requestError ? (
+              <InlineAlert tone="error" role="alert">
+                {requestError}
+              </InlineAlert>
+            ) : null}
+            <div className={styles.formActions}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                disabled={requestSubmitting}
+                onClick={cancelEmailEditor}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="md"
+                disabled={!canSubmitRequest || requestSubmitting}
+              >
+                {requestSubmitting ? 'A enviar…' : 'Enviar código'}
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <form noValidate onSubmit={handleConfirmSubmit} className={styles.editorForm}>
+            {requestInfo ? (
+              <InlineAlert tone="success" role="status">
+                {requestInfo}
+              </InlineAlert>
+            ) : null}
+            <p className="ds-body-muted" style={{ margin: 0 }}>
+              Código enviado para <strong>{pendingEmail}</strong>
+            </p>
+            <TextField
+              label="Código (8 dígitos)"
+              name="code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              value={confirmForm.code}
+              onChange={(e) =>
+                setConfirmForm((prev) => ({
+                  ...prev,
+                  code: e.target.value.replace(/\D/g, '').slice(0, 8),
+                }))
+              }
+              onBlur={onConfirmCodeBlur}
+              error={confirmDisplayErrors.code}
+              maxLength={8}
+            />
+            <TextField
+              label="Senha atual"
+              name="currentPassword"
+              type="password"
+              autoComplete="current-password"
+              value={confirmForm.currentPassword}
+              onChange={(e) =>
+                setConfirmForm((prev) => ({ ...prev, currentPassword: e.target.value }))
+              }
+              onBlur={onEmailConfirmPassBlur}
+              error={confirmDisplayErrors.currentPassword}
+              passwordToggle
+            />
+            {confirmError ? (
+              <InlineAlert tone="error" role="alert">
+                {confirmError}
+              </InlineAlert>
+            ) : null}
+            <div className={styles.formActions}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                disabled={confirmSubmitting}
+                onClick={cancelEmailEditor}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="md"
+                disabled={!canSubmitConfirm || confirmSubmitting}
+              >
+                {confirmSubmitting ? 'A confirmar…' : 'Confirmar novo e-mail'}
+              </Button>
+            </div>
+          </form>
         )}
       </section>
 
@@ -243,6 +564,58 @@ export default function PerfilPage() {
           </form>
         )}
       </section>
+
+      <section
+        className={`${styles.section} ${styles.dangerSection}`}
+        aria-labelledby="delete-account-section-title"
+      >
+        <h2 id="delete-account-section-title" className={styles.sectionTitle}>
+          Excluir conta
+        </h2>
+        <p className={styles.dangerHint}>
+          Esta ação é permanente. Perderás o perfil, inventário, Pokédex e histórico associados.
+        </p>
+        <Button type="button" variant="secondary" size="md" onClick={openDeleteModal}>
+          Excluir conta
+        </Button>
+      </section>
+
+      <ConfirmModal
+        open={deleteModalOpen}
+        title={deleteModalStep === 'confirm' ? 'Excluir conta?' : 'Confirmar exclusão'}
+        description={
+          deleteModalStep === 'confirm'
+            ? 'Esta ação é permanente. Perderás o perfil, inventário, Pokédex e histórico associados. Não é possível reverter.'
+            : 'Introduz a tua senha atual para confirmar a exclusão da conta.'
+        }
+        confirmLabel={deleteModalStep === 'confirm' ? 'Sim, excluir conta' : 'Confirmar exclusão'}
+        cancelLabel="Cancelar"
+        onCancel={closeDeleteModal}
+        onConfirm={handleDeleteModalConfirm}
+        confirmDisabled={deleteModalStep === 'password' && !canSubmitDelete}
+        confirming={deleteSubmitting}
+      >
+        {deleteModalStep === 'password' ? (
+          <form noValidate onSubmit={handleDeleteSubmit} className={styles.editorForm}>
+            <TextField
+              label="Senha atual"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              value={deleteForm.password}
+              onChange={(e) => setDeleteForm({ password: e.target.value })}
+              onBlur={onDeletePassBlur}
+              error={deleteDisplayErrors.password}
+              passwordToggle
+            />
+            {deleteSubmitError ? (
+              <InlineAlert tone="error" role="alert">
+                {deleteSubmitError}
+              </InlineAlert>
+            ) : null}
+          </form>
+        ) : null}
+      </ConfirmModal>
     </Card>
   );
 }

@@ -6,6 +6,35 @@
   width: 100%;
 }
 
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--ds-space-4);
+  margin-bottom: var(--ds-space-5);
+}
+
+.toolbar .ds-h1 {
+  margin: 0;
+}
+
+.searchWrap {
+  flex: 1;
+  min-width: min(100%, 16rem);
+  max-width: 22rem;
+}
+
+.searchWrap > div {
+  margin-bottom: 0;
+}
+
+.searchSummary {
+  margin: 0 0 var(--ds-space-4);
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-secondary);
+}
+
 .intro {
   margin-bottom: var(--ds-space-6);
 }
