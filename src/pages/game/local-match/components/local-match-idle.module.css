@@ -1,0 +1,74 @@
+.playersGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ds-space-4);
+  animation: dsFadeUp var(--ds-duration-slow) var(--ds-ease-standard) both;
+}
+
+@media (max-width: 40rem) {
+  .playersGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.playerCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-5);
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-color-border-default);
+  background: var(--ds-color-bg-raised);
+}
+
+.playerCardGuest:focus-within {
+  border-color: var(--ds-color-accent);
+  box-shadow: 0 0 0 1px var(--ds-color-accent-muted);
+}
+
+.playerLabel {
+  font-size: var(--ds-text-xs);
+  font-weight: var(--ds-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ds-color-text-muted);
+}
+
+.playerName {
+  margin: 0;
+  font-size: var(--ds-text-xl);
+  font-weight: var(--ds-weight-bold);
+  color: var(--ds-color-text-primary);
+  word-break: break-word;
+}
+
+.playerHint {
+  margin: 0;
+  font-size: var(--ds-text-xs);
+  color: var(--ds-color-text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--ds-space-3);
+  margin-top: auto;
+  padding-top: var(--ds-space-2);
+  animation: dsFadeUp var(--ds-duration-slow) var(--ds-ease-standard) 80ms both;
+}
+
+@media (min-width: 40rem) {
+  .actions {
+    max-width: 20rem;
+    align-self: center;
+    width: 100%;
+  }
+}
+
+.hint {
+  margin: 0;
+  font-size: var(--ds-text-xs);
+  color: var(--ds-color-text-muted);
+  text-align: center;
+}

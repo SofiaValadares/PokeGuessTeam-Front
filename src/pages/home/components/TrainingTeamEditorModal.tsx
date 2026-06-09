@@ -10,6 +10,7 @@ import { useSpeciesMeta } from '../../../hooks/useSpeciesMeta';
 import { Button, InlineAlert } from '../../../ds';
 import { ApiError } from '../../../services/http';
 import { mapTrainingTeam } from '../../../model';
+import grassStyles from '../../../components/game/grassField.module.css';
 import styles from '../home.module.css';
 
 type TrainingTeamEditorModalProps = {
@@ -140,7 +141,7 @@ export function TrainingTeamEditorModal({
                     {dex != null ? (
                       <PokemonSprite dex={dex} name={name} size={56} />
                     ) : (
-                      <span className={styles.teamEmptyMark}>?</span>
+                      <span className={grassStyles.emptyMark}>?</span>
                     )}
                   </div>
                   <span className={styles.editorName}>{name}</span>

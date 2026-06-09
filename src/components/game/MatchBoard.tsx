@@ -238,7 +238,7 @@ export function MatchBoard({
 
           <section className={styles.matchHitsSection}>
             <h3 className={styles.matchHitsTitle}>Encontrados pelo adversário</h3>
-            <p className={styles.matchHitsSub}>Na tua equipa · {opponentName}</p>
+            <p className={styles.matchHitsSub}>Na tua equipe · {opponentName}</p>
             <ul className={styles.matchHitsGrid}>
               {myTeamSlots.map((dex, index) => (
                 <li key={`${index}-${dex ?? 'empty'}`} className={styles.matchHitCell}>

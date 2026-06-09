@@ -41,12 +41,14 @@
   line-height: 0;
   transition:
     color var(--ds-duration-fast) var(--ds-ease-standard),
-    background-color var(--ds-duration-fast) var(--ds-ease-standard);
+    background-color var(--ds-duration-fast) var(--ds-ease-standard),
+    transform var(--ds-duration-fast) var(--ds-ease-standard);
 }
 
 .navBtn:hover {
   color: var(--ds-color-accent);
   background: var(--ds-color-accent-muted);
+  transform: translateY(-1px);
 }
 
 .navBtn:focus-visible {

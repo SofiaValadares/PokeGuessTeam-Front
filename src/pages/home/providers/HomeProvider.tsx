@@ -61,7 +61,7 @@ export function HomeProvider({ children }: { children: React.ReactNode }) {
 
   const openEditor = useCallback(() => dispatch(openTeamEditor()), [dispatch]);
   const closeEditor = useCallback(() => dispatch(closeTeamEditor()), [dispatch]);
-  const goToHistory = useCallback(() => navigate('/jogo/historico'), [navigate]);
+  const goToHistory = useCallback(() => navigate('/game/historico'), [navigate]);
 
   const value = useMemo(
     () => ({

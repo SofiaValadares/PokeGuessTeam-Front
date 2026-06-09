@@ -10,6 +10,8 @@ export { InlineAlert } from './components/InlineAlert';
 export type { InlineAlertProps } from './components/InlineAlert';
 export { PageShell } from './components/PageShell';
 export type { PageShellProps } from './components/PageShell';
+export { PageSection } from './components/PageSection/PageSection';
+export type { PageSectionProps } from './components/PageSection/PageSection';
 export { ThemeToggle } from './components/ThemeToggle';
 export type { ThemeToggleProps } from './components/ThemeToggle';
 export { TextField } from './components/TextField';

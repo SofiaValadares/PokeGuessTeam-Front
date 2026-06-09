@@ -24,6 +24,7 @@
   border-radius: var(--ds-radius-lg);
   border: 1px solid var(--ds-color-border-default);
   background: var(--ds-color-bg-elevated);
+  animation: dsFadeUp var(--ds-duration-slow) var(--ds-ease-standard) both;
 }
 
 .identityRow {
@@ -152,9 +153,18 @@
 }
 
 .metaValue {
+  flex: 1;
+  min-width: 0;
   font-size: var(--ds-text-sm);
   color: var(--ds-color-text-primary);
   word-break: break-word;
+}
+
+.metaValueRow {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  min-width: 0;
 }
 
 .metaBadge {

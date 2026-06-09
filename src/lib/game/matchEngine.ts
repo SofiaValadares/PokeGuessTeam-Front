@@ -194,6 +194,6 @@ export function opponentCorrectGuesses(state: ClientMatchState): number {
 
 export function assertTeamSize(team: number[]): void {
   if (team.length !== TEAM_SIZE) {
-    throw new Error(`Equipa deve ter ${TEAM_SIZE} Pokémon.`);
+    throw new Error(`Equipe deve ter ${TEAM_SIZE} Pokémon.`);
   }
 }

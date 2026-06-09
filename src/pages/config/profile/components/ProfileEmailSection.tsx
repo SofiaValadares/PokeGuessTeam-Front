@@ -1,26 +1,35 @@
+import { forwardRef } from 'react';
 import { Button, InlineAlert, TextField } from '../../../../ds';
-import { useProfileEmailChange } from '../hooks';
+import type { useProfileEmailChange } from '../hooks';
 import styles from '../profile.module.css';
 
-export function ProfileEmailSection() {
-  const email = useProfileEmailChange();
+type EmailChange = ReturnType<typeof useProfileEmailChange>;
+
+type Props = {
+  email: EmailChange;
+};
+
+export const ProfileEmailSection = forwardRef<HTMLElement, Props>(function ProfileEmailSection(
+  { email },
+  ref,
+) {
+  if (!email.editorOpen && !email.success) {
+    return null;
+  }
 
   return (
-    <section className={styles.settingCard} aria-labelledby="email-section-title">
+    <section ref={ref} className={styles.settingCard} aria-labelledby="email-section-title">
       <div className={styles.settingCardHead}>
         <div>
           <h2 id="email-section-title" className={styles.sectionTitle}>
-            E-mail
+            Alterar e-mail
           </h2>
-          <p className={styles.sectionHint}>
-            Para alterar o e-mail, confirma com a senha atual e valida o código enviado ao novo endereço.
-          </p>
+          {email.editorOpen ? (
+            <p className={styles.sectionHint}>
+              Confirma com a senha atual e valida o código enviado ao novo endereço.
+            </p>
+          ) : null}
         </div>
-        {!email.editorOpen ? (
-          <Button type="button" variant="secondary" size="md" onClick={email.openEditor}>
-            Alterar
-          </Button>
-        ) : null}
       </div>
       {email.success && !email.editorOpen ? (
         <InlineAlert tone="success" role="status">
@@ -149,4 +158,4 @@ export function ProfileEmailSection() {
       ) : null}
     </section>
   );
-}
+});

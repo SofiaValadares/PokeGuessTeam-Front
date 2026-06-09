@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
-import { Card, PageShell } from '../../ds';
+import { PageShell } from '../../ds';
 import { useSpeciesMeta } from '../../hooks/useSpeciesMeta';
 import { GameLaunchPanel } from './components/GameLaunchPanel';
 import { IntroDialogue } from './components/IntroDialogue';
 import { PokemonDetailModal } from './components/PokemonDetailModal';
 import { ProfileSummaryCard } from './components/ProfileSummaryCard';
+import { TrainingTeamCard } from './components/TrainingTeamCard';
 import { TrainingTeamEditorModal } from './components/TrainingTeamEditorModal';
-import { TrainingTeamRow, type TrainingSlotView } from './components/TrainingTeamRow';
+import type { TrainingSlotView } from './types/trainingSlot';
 import { HomeProvider, useHome } from './providers/HomeProvider';
 import styles from './home.module.css';
 
@@ -38,23 +39,18 @@ function HomeContent() {
     <PageShell width="fluid" className={styles.homeShell}>
       <IntroDialogue open={showIntro} playerName={playerName} onComplete={dismissIntroDialogue} />
 
-      <div className={styles.layout}>
+      <div className={`${styles.layout} ds-motion-stagger`}>
         <div className={styles.leftColumn}>
           <ProfileSummaryCard />
-
-          <Card padding="md" className={styles.teamCardWrap}>
-            {loading ? (
-              <p className="ds-body-muted">A carregar time…</p>
-            ) : errorMessage ? null : (
-              <TrainingTeamRow
-                slots={trainingTeam?.slots ?? []}
-                speciesByDex={speciesByDex}
-                evolutionLevelByDex={evolutionLevelByDex}
-                onSelect={setSelectedSlot}
-                onEdit={openEditor}
-              />
-            )}
-          </Card>
+          <TrainingTeamCard
+            loading={loading}
+            errorMessage={errorMessage}
+            slots={trainingTeam?.slots ?? []}
+            speciesByDex={speciesByDex}
+            evolutionLevelByDex={evolutionLevelByDex}
+            onSelect={setSelectedSlot}
+            onEdit={openEditor}
+          />
         </div>
 
         <div className={styles.rightColumn}>

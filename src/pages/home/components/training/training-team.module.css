@@ -1,0 +1,179 @@
+.wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sectionBody {
+  flex: 1;
+  min-height: 0;
+  gap: 0 !important;
+}
+
+.teamCard,
+.teamCardEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ds-space-1);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: var(--ds-space-2) var(--ds-space-1);
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  box-sizing: border-box;
+}
+
+.teamCard {
+  position: relative;
+  overflow: visible;
+  cursor: pointer;
+  transition:
+    border-color var(--ds-duration-fast) var(--ds-ease-standard),
+    transform var(--ds-duration-fast) var(--ds-ease-standard),
+    background var(--ds-duration-fast) var(--ds-ease-standard),
+    box-shadow var(--ds-duration-fast) var(--ds-ease-standard);
+}
+
+.teamCard:hover {
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+}
+
+.teamCard:hover .spriteStageOccupied {
+  animation: teamSpriteHop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.teamCardEmpty {
+  opacity: 0.72;
+}
+
+.spriteStage {
+  flex: 1;
+  width: 100%;
+  min-height: 3rem;
+  min-width: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: visible;
+}
+
+.spriteStageOccupied {
+  filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.22));
+  transform-origin: center bottom;
+  animation: teamSlotBob 1.5s ease-in-out infinite;
+  animation-delay: calc(var(--slot-index, 0) * 0.12s);
+  will-change: transform;
+}
+
+.teamSpriteImg {
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+@keyframes teamSlotBob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes teamSpriteHop {
+  0% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-22px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.teamEmptyMark {
+  font-size: var(--ds-text-xl);
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1;
+  padding-bottom: var(--ds-space-1);
+  animation: teamEmptyPulse 2.8s ease-in-out infinite;
+  animation-delay: calc(var(--slot-index, 0) * 0.2s);
+}
+
+@keyframes teamEmptyPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.08);
+  }
+}
+
+.teamMeta {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.teamName {
+  width: 100%;
+  font-size: 0.7rem;
+  font-weight: var(--ds-weight-semibold);
+  color: #0f1a12;
+  text-align: center;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.teamLevel {
+  font-size: 0.65rem;
+  font-weight: var(--ds-weight-medium);
+  color: #1e3324;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.notificationDot {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #e53935;
+  border: 1px solid rgba(15, 26, 18, 0.35);
+  pointer-events: none;
+  animation: notifyPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes notifyPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 0.85;
+  }
+}

@@ -24,7 +24,7 @@ export const INTRO_DIALOGUE_BEATS: IntroDialogueBeat[] = [
   {
     id: 'professor-mission',
     speaker: 'professor',
-    text: 'Desvendarás equipas secretas de seis Pokémon usando pistas de tipo, geração, cor, altura e peso — e provarás que o teu raciocínio supera o dos rivais.',
+    text: 'Desvendarás equipes secretas de seis Pokémon usando pistas de tipo, geração, cor, altura e peso — e provarás que o teu raciocínio supera o dos rivais.',
   },
   {
     id: 'player-response-1',
@@ -39,7 +39,7 @@ export const INTRO_DIALOGUE_BEATS: IntroDialogueBeat[] = [
   {
     id: 'professor-duel',
     speaker: 'professor',
-    text: 'Cada duelo é um experimento: escolhes um palpite, o sistema revela o que coincide com a equipa adversária, e vences quem identificar os seis primeiro.',
+    text: 'Cada duelo é um experimento: escolhes um palpite, o sistema revela o que coincide com a equipe adversária, e vences quem identificar os seis primeiro.',
   },
   {
     id: 'rival-challenge',

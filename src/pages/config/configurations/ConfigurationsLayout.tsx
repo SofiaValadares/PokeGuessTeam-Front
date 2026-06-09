@@ -9,7 +9,7 @@ export default function ConfigurationsLayout() {
 
   return (
     <PageShell width="fluid" className={styles.shell}>
-      <div className={styles.grid}>
+      <div className={`${styles.grid} ds-motion-fade-in`}>
         <aside className={styles.sidebar} aria-label="Secções de configurações">
           <p className={styles.sidebarTitle}>Configurações</p>
           <nav className={styles.sidebarNav}>

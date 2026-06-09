@@ -1,4 +1,3 @@
-import { Pencil } from 'lucide-react';
 import { accountDisplayName } from '../../../../auth/accountDisplay';
 import { useAuth } from '../../../../store/providers/AuthProvider';
 import { useProfileMe } from '../../../../hooks/useProfileMe';
@@ -7,32 +6,10 @@ import { PokemonSprite } from '../../../../components/PokemonSprite';
 import { FetchStatus } from '../../../../types/fetchStatus';
 import { useFavoritePokemonEditor } from '../hooks';
 import type { useProfileSettings } from '../hooks/useProfileSettings';
+import { ProfileEditButton } from './ProfileEditButton';
 import styles from '../profile.module.css';
 
 type Settings = ReturnType<typeof useProfileSettings>;
-
-function EditIconButton({
-  label,
-  onClick,
-  disabled,
-}: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      className={styles.editIconBtn}
-      aria-label={label}
-      title={label}
-      disabled={disabled}
-      onClick={onClick}
-    >
-      <Pencil size={14} aria-hidden />
-    </button>
-  );
-}
 
 export function ProfileIdentityBar({ settings }: { settings: Settings }) {
   const { me } = useAuth();
@@ -60,7 +37,7 @@ export function ProfileIdentityBar({ settings }: { settings: Settings }) {
               </span>
             )}
           </div>
-          <EditIconButton
+          <ProfileEditButton
             label="Alterar Pokémon favorito"
             onClick={favorite.openEditor}
             disabled={loading || favorite.editorOpen || settings.usernameEditorOpen}
@@ -70,7 +47,7 @@ export function ProfileIdentityBar({ settings }: { settings: Settings }) {
         <div className={styles.identityNameBlock}>
           <div className={styles.identityNameRow}>
             <h2 className={styles.identityName}>{displayName}</h2>
-            <EditIconButton
+            <ProfileEditButton
               label="Alterar nome de usuário"
               onClick={settings.openUsernameEditor}
               disabled={loading || favorite.editorOpen || settings.usernameEditorOpen}

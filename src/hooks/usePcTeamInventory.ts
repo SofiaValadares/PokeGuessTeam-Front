@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import type { PokemonDto } from '../services/types/pokemon';
 import { resolveCurrentMemberDex } from '../lib/pokemon/pcCurrentForm';
 import { useSpeciesMeta } from './useSpeciesMeta';
@@ -35,8 +35,6 @@ export function usePcTeamInventory() {
 
   const loading = cacheStatus === FetchStatus.Loading || metaLoading;
   const ready = cacheStatus === FetchStatus.Success && !metaLoading;
-
-  const refresh = useCallback(async () => undefined, []);
 
   return {
     lines,

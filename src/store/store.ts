@@ -1,8 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { hydrateBotMatch } from '../pages/jogo/bot-match/slice/botMatchSlice';
-import { readPersistedBotMatch } from '../pages/jogo/bot-match/slice/botMatchStorage';
-import { hydrateLocalMatch } from '../pages/jogo/local-match/slice/localMatchSlice';
-import { readPersistedLocalMatch } from '../pages/jogo/local-match/slice/localMatchStorage';
+import { hydrateBotMatch } from '../pages/game/bot-match/slice/botMatchSlice';
+import { readPersistedBotMatch } from '../pages/game/bot-match/slice/botMatchStorage';
+import { hydrateLocalMatch } from '../pages/game/local-match/slice/localMatchSlice';
+import { readPersistedLocalMatch } from '../pages/game/local-match/slice/localMatchStorage';
 import { startMatchPersistence } from './matchPersistence';
 import { rootReducers } from './state';
 

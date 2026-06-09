@@ -4,7 +4,6 @@ import {
   hydrateAuth,
   loginUser,
   logoutUser,
-  confirmEmailUser,
 } from '../slices/authSlice';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import type { FetchStatus } from '../../types/fetchStatus';

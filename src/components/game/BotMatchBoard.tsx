@@ -1,5 +1,5 @@
 import { MatchBoard, type MatchBoardProps } from './MatchBoard';
-import { useBotMatchPlay } from '../../pages/jogo/bot-match/providers/BotMatchPlayProvider';
+import { useBotMatchPlay } from '../../pages/game/bot-match/providers/BotMatchPlayProvider';
 
 type BotMatchBoardProps = Omit<MatchBoardProps, 'registeredPokedexOnly'>;
 

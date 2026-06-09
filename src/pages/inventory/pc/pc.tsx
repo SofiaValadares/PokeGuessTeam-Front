@@ -8,7 +8,7 @@ import { useAppSelector } from '../../../store/hooks';
 import { PC_PAGE_SIZE_OPTIONS } from '../../../lib/ui/gridPageSizes';
 import { usePokemonPcPage } from '../../../hooks/usePokemonPcPage';
 import { useSpeciesMeta } from '../../../hooks/useSpeciesMeta';
-import { Card, InlineAlert, PageShell, TextField } from '../../../ds';
+import { Card, InlineAlert, PageSection, PageShell, TextField } from '../../../ds';
 import { FetchStatus } from '../../../types/fetchStatus';
 import type { PcLineDto } from '../../../services/types/pokemon';
 import { PcDetailPanel } from './components/PcDetailPanel';
@@ -39,7 +39,10 @@ export default function PcPage() {
   }, [cachedPcLines, isSearching, trimmedSearch]);
 
   const loading = isSearching ? searchStatus === FetchStatus.Loading : status === FetchStatus.Loading;
-  const lines = isSearching ? (searchLines ?? []) : (data?.content ?? []);
+  const lines = useMemo(
+    () => (isSearching ? (searchLines ?? []) : (data?.content ?? [])),
+    [isSearching, searchLines, data?.content],
+  );
 
   const allMemberDex = useMemo(() => lines.flatMap((line) => line.members), [lines]);
   const { speciesByDex, evolutionLevelByDex, loading: metaLoading } = useSpeciesMeta(allMemberDex);
@@ -88,32 +91,37 @@ export default function PcPage() {
   return (
     <PageShell width="fluid" className={styles.pageShell}>
       <Card padding="md" className={styles.card}>
-        <div className={styles.toolbar}>
-          <h1 className="ds-h1">Caixa Pokémon</h1>
-          <div className={styles.searchWrap}>
-            <TextField
-              label="Pesquisar"
-              name="pcSearch"
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="Nome ou nº da Pokédex"
-            />
-          </div>
-        </div>
+        <PageSection
+          title="Caixa Pokémon"
+          headingLevel="h1"
+          divider
+          action={
+            <div className={styles.searchWrap}>
+              <TextField
+                label="Pesquisar"
+                name="pcSearch"
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Nome ou nº da Pokédex"
+              />
+            </div>
+          }
+        />
 
-        {errorMessage && !isSearching ? (
-          <InlineAlert tone="error" role="alert">
-            {errorMessage}
-          </InlineAlert>
-        ) : null}
+        <PageSection grow>
+          {errorMessage && !isSearching ? (
+            <InlineAlert tone="error" role="alert">
+              {errorMessage}
+            </InlineAlert>
+          ) : null}
 
-        {isSearching && searchStatus === FetchStatus.Error ? (
-          <InlineAlert tone="error" role="alert">
-            Não foi possível pesquisar no PC.
-          </InlineAlert>
-        ) : null}
+          {isSearching && searchStatus === FetchStatus.Error ? (
+            <InlineAlert tone="error" role="alert">
+              Não foi possível pesquisar no PC.
+            </InlineAlert>
+          ) : null}
 
-        {loading && lines.length === 0 ? (
+          {loading && lines.length === 0 ? (
           <p className="ds-body-muted">A carregar inventário…</p>
         ) : showEmpty ? (
           <p className={styles.empty}>
@@ -165,7 +173,8 @@ export default function PcPage() {
               />
             ) : null}
           </>
-        )}
+          )}
+        </PageSection>
       </Card>
     </PageShell>
   );

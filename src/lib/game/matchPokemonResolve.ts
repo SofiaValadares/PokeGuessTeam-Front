@@ -35,7 +35,7 @@ function collectMatchDexNumbers(state: ClientMatchState): number[] {
   ];
 }
 
-/** Carrega espécies da partida necessárias para calcular pistas (equipas + palpites). */
+/** Carrega espécies da partida necessárias para calcular pistas (equipes + palpites). */
 export async function resolveMatchDexMap(
   base: Record<number, PokemonDto>,
   state: ClientMatchState,
@@ -45,9 +45,9 @@ export async function resolveMatchDexMap(
 
   for (const dex of Array.from(needed)) {
     if (map.has(dex)) continue;
-    await resolvePokemonForMatch(dex, map, (next) => {
-      map = next;
-    });
+    const pokemon = await resolvePokemonForMatch(dex, map, () => undefined);
+    map = new Map(map);
+    map.set(dex, pokemon);
   }
 
   return map;

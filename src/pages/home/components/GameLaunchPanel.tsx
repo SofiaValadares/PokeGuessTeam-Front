@@ -1,78 +1,73 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FRIEND_MATCH_ENABLED } from '../../../lib/config/featureFlags';
-import { GAME_RULES } from '../../../lib/game/rules';
 import { RIVAL } from '../../../lib/game/characters';
-import { Button, Card } from '../../../ds';
-import styles from '../home.module.css';
+import { Button, Card, PageSection } from '../../../ds';
+import { GameRulesPanel } from './GameRulesPanel';
+import styles from './game-launch.module.css';
+import homeStyles from '../home.module.css';
 
 export function GameLaunchPanel() {
   const navigate = useNavigate();
   const [rulesOpen, setRulesOpen] = useState(false);
 
   return (
-    <Card padding="md" className={`${styles.gamePanel} ${styles.rightPanelCard}`}>
-      <div className={styles.panelHeader}>
-        <h2 className={styles.panelTitle}>Iniciar jogo</h2>
-        <button
-          type="button"
-          className={styles.rulesToggle}
-          aria-expanded={rulesOpen}
-          onClick={() => setRulesOpen((v) => !v)}
-        >
-          {rulesOpen ? 'Ocultar regras' : 'Regras do jogo'}
-        </button>
-      </div>
+    <Card padding="md" className={`${styles.panel} ${homeStyles.rightPanelCard}`}>
+      <PageSection
+        title="Iniciar jogo"
+        subtitle="Duelos de dedução — descobre a equipe secreta do adversário antes que ele descubra a tua."
+        headingLevel="h2"
+        action={
+          <button
+            type="button"
+            className={styles.rulesToggle}
+            aria-expanded={rulesOpen}
+            onClick={() => setRulesOpen((v) => !v)}
+          >
+            {rulesOpen ? 'Ocultar regras' : 'Regras'}
+          </button>
+        }
+        divider
+        grow
+        aria-label="Modos de jogo"
+      >
+        {rulesOpen ? <GameRulesPanel /> : null}
+        <div className={styles.actions}>
+          {FRIEND_MATCH_ENABLED ? (
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              fullWidth
+              className={styles.modeBtn}
+              onClick={() => navigate('/game/amigo')}
+            >
+              Partida amigável
+            </Button>
+          ) : null}
 
-      <p className={styles.panelHint}>
-        Duelos de dedução — descobre a equipe secreta do adversário antes que ele descubra a tua.
-      </p>
-
-      {rulesOpen ? (
-        <section className={styles.gameRulesPanel} aria-label="Regras do jogo">
-          <ol className={styles.gameRulesList}>
-            {GAME_RULES.map((rule) => (
-              <li key={rule}>{rule}</li>
-            ))}
-          </ol>
-        </section>
-      ) : null}
-
-      <div className={styles.gameActions}>
-        {FRIEND_MATCH_ENABLED ? (
           <Button
             type="button"
-            variant="primary"
+            variant={FRIEND_MATCH_ENABLED ? 'secondary' : 'primary'}
             size="md"
             fullWidth
-            className={styles.gameModeBtn}
-            onClick={() => navigate('/jogo/amigo')}
+            className={styles.modeBtn}
+            onClick={() => navigate('/game/bot')}
           >
-            Partida amigável
+            Duelo vs {RIVAL.shortName}
           </Button>
-        ) : null}
-
-        <Button
-          type="button"
-          variant={FRIEND_MATCH_ENABLED ? 'secondary' : 'primary'}
-          size="md"
-          fullWidth
-          className={styles.gameModeBtn}
-          onClick={() => navigate('/jogo/bot')}
-        >
-          Duelo vs {RIVAL.shortName}
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          size="md"
-          fullWidth
-          className={styles.gameModeBtn}
-          onClick={() => navigate('/jogo/local')}
-        >
-          Jogo local
-        </Button>
-      </div>
+          <Button
+            type="button"
+            variant="secondary"
+            size="md"
+            fullWidth
+            className={styles.modeBtn}
+            onClick={() => navigate('/game/local')}
+          >
+            Jogo local
+          </Button>
+        </div>
+      </PageSection>
     </Card>
   );
 }

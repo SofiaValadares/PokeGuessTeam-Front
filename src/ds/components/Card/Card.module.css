@@ -3,6 +3,7 @@
   border: 1px solid var(--ds-color-border-subtle);
   border-radius: var(--ds-radius-lg);
   box-shadow: var(--ds-shadow-md);
+  animation: dsFadeUp var(--ds-duration-slow) var(--ds-ease-standard) both;
 }
 
 .paddingSm {

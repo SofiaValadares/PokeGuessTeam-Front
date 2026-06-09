@@ -1,26 +1,35 @@
 import type { ReactNode } from 'react';
-import { InlineAlert } from '../../ds';
-import hubStyles from '../../pages/jogo/jogo.module.css';
+import { MatchSetupLayout } from '../../pages/game/shared/MatchSetupLayout';
 
 type TeamSetupScreenProps = {
+  title?: string;
+  subtitle?: ReactNode;
+  backHref?: string;
+  onBack?: () => void;
   error?: ReactNode;
   extra?: ReactNode;
   children: ReactNode;
 };
 
-export function TeamSetupScreen({ error, extra, children }: TeamSetupScreenProps) {
+export function TeamSetupScreen({
+  title = 'Prepara a tua equipe',
+  subtitle = 'Escolhe 6 Pokémon registados na Pokédex. O adversário vai tentar adivinhar a tua equipe secreta.',
+  backHref = '/',
+  onBack,
+  error,
+  extra,
+  children,
+}: TeamSetupScreenProps) {
   return (
-    <div className={hubStyles.setupScreen}>
-      <div className={hubStyles.setupContent}>
-        <h1 className={hubStyles.setupTitle}>Prepare sua equipe</h1>
-        {extra}
-        {error ? (
-          <InlineAlert tone="error" role="alert">
-            {error}
-          </InlineAlert>
-        ) : null}
-        <div className={hubStyles.setupBody}>{children}</div>
-      </div>
-    </div>
+    <MatchSetupLayout
+      title={title}
+      subtitle={subtitle}
+      backHref={backHref}
+      onBack={onBack}
+      error={error}
+    >
+      {extra}
+      {children}
+    </MatchSetupLayout>
   );
 }

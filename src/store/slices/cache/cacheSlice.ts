@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { GachaDrawResult, GameHistoryEntry, TrainingTeam } from '../../../model';
 import type { PcLine } from '../../../model';
-import type { PokeballInventory, ProfileMe } from '../../../model';
+import type { ProfileMe } from '../../../model';
 import { FetchStatus } from '../../../types/fetchStatus';
 import {
   patchAfterClaimRewards,

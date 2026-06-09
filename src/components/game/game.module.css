@@ -7,35 +7,15 @@
 .teamPickerFullscreen {
   flex: 1;
   min-height: 0;
-  gap: var(--ds-space-5);
+  gap: var(--ds-space-4);
   width: 100%;
 }
 
-.teamPickerFullscreen .teamSlots {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--ds-space-4);
-}
-
-@media (min-width: 40rem) {
-  .teamPickerFullscreen .teamSlots {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-}
-
-.teamPickerFullscreen .teamSlot {
-  min-height: 6.75rem;
-  aspect-ratio: 1;
-  border-width: 2px;
-}
-
-.teamPickerFullscreen .teamRemove {
-  width: 1.5rem;
-  height: 1.5rem;
-  font-size: 1rem;
-}
-
-.teamPickerFullscreen .searchResults {
-  max-height: min(16rem, 30vh);
+.teamFieldWrap {
+  flex: 1;
+  min-height: min(28rem, 55vh);
+  display: flex;
+  flex-direction: column;
 }
 
 .teamFooter {
@@ -141,6 +121,59 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--ds-space-3);
+  flex-shrink: 0;
+}
+
+.randomTeamBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  padding: var(--ds-space-2) var(--ds-space-4);
+  border-radius: var(--ds-radius-full, 999px);
+  border: 1px solid #3d8b37;
+  background: linear-gradient(180deg, rgba(90, 173, 74, 0.22) 0%, rgba(61, 139, 55, 0.12) 100%);
+  color: var(--ds-color-text-primary);
+  font-size: var(--ds-text-sm);
+  font-weight: var(--ds-weight-semibold);
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(61, 139, 55, 0.15);
+  transition:
+    transform var(--ds-duration-fast) var(--ds-ease-standard),
+    border-color var(--ds-duration-fast) var(--ds-ease-standard),
+    background var(--ds-duration-fast) var(--ds-ease-standard),
+    box-shadow var(--ds-duration-fast) var(--ds-ease-standard);
+}
+
+.randomTeamBtn:not(:disabled):hover {
+  transform: translateY(-1px);
+  border-color: #4fa043;
+  background: linear-gradient(180deg, rgba(90, 173, 74, 0.32) 0%, rgba(61, 139, 55, 0.18) 100%);
+  box-shadow: 0 4px 14px rgba(61, 139, 55, 0.22);
+}
+
+.randomTeamBtn:not(:disabled):active {
+  transform: translateY(0);
+}
+
+.randomTeamBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.randomTeamIconSpin {
+  animation: randomTeamSpin 0.55s ease-in-out;
+}
+
+@keyframes randomTeamSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .teamCount {
@@ -282,6 +315,7 @@
   border: 2px solid var(--ds-color-border-default);
   background: var(--ds-color-bg-elevated);
   overflow: hidden;
+  animation: dsScaleIn var(--ds-duration-slow) var(--ds-ease-standard) both;
 }
 
 .matchShellHeader {

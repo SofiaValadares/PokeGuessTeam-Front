@@ -5,7 +5,7 @@ import { ApiError } from '../../../services/http';
 import { PokemonBillGrid } from '../../../components/PokemonBillGrid';
 import { PokemonGridPagination } from '../../../components/PokemonGridPagination';
 import { POKEDEX_PAGE_SIZE_OPTIONS } from '../../../lib/ui/gridPageSizes';
-import { Card, InlineAlert, PageShell } from '../../../ds';
+import { Card, InlineAlert, PageSection, PageShell } from '../../../ds';
 import { PokedexDetailPanel } from './components/PokedexDetailPanel';
 import { buildPokedexGridData } from '../../../lib/pokedex/buildGridData';
 import styles from './pokedex.module.css';
@@ -40,9 +40,10 @@ export default function PokedexPage() {
     setPage(0);
   }, [pageSize]);
 
-  const entries = data?.content ?? [];
-
-  const { gridItems, entriesByKey } = useMemo(() => buildPokedexGridData(entries), [entries]);
+  const { gridItems, entriesByKey } = useMemo(
+    () => buildPokedexGridData(data?.content ?? []),
+    [data?.content],
+  );
 
   const pageSlotCount = data?.size ?? pageSize;
 
@@ -65,15 +66,21 @@ export default function PokedexPage() {
   return (
     <PageShell width="fluid" className={styles.pageShell}>
       <Card padding="md" className={styles.card}>
-        <h1 className="ds-h1">Pokédex</h1>
+        <PageSection
+          title="Pokédex"
+          subtitle="Consulta espécies e o teu progresso de registo."
+          headingLevel="h1"
+          divider
+        />
 
-        {error ? (
-          <InlineAlert tone="error" role="alert">
-            {error}
-          </InlineAlert>
-        ) : null}
+        <PageSection grow>
+          {error ? (
+            <InlineAlert tone="error" role="alert">
+              {error}
+            </InlineAlert>
+          ) : null}
 
-        {loading && !data ? (
+          {loading && !data ? (
           <p className="ds-body-muted">A carregar…</p>
         ) : data && gridItems.length === 0 ? (
           <p className="ds-body-muted">Sem resultados.</p>
@@ -106,7 +113,8 @@ export default function PokedexPage() {
               onNext={() => setPage((x) => x + 1)}
             />
           </>
-        ) : null}
+          ) : null}
+        </PageSection>
       </Card>
     </PageShell>
   );

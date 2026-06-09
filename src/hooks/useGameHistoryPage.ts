@@ -4,7 +4,7 @@ import type { GameHistoryPageResponse } from '../services/types/game';
 import { ApiError } from '../services/http';
 import { FetchStatus } from '../types/fetchStatus';
 
-export function useGameHistoryPage(initialPage = 0, initialSize = 20) {
+export function useGameHistoryPage(initialPage = 0, initialSize = 10) {
   const [page, setPage] = useState(initialPage);
   const [pageSize, setPageSize] = useState(initialSize);
   const [data, setData] = useState<GameHistoryPageResponse | null>(null);
