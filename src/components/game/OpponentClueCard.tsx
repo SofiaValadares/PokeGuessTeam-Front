@@ -3,7 +3,7 @@ import {
   pokemonColorLabel,
   pokemonEvolutionStageLabel,
   pokemonTypeLabel,
-} from '../../lib/pokemonLabels';
+} from '../../lib/pokemon/labels';
 import { PokemonSprite } from '../PokemonSprite';
 import styles from './game.module.css';
 
@@ -34,7 +34,7 @@ type OpponentClueCardProps = {
 export function OpponentClueCard({ slot }: OpponentClueCardProps) {
   const dex = slot.revealed ? slot.pokedexNumber : null;
   const bannerLabel =
-    slot.revealed && slot.name ? slot.name.toUpperCase() : 'DESCONHECIDO';
+    slot.revealed && slot.name ? slot.name.toUpperCase() : 'UNKNOWN';
 
   const primaryLabel = slot.primaryType ? pokemonTypeLabel(slot.primaryType) : null;
   const secondaryRaw = slot.secondaryType;
@@ -70,21 +70,21 @@ export function OpponentClueCard({ slot }: OpponentClueCardProps) {
         </div>
 
         <div className={styles.clueCardRight}>
-          <HintField label="Geração" value={hintOrUnknown(slot.generation)} wide />
+          <HintField label="Generation" value={hintOrUnknown(slot.generation)} wide />
           <div className={styles.clueHintPair}>
-            <HintField label="Estágio" value={hintOrUnknown(evolutionLabel)} />
+            <HintField label="Stage" value={hintOrUnknown(evolutionLabel)} />
             <HintField
-              label="Cor"
+              label="Color"
               value={slot.color ? pokemonColorLabel(slot.color) : hintOrUnknown(null)}
             />
           </div>
           <div className={styles.clueHintPair}>
             <HintField
-              label="Altura"
+              label="Height"
               value={slot.heightM != null ? `${slot.heightM} m` : '???'}
             />
             <HintField
-              label="Peso"
+              label="Weight"
               value={slot.weightKg != null ? `${slot.weightKg} kg` : '???'}
             />
           </div>

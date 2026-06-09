@@ -6,9 +6,10 @@ import { PokemonSprite } from '../PokemonSprite';
 import { Button } from '../../ds';
 import { OpponentClueCard } from './OpponentClueCard';
 import { PokemonSearchField } from './PokemonSearchField';
+import { searchRegisteredPokemonList, listRegisteredPokemon } from '../../lib/pokemon/registeredPokedexSearch';
 import styles from './game.module.css';
 
-type MatchBoardProps = {
+export type MatchBoardProps = {
   playerName: string;
   opponentName: string;
   userScore: number;
@@ -27,6 +28,8 @@ type MatchBoardProps = {
   opponentAvatarDex?: number | null;
   excludedPokedexNumbers?: number[];
   playerTheme?: 'default' | 'guest' | 'waiting';
+  /** When set, search is limited to these Pokémon (e.g. registered Pokédex). */
+  registeredPokedexOnly?: PokemonDto[];
 };
 
 export function MatchBoard({
@@ -48,25 +51,51 @@ export function MatchBoard({
   opponentAvatarDex,
   excludedPokedexNumbers = [],
   playerTheme = 'default',
+  registeredPokedexOnly,
 }: MatchBoardProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PokemonDto[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const excludedDex = useMemo(() => new Set(excludedPokedexNumbers), [excludedPokedexNumbers]);
 
-  const search = useCallback(async (q: string) => {
-    if (q.trim().length < 1) {
-      setResults([]);
+  const search = useCallback(
+    async (q: string) => {
+      if (q.trim().length < 1) return;
+      try {
+        if (registeredPokedexOnly) {
+          setResults(searchRegisteredPokemonList(registeredPokedexOnly, q, 50));
+          return;
+        }
+        setResults(await searchPokemon(q, 20));
+      } catch {
+        setResults([]);
+      }
+    },
+    [registeredPokedexOnly],
+  );
+
+  const handleSearchOpen = useCallback(() => {
+    if (registeredPokedexOnly && registeredPokedexOnly.length > 0) {
+      setResults(listRegisteredPokemon(registeredPokedexOnly));
       return;
     }
-    try {
-      setResults(await searchPokemon(q, 20));
-    } catch {
-      setResults([]);
+    if (query.trim()) {
+      void search(query);
     }
+  }, [query, registeredPokedexOnly, search]);
+
+  const handleSearchClose = useCallback(() => {
+    setResults([]);
+  }, []);
+
+  const handleQueryChange = useCallback((q: string) => {
+    setQuery(q);
   }, []);
 
   useEffect(() => {
+    if (!query.trim()) {
+      return;
+    }
     const t = window.setTimeout(() => void search(query), 220);
     return () => window.clearTimeout(t);
   }, [query, search]);
@@ -107,11 +136,11 @@ export function MatchBoard({
       </header>
 
       <div className={styles.matchLayout}>
-        <section className={styles.matchLeft} aria-label="Campos de adivinhação">
+        <section className={styles.matchLeft} aria-label="Campos de palpite">
           <div className={styles.matchLeftHead}>
-            <h2 className={styles.matchPanelTitle}>Campos de adivinhação</h2>
+            <h2 className={styles.matchPanelTitle}>Campos de palpite</h2>
             <p className={styles.matchPanelSub}>
-              Pistas reais de cada slot do adversário · {revealedCount}/{maxScore} revelados
+              Pistas reais por slot do adversário · {revealedCount}/{maxScore} revelados
             </p>
           </div>
 
@@ -125,15 +154,22 @@ export function MatchBoard({
             <div className={styles.matchGuessBar}>
               <PokemonSearchField
                 query={query}
-                onQueryChange={setQuery}
+                onQueryChange={handleQueryChange}
                 results={results}
                 selected={null}
                 onSelect={(p) => void submitGuess(p)}
                 onPick={(p) => void submitGuess(p)}
                 disabled={!canGuess}
                 excludedDexNumbers={excludedDex}
-                placeholder="Busque um pokémon e clique ou pressione Enter"
+                placeholder={
+                  registeredPokedexOnly
+                    ? 'Clica para ver a Pokédex ou pesquisa por nome'
+                    : 'Pesquisa um Pokémon e clica ou carrega Enter'
+                }
                 overlay
+                showResultsOnFocus={Boolean(registeredPokedexOnly)}
+                onOpen={handleSearchOpen}
+                onClose={handleSearchClose}
               />
             </div>
           ) : (
@@ -141,8 +177,8 @@ export function MatchBoard({
           )}
         </section>
 
-        <aside className={styles.matchRight} aria-label="Controle de turnos">
-          <h2 className={styles.matchPanelTitle}>Controle de turnos</h2>
+        <aside className={styles.matchRight} aria-label="Controlo de turnos">
+          <h2 className={styles.matchPanelTitle}>Controlo de turnos</h2>
 
           {status === 'ACTIVE' ? (
             <p
@@ -152,8 +188,8 @@ export function MatchBoard({
               ].join(' ')}
             >
               {isYourTurn
-                ? 'É a tua vez — escolhe um pokémon na busca.'
-                : `Aguarda a vez de ${opponentName}.`}
+                ? 'A tua vez — escolhe um Pokémon na pesquisa.'
+                : `À espera de ${opponentName}.`}
             </p>
           ) : null}
 
@@ -201,8 +237,8 @@ export function MatchBoard({
           </div>
 
           <section className={styles.matchHitsSection}>
-            <h3 className={styles.matchHitsTitle}>Descobertos pelo adversário</h3>
-            <p className={styles.matchHitsSub}>Na sua equipe · {opponentName}</p>
+            <h3 className={styles.matchHitsTitle}>Encontrados pelo adversário</h3>
+            <p className={styles.matchHitsSub}>Na tua equipa · {opponentName}</p>
             <ul className={styles.matchHitsGrid}>
               {myTeamSlots.map((dex, index) => (
                 <li key={`${index}-${dex ?? 'empty'}`} className={styles.matchHitCell}>
@@ -229,7 +265,7 @@ export function MatchBoard({
               disabled={busy || submitting}
               onClick={onSurrender}
             >
-              DESISTIR DA PARTIDA
+              DESISTIR
             </Button>
           ) : null}
         </aside>

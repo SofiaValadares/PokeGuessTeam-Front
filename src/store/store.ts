@@ -1,11 +1,26 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { authReducer } from './slices/authSlice';
+import { hydrateBotMatch } from '../pages/jogo/bot-match/slice/botMatchSlice';
+import { readPersistedBotMatch } from '../pages/jogo/bot-match/slice/botMatchStorage';
+import { hydrateLocalMatch } from '../pages/jogo/local-match/slice/localMatchSlice';
+import { readPersistedLocalMatch } from '../pages/jogo/local-match/slice/localMatchStorage';
+import { startMatchPersistence } from './matchPersistence';
+import { rootReducers } from './state';
 
 export const store = configureStore({
-  reducer: {
-    auth: authReducer,
-  },
+  reducer: rootReducers,
 });
 
-export type RootState = ReturnType<typeof store.getState>;
+const persistedBotMatch = readPersistedBotMatch();
+if (persistedBotMatch) {
+  store.dispatch(hydrateBotMatch(persistedBotMatch));
+}
+
+const persistedLocalMatch = readPersistedLocalMatch();
+if (persistedLocalMatch) {
+  store.dispatch(hydrateLocalMatch(persistedLocalMatch));
+}
+
+startMatchPersistence(store);
+
+export type { RootState } from './state';
 export type AppDispatch = typeof store.dispatch;

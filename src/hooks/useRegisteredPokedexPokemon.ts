@@ -23,7 +23,7 @@ export function useRegisteredPokedexPokemon() {
     } catch (e) {
       setEntries([]);
       const msg =
-        e instanceof ApiError ? e.message : e instanceof Error ? e.message : 'Erro ao carregar a Pokédex.';
+        e instanceof ApiError ? e.message : e instanceof Error ? e.message : 'Não foi possível carregar a Pokédex.';
       setErrorMessage(msg);
       setStatus(FetchStatus.Error);
     }

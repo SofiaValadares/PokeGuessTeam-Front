@@ -2,7 +2,7 @@ import type { TrainingTeamSlotDto } from '../../../api/types/game';
 import type { PcLineDto, PokemonDto } from '../../../api/types/pokemon';
 import { PokemonSprite } from '../../../components/PokemonSprite';
 import { Button } from '../../../ds';
-import { resolveCurrentMemberDex } from '../../../lib/pcCurrentForm';
+import { resolveCurrentMemberDex } from '../../../lib/pokemon/pcCurrentForm';
 import styles from '../home.module.css';
 
 export type TrainingSlotView = {

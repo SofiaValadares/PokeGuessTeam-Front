@@ -37,7 +37,7 @@ export function MatchResultModal({
           ))}
         </div>
         <p className={styles.matchResultModalCountdown}>
-          Voltando ao início em {Math.max(secondsLeft, 0)}s…
+          A voltar ao início em {Math.max(secondsLeft, 0)}s…
         </p>
         <Button type="button" variant="primary" size="md" fullWidth onClick={onGoHome}>
           Ir agora

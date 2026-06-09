@@ -1,0 +1,272 @@
+.pageShell {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  max-width: none !important;
+  padding: var(--ds-space-4) var(--ds-space-5) !important;
+  box-sizing: border-box;
+}
+
+.card {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--ds-space-4);
+  margin-bottom: var(--ds-space-5);
+  flex-shrink: 0;
+}
+
+.toolbar .ds-h1 {
+  margin: 0;
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ds-space-6);
+  overflow-y: auto;
+}
+
+.intro {
+  margin: 0 0 var(--ds-space-5);
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-muted);
+  line-height: var(--ds-leading-relaxed);
+  flex-shrink: 0;
+  text-align: center;
+  max-width: 42rem;
+  align-self: center;
+}
+
+.fragments {
+  margin: 0;
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-secondary);
+}
+
+.ballGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--ds-space-4);
+  width: min(100%, 40rem);
+}
+
+@media (max-width: 40rem) {
+  .ballGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.ballBtn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ds-space-2);
+  padding: var(--ds-space-5) var(--ds-space-3) var(--ds-space-4);
+  border-radius: var(--ds-radius-lg);
+  border: 2px solid var(--ds-color-border-default);
+  background: var(--ds-color-bg-elevated);
+  cursor: pointer;
+  transition:
+    border-color var(--ds-duration-fast) var(--ds-ease-standard),
+    transform var(--ds-duration-fast) var(--ds-ease-standard),
+    box-shadow var(--ds-duration-fast) var(--ds-ease-standard);
+}
+
+.ballBtn:not(:disabled):hover {
+  border-color: var(--ds-color-accent);
+  transform: translateY(-2px);
+  box-shadow: var(--ds-shadow-md);
+}
+
+.ballBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ballBtnBusy {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.ballQty {
+  position: absolute;
+  top: var(--ds-space-2);
+  right: var(--ds-space-2);
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--ds-color-accent);
+  color: var(--ds-color-text-inverse);
+  font-size: var(--ds-text-xs);
+  font-weight: var(--ds-weight-bold);
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.ballQtyEmpty {
+  background: var(--ds-color-border-strong);
+  color: var(--ds-color-text-muted);
+}
+
+.ballSprite {
+  width: 4.5rem;
+  height: 4.5rem;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.ballLabel {
+  font-size: var(--ds-text-sm);
+  font-weight: var(--ds-weight-semibold);
+  color: var(--ds-color-text-primary);
+  text-align: center;
+}
+
+.drawingOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  border-radius: inherit;
+}
+
+.drawingInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ds-space-4);
+}
+
+.drawingBall {
+  width: 6rem;
+  height: 6rem;
+  object-fit: contain;
+  image-rendering: pixelated;
+  animation: gachaBallShake 0.55s ease-in-out infinite;
+}
+
+.drawingText {
+  margin: 0;
+  font-size: var(--ds-text-lg);
+  font-weight: var(--ds-weight-semibold);
+  color: var(--ds-color-text-inverse);
+}
+
+.resultPanel {
+  position: relative;
+  width: min(100%, 24rem);
+  padding: var(--ds-space-6);
+  border-radius: var(--ds-radius-lg);
+  border: 1px solid var(--ds-color-border-subtle, rgba(255, 255, 255, 0.12));
+  background: var(--ds-color-surface-raised, rgba(255, 255, 255, 0.04));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ds-space-3);
+  text-align: center;
+  animation: gachaReveal 0.65s var(--ds-ease-standard) both;
+  overflow: hidden;
+}
+
+.resultBurst {
+  position: absolute;
+  inset: -40%;
+  background: radial-gradient(circle, rgba(94, 234, 212, 0.22) 0%, transparent 65%);
+  animation: gachaBurst 0.8s ease-out both;
+  pointer-events: none;
+}
+
+.resultSpriteWrap {
+  position: relative;
+  z-index: 1;
+  animation: gachaSpritePop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+}
+
+.resultTitle {
+  margin: 0;
+  font-size: var(--ds-text-xl);
+  font-weight: var(--ds-weight-semibold);
+  color: var(--ds-color-text-primary);
+}
+
+.resultMeta {
+  margin: 0;
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-secondary);
+}
+
+@keyframes gachaBallShake {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(-10deg) scale(1.06);
+  }
+  75% {
+    transform: rotate(10deg) scale(1.06);
+  }
+}
+
+@keyframes gachaReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.88) translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes gachaSpritePop {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes gachaBurst {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  40% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.2);
+  }
+}

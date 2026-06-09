@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GAME_RULES } from '../../../lib/gameRules';
-import { RIVAL } from '../../../lib/gameCharacters';
+import { FRIEND_MATCH_ENABLED } from '../../../lib/config/featureFlags';
+import { GAME_RULES } from '../../../lib/game/rules';
+import { RIVAL } from '../../../lib/game/characters';
 import { Button, Card } from '../../../ds';
 import styles from '../home.module.css';
 
@@ -38,20 +39,22 @@ export function GameLaunchPanel() {
       ) : null}
 
       <div className={styles.gameActions}>
-        <Button
-          type="button"
-          variant="primary"
-          size="md"
-          fullWidth
-          className={styles.gameModeBtn}
-          onClick={() => navigate('/jogo/amigo')}
-        >
-          Partida amigável
-        </Button>
+        {FRIEND_MATCH_ENABLED ? (
+          <Button
+            type="button"
+            variant="primary"
+            size="md"
+            fullWidth
+            className={styles.gameModeBtn}
+            onClick={() => navigate('/jogo/amigo')}
+          >
+            Partida amigável
+          </Button>
+        ) : null}
 
         <Button
           type="button"
-          variant="secondary"
+          variant={FRIEND_MATCH_ENABLED ? 'secondary' : 'primary'}
           size="md"
           fullWidth
           className={styles.gameModeBtn}

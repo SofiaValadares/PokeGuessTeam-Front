@@ -1,16 +1,14 @@
 import { Settings } from 'lucide-react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '../auth/AuthContext';
-import { AppHeader, Button } from '../ds';
+import { AppHeader } from '../ds';
 import headerStyles from '../ds/components/AppHeader/AppHeader.module.css';
 import styles from './authenticated-layout.module.css';
 
 function isGameRoute(pathname: string): boolean {
-  return pathname.startsWith('/jogo/');
+  return pathname === '/jogo/bot' || pathname === '/jogo/local';
 }
 
 export function AuthenticatedLayout() {
-  const { logout } = useAuth();
   const { pathname } = useLocation();
   const gameScreen = isGameRoute(pathname);
 
@@ -19,25 +17,21 @@ export function AuthenticatedLayout() {
       {gameScreen ? null : (
         <AppHeader
           end={
-            <>
-              <NavLink
-                to="/configuracoes"
-                className={({ isActive }) =>
-                  [headerStyles.navBtn, isActive ? headerStyles.navBtnActive : ''].filter(Boolean).join(' ')
-                }
-                aria-label="Configurações"
-              >
-                <Settings
-                  className={headerStyles.navIcon}
-                  size={22}
-                  strokeWidth={2}
-                  aria-hidden
-                />
-              </NavLink>
-              <Button type="button" variant="secondary" size="md" onClick={() => void logout()}>
-                Sair
-              </Button>
-            </>
+            <NavLink
+              to="/config"
+              className={({ isActive }) =>
+                [headerStyles.navBtn, isActive ? headerStyles.navBtnActive : ''].filter(Boolean).join(' ')
+              }
+              aria-label="Configurações"
+              title="Configurações"
+            >
+              <Settings
+                className={headerStyles.navIcon}
+                size={22}
+                strokeWidth={2}
+                aria-hidden
+              />
+            </NavLink>
           }
         />
       )}

@@ -1,12 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
-import { AuthProvider } from './auth/AuthContext';
+import { AuthProvider } from './store/providers';
 import './index.css';
 import { AppRouter } from './routes';
 import reportWebVitals from './reportWebVitals';
 import { store } from './store/store';
 import { ThemeProvider } from './theme';
+import { PreferencesProvider } from './preferences';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -15,9 +16,11 @@ root.render(
   <React.StrictMode>
     <Provider store={store}>
       <ThemeProvider>
-        <AuthProvider>
-          <AppRouter />
-        </AuthProvider>
+        <PreferencesProvider>
+          <AuthProvider>
+            <AppRouter />
+          </AuthProvider>
+        </PreferencesProvider>
       </ThemeProvider>
     </Provider>
   </React.StrictMode>

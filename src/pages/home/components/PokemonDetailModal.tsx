@@ -4,7 +4,7 @@ import { claimEvolutionRewards } from '../../../api/pokemonApi';
 import { getGameMeta } from '../../../api/metaApi';
 import { PokemonSprite } from '../../../components/PokemonSprite';
 import { Button } from '../../../ds';
-import { pokeballLabel } from '../../../lib/pokeballLabels';
+import { pokeballLabel } from '../../../lib/pokeball/labels';
 import styles from '../home.module.css';
 
 type PokemonDetailModalProps = {

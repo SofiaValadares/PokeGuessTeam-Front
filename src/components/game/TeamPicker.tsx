@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { pickRandomDexNumbers } from '../../lib/pickRandomTeam';
+import { pickRandomDexNumbers } from '../../lib/game/pickRandomTeam';
 import type { PokemonDto } from '../../api/types/pokemon';
 import { useRegisteredPokedexPokemon } from '../../hooks/useRegisteredPokedexPokemon';
 import { PokemonSearchField } from './PokemonSearchField';

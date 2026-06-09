@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { PokemonDto } from '../../api/types/pokemon';
 import { PokemonSprite } from '../PokemonSprite';
 import styles from './game.module.css';
@@ -14,8 +14,11 @@ type PokemonSearchFieldProps = {
   placeholder?: string;
   label?: string;
   overlay?: boolean;
-  minCharsHint?: number;
   excludedDexNumbers?: Set<number>;
+  /** Show the full list when opened, even with an empty query. */
+  showResultsOnFocus?: boolean;
+  onOpen?: () => void;
+  onClose?: () => void;
 };
 
 export function PokemonSearchField({
@@ -26,25 +29,54 @@ export function PokemonSearchField({
   onSelect,
   onPick,
   disabled = false,
-  placeholder = 'Busque um pokémon…',
+  placeholder = 'Pesquisar um Pokémon…',
   label,
   overlay = true,
-  minCharsHint = 1,
   excludedDexNumbers,
+  showResultsOnFocus = false,
+  onOpen,
+  onClose,
 }: PokemonSearchFieldProps) {
   const inputId = useId();
   const wrapRef = useRef<HTMLDivElement>(null);
-  const showResults = overlay && results.length > 0 && query.trim().length >= minCharsHint;
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
+
+  const hasQuery = query.trim().length > 0;
+  const showResults =
+    open &&
+    overlay &&
+    results.length > 0 &&
+    (hasQuery || showResultsOnFocus);
 
   const isExcluded = (pokemon: PokemonDto) => excludedDexNumbers?.has(pokemon.number) ?? false;
+
+  const close = useCallback(() => {
+    setOpen(false);
+    onClose?.();
+  }, [onClose]);
+
+  const openSearch = useCallback(() => {
+    if (disabled) return;
+    setOpen(true);
+    onOpen?.();
+  }, [disabled, onOpen]);
 
   const handlePick = (pokemon: PokemonDto) => {
     if (disabled || isExcluded(pokemon)) return;
     onSelect(pokemon);
     onPick?.(pokemon);
+    close();
+    inputRef.current?.blur();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      close();
+      inputRef.current?.blur();
+      return;
+    }
     if (e.key !== 'Enter' || disabled) return;
     const q = query.trim().toLowerCase();
     if (!q) return;
@@ -57,16 +89,32 @@ export function PokemonSearchField({
     }
   };
 
+  const handleChange = (value: string) => {
+    onQueryChange(value);
+    if (!open) {
+      setOpen(true);
+      onOpen?.();
+    } else if (showResultsOnFocus && !value.trim()) {
+      onOpen?.();
+    }
+  };
+
   useEffect(() => {
-    if (!showResults) return;
-    const onDocClick = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        /* keep query; user closes by clearing or selecting */
-      }
+    if (!open) return;
+    const onDocMouseDown = (e: MouseEvent) => {
+      if (wrapRef.current?.contains(e.target as Node)) return;
+      close();
+      inputRef.current?.blur();
     };
-    document.addEventListener('mousedown', onDocClick);
-    return () => document.removeEventListener('mousedown', onDocClick);
-  }, [showResults]);
+    document.addEventListener('mousedown', onDocMouseDown);
+    return () => document.removeEventListener('mousedown', onDocMouseDown);
+  }, [open, close]);
+
+  useEffect(() => {
+    if (disabled && open) {
+      close();
+    }
+  }, [disabled, open, close]);
 
   return (
     <div
@@ -81,11 +129,13 @@ export function PokemonSearchField({
         </label>
       ) : null}
       <input
+        ref={inputRef}
         id={inputId}
         className={styles.searchInput}
         type="search"
         value={query}
-        onChange={(e) => onQueryChange(e.target.value)}
+        onChange={(e) => handleChange(e.target.value)}
+        onFocus={openSearch}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled}
@@ -104,29 +154,30 @@ export function PokemonSearchField({
           {results.map((p) => {
             const used = isExcluded(p);
             return (
-            <li key={p.id}>
-              <button
-                type="button"
-                className={[
-                  styles.searchResultBtn,
-                  selected?.id === p.id ? styles.searchResultSelected : '',
-                  used ? styles.searchResultUsed : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                onClick={() => handlePick(p)}
-                disabled={disabled || used}
-                role="option"
-                aria-selected={selected?.id === p.id}
-                aria-disabled={used}
-              >
-                <PokemonSprite dex={p.number} name={p.name} size={40} />
-                <span>
-                  {p.name} <span className={styles.searchDex}>#{p.number}</span>
-                  {used ? <span className={styles.searchUsedTag}> · já chutado</span> : null}
-                </span>
-              </button>
-            </li>
+              <li key={p.id}>
+                <button
+                  type="button"
+                  className={[
+                    styles.searchResultBtn,
+                    selected?.id === p.id ? styles.searchResultSelected : '',
+                    used ? styles.searchResultUsed : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => handlePick(p)}
+                  onMouseDown={(e) => e.preventDefault()}
+                  disabled={disabled || used}
+                  role="option"
+                  aria-selected={selected?.id === p.id}
+                  aria-disabled={used}
+                >
+                  <PokemonSprite dex={p.number} name={p.name} size={40} />
+                  <span>
+                    {p.name} <span className={styles.searchDex}>#{p.number}</span>
+                    {used ? <span className={styles.searchUsedTag}> · already guessed</span> : null}
+                  </span>
+                </button>
+              </li>
             );
           })}
         </ul>

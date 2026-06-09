@@ -1,45 +1,20 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getPokedexAll } from '../api/pokedexApi';
-import { getProfileMe, getTrainingTeam } from '../api/profileApi';
-import type { TrainingTeamResponse } from '../api/types/game';
-import type { ProfileMeResponse } from '../api/types/profile';
-import { ApiError } from '../api/http';
+import { useCallback, useMemo } from 'react';
+import { useAppSelector } from '../store/hooks';
+import {
+  selectProfileMe,
+  selectRegisteredPokemonCount,
+  selectTrainingTeam,
+  selectUserCache,
+} from '../store/slices/cache/selectors';
 import { FetchStatus } from '../types/fetchStatus';
 
 export function useHomePage() {
-  const [profileMe, setProfileMe] = useState<ProfileMeResponse | null>(null);
-  const [trainingTeam, setTrainingTeam] = useState<TrainingTeamResponse | null>(null);
-  const [pokedexRegisteredCount, setPokedexRegisteredCount] = useState<number | null>(null);
-  const [status, setStatus] = useState(FetchStatus.Loading);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const refresh = useCallback(async () => {
-    setStatus(FetchStatus.Loading);
-    setErrorMessage(null);
-    try {
-      const [profile, team, pokedex] = await Promise.all([
-        getProfileMe(),
-        getTrainingTeam(),
-        getPokedexAll(),
-      ]);
-      setProfileMe(profile);
-      setTrainingTeam(team);
-      setPokedexRegisteredCount(pokedex.filter((e) => e.registeredInUserPokedex).length);
-      setStatus(FetchStatus.Success);
-    } catch (e) {
-      setProfileMe(null);
-      setTrainingTeam(null);
-      setPokedexRegisteredCount(null);
-      const msg =
-        e instanceof ApiError ? e.message : e instanceof Error ? e.message : 'Erro ao carregar.';
-      setErrorMessage(msg);
-      setStatus(FetchStatus.Error);
-    }
-  }, []);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+  const profileMe = useAppSelector(selectProfileMe);
+  const trainingTeam = useAppSelector(selectTrainingTeam);
+  const pokedexRegisteredCount = useAppSelector(selectRegisteredPokemonCount);
+  const cache = useAppSelector(selectUserCache);
+  const cacheStatus = cache.status;
+  const cacheError = cache.error;
 
   const favoriteDex = useMemo(() => {
     if (!profileMe?.favoritePokemonId) return null;
@@ -47,13 +22,17 @@ export function useHomePage() {
     return Number.isFinite(n) ? n : null;
   }, [profileMe?.favoritePokemonId]);
 
+  const refresh = useCallback(async () => {
+    /* Dados servidos pela cache hidratada no login — refresh global via auth/hydrate se necessário. */
+  }, []);
+
   return {
     profileMe,
     trainingTeam,
     pokedexRegisteredCount,
     favoriteDex,
-    status,
-    errorMessage,
+    status: cacheStatus === FetchStatus.Loading ? FetchStatus.Loading : FetchStatus.Success,
+    errorMessage: cacheError,
     refresh,
   };
 }

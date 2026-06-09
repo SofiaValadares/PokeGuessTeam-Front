@@ -36,6 +36,7 @@ export function AppHeader({ end, navEnabled = true }: AppHeaderProps) {
                     [styles.navBtn, isActive ? styles.navBtnActive : ''].filter(Boolean).join(' ')
                   }
                   aria-label="Início"
+                  title="Início"
                 >
                   <Home className={styles.navIcon} {...navIconProps} />
                 </NavLink>
@@ -44,18 +45,18 @@ export function AppHeader({ end, navEnabled = true }: AppHeaderProps) {
                   className={({ isActive }) =>
                     [styles.navBtn, isActive ? styles.navBtnActive : ''].filter(Boolean).join(' ')
                   }
-                  aria-label="PC — loja Pokémon"
-                  title="PC — loja Pokémon"
+                  aria-label="PC — armazenamento de Pokémon"
+                  title="PC — armazenamento de Pokémon"
                 >
                   <Monitor className={styles.navIcon} {...navIconProps} />
                 </NavLink>
                 <NavLink
-                  to="/area-selvagem"
+                  to="/wild-area"
                   className={({ isActive }) =>
                     [styles.navBtn, isActive ? styles.navBtnActive : ''].filter(Boolean).join(' ')
                   }
                   aria-label="Área selvagem"
-                  title="Área selvagem — captura"
+                  title="Área selvagem — capturar Pokémon"
                 >
                   <Trees className={styles.navIcon} {...navIconProps} />
                 </NavLink>
@@ -65,6 +66,7 @@ export function AppHeader({ end, navEnabled = true }: AppHeaderProps) {
                     [styles.navBtn, isActive ? styles.navBtnActive : ''].filter(Boolean).join(' ')
                   }
                   aria-label="Pokédex"
+                  title="Pokédex"
                 >
                   <BookOpen className={styles.navIcon} {...navIconProps} />
                 </NavLink>

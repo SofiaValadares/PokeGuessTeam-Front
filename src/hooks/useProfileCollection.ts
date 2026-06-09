@@ -1,33 +1,22 @@
-import { useCallback, useEffect, useState } from 'react';
-import { getProfileCollection } from '../api/profileApi';
-import type { ProfileCollectionResult } from '../api/types/profile';
-import { ApiError } from '../api/http';
+import { useMemo } from 'react';
+import type { ProfileCollectionResult } from '../services/types/profile';
+import { selectInventory, selectUserCache } from '../store/slices/cache/selectors';
+import { useAppSelector } from '../store/hooks';
 import { FetchStatus } from '../types/fetchStatus';
 
 export function useProfileCollection() {
-  const [collection, setCollection] = useState<ProfileCollectionResult | null>(null);
-  const [status, setStatus] = useState(FetchStatus.Loading);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const inventory = useAppSelector(selectInventory);
+  const cacheStatus = useAppSelector(selectUserCache).status;
 
-  const refresh = useCallback(async () => {
-    setStatus(FetchStatus.Loading);
-    setErrorMessage(null);
-    try {
-      const c = await getProfileCollection();
-      setCollection(c);
-      setStatus(FetchStatus.Success);
-    } catch (e) {
-      setCollection(null);
-      const msg =
-        e instanceof ApiError ? e.message : e instanceof Error ? e.message : 'Erro ao carregar.';
-      setErrorMessage(msg);
-      setStatus(FetchStatus.Error);
-    }
-  }, []);
+  const collection = useMemo<ProfileCollectionResult | null>(() => {
+    if (!inventory) return null;
+    return { variant: 'pokeballs', pokeballs: inventory };
+  }, [inventory]);
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  return { collection, status, errorMessage, refresh };
+  return {
+    collection,
+    status: cacheStatus === FetchStatus.Loading ? FetchStatus.Loading : FetchStatus.Success,
+    errorMessage: cacheStatus === FetchStatus.Error ? 'Erro ao carregar inventário.' : null,
+    refresh: async () => undefined,
+  };
 }

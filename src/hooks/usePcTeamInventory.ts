@@ -1,35 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ApiError } from '../api/http';
-import type { PcLineDto, PokemonDto } from '../api/types/pokemon';
-import { fetchAllPcLines } from '../lib/fetchAllPcLines';
-import { resolveCurrentMemberDex } from '../lib/pcCurrentForm';
+import { useCallback, useMemo } from 'react';
+import type { PokemonDto } from '../services/types/pokemon';
+import { resolveCurrentMemberDex } from '../lib/pokemon/pcCurrentForm';
 import { useSpeciesMeta } from './useSpeciesMeta';
+import { selectPcLines, selectUserCache } from '../store/slices/cache/selectors';
+import { useAppSelector } from '../store/hooks';
 import { FetchStatus } from '../types/fetchStatus';
 
 export function usePcTeamInventory() {
-  const [lines, setLines] = useState<PcLineDto[]>([]);
-  const [status, setStatus] = useState(FetchStatus.Loading);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setStatus(FetchStatus.Loading);
-    setErrorMessage(null);
-    try {
-      const all = await fetchAllPcLines();
-      setLines(all);
-      setStatus(FetchStatus.Success);
-    } catch (e) {
-      setLines([]);
-      const msg =
-        e instanceof ApiError ? e.message : e instanceof Error ? e.message : 'Erro ao carregar o PC.';
-      setErrorMessage(msg);
-      setStatus(FetchStatus.Error);
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const lines = useAppSelector(selectPcLines);
+  const cacheStatus = useAppSelector(selectUserCache).status;
 
   const allMemberDex = useMemo(
     () => lines.flatMap((line) => line.members),
@@ -54,8 +33,10 @@ export function usePcTeamInventory() {
     return list.sort((a, b) => a.number - b.number);
   }, [lines, speciesByDex, evolutionLevelByDex]);
 
-  const loading = status === FetchStatus.Loading || metaLoading;
-  const ready = status === FetchStatus.Success && !metaLoading;
+  const loading = cacheStatus === FetchStatus.Loading || metaLoading;
+  const ready = cacheStatus === FetchStatus.Success && !metaLoading;
+
+  const refresh = useCallback(async () => undefined, []);
 
   return {
     lines,
@@ -63,7 +44,7 @@ export function usePcTeamInventory() {
     lineCount: lines.length,
     loading,
     ready,
-    errorMessage,
-    refresh: load,
+    errorMessage: cacheStatus === FetchStatus.Error ? 'Erro ao carregar o PC.' : null,
+    refresh: async () => undefined,
   };
 }

@@ -1,5 +1,5 @@
 import type { BotMatchGuessFeedbackDto } from '../../api/types/game';
-import { guessOutcomeLabel, playerSideLabel } from '../../lib/gameLabels';
+import { guessOutcomeLabel, playerSideLabel } from '../../lib/game/labels';
 import styles from './game.module.css';
 
 type GuessLogTableProps = {

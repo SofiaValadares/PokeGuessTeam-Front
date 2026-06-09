@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TrainingTeamSlotDto } from '../../../api/types/game';
 import type { PcLineDto } from '../../../api/types/pokemon';
-import { updateTrainingTeam } from '../../../api/profileApi';
+import { submitTrainingTeam } from '../../../services/profileService';
+import { useCacheActions } from '../../../store/providers/CacheProvider';
 import { PokemonSprite } from '../../../components/PokemonSprite';
 import { usePcTeamInventory } from '../../../hooks/usePcTeamInventory';
-import { resolveCurrentMemberDex } from '../../../lib/pcCurrentForm';
+import { resolveCurrentMemberDex } from '../../../lib/pokemon/pcCurrentForm';
 import { useSpeciesMeta } from '../../../hooks/useSpeciesMeta';
 import { Button, InlineAlert } from '../../../ds';
-import { ApiError } from '../../../api/http';
+import { ApiError } from '../../../services/http';
+import { mapTrainingTeam } from '../../../model';
 import styles from '../home.module.css';
 
 type TrainingTeamEditorModalProps = {
@@ -28,19 +30,22 @@ export function TrainingTeamEditorModal({
   onClose,
   onSaved,
 }: TrainingTeamEditorModalProps) {
-  const { lines, loading, ready, errorMessage, refresh } = usePcTeamInventory();
+  const { applyTrainingTeamUpdate } = useCacheActions();
+  const { lines, loading, ready, errorMessage } = usePcTeamInventory();
   const [draft, setDraft] = useState<(number | null)[]>(Array(6).fill(null));
   const [selectedSlot, setSelectedSlot] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const wasOpenRef = useRef(false);
 
   useEffect(() => {
-    if (!open) return;
-    setDraft(slotsToKeys(currentSlots));
-    setSelectedSlot(0);
-    setSaveError(null);
-    void refresh();
-  }, [open, currentSlots, refresh]);
+    if (open && !wasOpenRef.current) {
+      setDraft(slotsToKeys(currentSlots));
+      setSelectedSlot(0);
+      setSaveError(null);
+    }
+    wasOpenRef.current = open;
+  }, [open, currentSlots]);
 
   const memberDex = useMemo(() => lines.flatMap((l) => l.members), [lines]);
   const { speciesByDex, evolutionLevelByDex } = useSpeciesMeta(memberDex);
@@ -68,7 +73,8 @@ export function TrainingTeamEditorModal({
     setSaving(true);
     setSaveError(null);
     try {
-      await updateTrainingTeam(draft);
+      const team = await submitTrainingTeam(draft);
+      applyTrainingTeamUpdate(mapTrainingTeam(team));
       onSaved();
       onClose();
     } catch (e) {

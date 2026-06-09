@@ -1,4 +1,4 @@
-import { pokemonSpriteUrl, type PokemonSpriteVariant } from '../../lib/pokemonSprites';
+import { pokemonSpriteUrl, type PokemonSpriteVariant } from '../../lib/pokemon/sprites';
 import styles from './PokemonSprite.module.css';
 
 export type PokemonSpriteProps = {

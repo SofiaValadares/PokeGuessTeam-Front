@@ -1,12 +1,12 @@
 import { useCallback, useState } from 'react';
 import { PlayerSprite } from '../../../components/PlayerSprite';
-import { PROFESSOR, RIVAL } from '../../../lib/gameCharacters';
+import { PROFESSOR, RIVAL } from '../../../lib/game/characters';
 import {
   formatIntroText,
   INTRO_DIALOGUE_BEATS,
   speakerLabel,
   type IntroSpeaker,
-} from '../../../lib/introDialogueScript';
+} from '../../../lib/intro/dialogueScript';
 import { Button } from '../../../ds';
 import styles from '../home.module.css';
 
