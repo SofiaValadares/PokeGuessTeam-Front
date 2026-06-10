@@ -17,6 +17,8 @@ type PokemonSearchFieldProps = {
   excludedDexNumbers?: Set<number>;
   /** Show the full list when opened, even with an empty query. */
   showResultsOnFocus?: boolean;
+  /** Open results below the input (better when the field sits near the top of a clipped container). */
+  resultsOpenBelow?: boolean;
   onOpen?: () => void;
   onClose?: () => void;
 };
@@ -34,6 +36,7 @@ export function PokemonSearchField({
   overlay = true,
   excludedDexNumbers,
   showResultsOnFocus = false,
+  resultsOpenBelow = false,
   onOpen,
   onClose,
 }: PokemonSearchFieldProps) {
@@ -64,8 +67,7 @@ export function PokemonSearchField({
 
   const handlePick = (pokemon: PokemonDto) => {
     if (disabled || isExcluded(pokemon)) return;
-    onSelect(pokemon);
-    onPick?.(pokemon);
+    (onPick ?? onSelect)(pokemon);
     close();
     inputRef.current?.blur();
   };
@@ -150,7 +152,15 @@ export function PokemonSearchField({
         </p>
       ) : null}
       {showResults ? (
-        <ul className={styles.searchResultsOverlay} role="listbox">
+        <ul
+          className={[
+            styles.searchResultsOverlay,
+            resultsOpenBelow ? styles.searchResultsOverlayBelow : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          role="listbox"
+        >
           {results.map((p) => {
             const used = isExcluded(p);
             return (

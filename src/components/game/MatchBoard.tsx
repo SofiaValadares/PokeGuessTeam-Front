@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { OpponentKnowledgeSlotDto } from '../../api/types/game';
 import { searchPokemon } from '../../api/pokemonApi';
 import type { PokemonDto } from '../../api/types/pokemon';
@@ -56,6 +56,7 @@ export function MatchBoard({
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PokemonDto[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const excludedDex = useMemo(() => new Set(excludedPokedexNumbers), [excludedPokedexNumbers]);
 
   const search = useCallback(
@@ -103,13 +104,17 @@ export function MatchBoard({
   const canGuess = status === 'ACTIVE' && isYourTurn && !busy && !submitting;
 
   const submitGuess = async (pokemon: PokemonDto) => {
-    if (!canGuess || excludedDex.has(pokemon.number)) return;
+    if (!canGuess || excludedDex.has(pokemon.number) || submittingRef.current) return;
+    submittingRef.current = true;
     setSubmitting(true);
     try {
       await onGuess(pokemon.number);
       setQuery('');
       setResults([]);
+    } catch {
+      /* erro mostrado pelo provider */
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
@@ -158,7 +163,6 @@ export function MatchBoard({
                 results={results}
                 selected={null}
                 onSelect={(p) => void submitGuess(p)}
-                onPick={(p) => void submitGuess(p)}
                 disabled={!canGuess}
                 excludedDexNumbers={excludedDex}
                 placeholder={

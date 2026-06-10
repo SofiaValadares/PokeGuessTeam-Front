@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { MatchSetupLayout } from '../../pages/game/shared/MatchSetupLayout';
+import teamSetupStyles from './teamSetupScreen.module.css';
 
 type TeamSetupScreenProps = {
   title?: string;
@@ -28,8 +29,10 @@ export function TeamSetupScreen({
       onBack={onBack}
       error={error}
     >
-      {extra}
-      {children}
+      <div className={teamSetupStyles.root}>
+        {extra}
+        <div className={teamSetupStyles.picker}>{children}</div>
+      </div>
     </MatchSetupLayout>
   );
 }

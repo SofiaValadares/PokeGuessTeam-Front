@@ -143,6 +143,11 @@ export type LocalMatchActionResponse = {
   turnFeedbacks: BotMatchGuessFeedbackDto[];
 };
 
+export type FriendMatchJoinRequest = {
+  joinCode: string;
+  team: number[];
+};
+
 export type FriendMatchParticipantDto = {
   userId: string;
   username: string;
@@ -172,6 +177,7 @@ export type FriendMatchStateDto = {
   startedAt: string | null;
   finishedAt: string | null;
   historyEntry: GameHistoryEntryDto | null;
+  yourReward?: MatchRewardDto | null;
   turnDeadlineAt?: string | null;
   yourTimeoutPenalties?: number;
   opponentReplacedByBot?: boolean;
@@ -180,6 +186,7 @@ export type FriendMatchStateDto = {
 export type FriendMatchActionResponse = {
   match: FriendMatchStateDto;
   turnFeedbacks: BotMatchGuessFeedbackDto[];
+  reward?: MatchRewardDto | null;
 };
 
 export type GameHistoryPageResponse = {

@@ -5,7 +5,7 @@ import headerStyles from '../ds/components/AppHeader/AppHeader.module.css';
 import styles from './authenticated-layout.module.css';
 
 function isGameRoute(pathname: string): boolean {
-  return pathname === '/game/bot' || pathname === '/game/local';
+  return pathname === '/game/bot' || pathname === '/game/local' || pathname === '/game/amigo';
 }
 
 export function AuthenticatedLayout() {

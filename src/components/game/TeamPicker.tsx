@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { Shuffle } from 'lucide-react';
 import { pickRandomDexNumbers } from '../../lib/game/pickRandomTeam';
 import type { PokemonDto } from '../../api/types/pokemon';
@@ -15,8 +15,10 @@ type TeamPickerProps = {
   minRegistered?: number;
   value: number[];
   onChange: (team: number[]) => void;
-  onSubmit: () => void;
+  onSubmit?: () => void;
   submitLabel?: string;
+  /** Substitui ou complementa o botão de continuar (ex.: criar/entrar na sala online). */
+  footer?: ReactNode;
   loading?: boolean;
   disabled?: boolean;
 };
@@ -28,6 +30,7 @@ export function TeamPicker({
   onChange,
   onSubmit,
   submitLabel = 'INICIAR PARTIDA',
+  footer,
   loading = false,
   disabled = false,
 }: TeamPickerProps) {
@@ -84,6 +87,8 @@ export function TeamPicker({
   const canSubmit =
     value.length === teamSize && !loading && !disabled && !inventoryLoading && ready;
   const canPickMore = registeredCount >= requiredRegistered;
+  const canAddPokemon =
+    registeredCount >= teamSize && value.length < teamSize && !inventoryLoading && !disabled;
 
   return (
     <div className={`${styles.teamPicker} ${styles.teamPickerFullscreen}`}>
@@ -149,6 +154,19 @@ export function TeamPicker({
           </ul>
         </div>
       </div>
+      <PokemonSearchField
+        query={query}
+        onQueryChange={setQuery}
+        results={results}
+        selected={null}
+        onSelect={addPokemon}
+        disabled={disabled || !canAddPokemon}
+        placeholder="Clica para ver ou pesquisa por nome…"
+        label="Pesquisar na Pokédex"
+        overlay
+        showResultsOnFocus
+        resultsOpenBelow
+      />
       <div className={styles.teamActions}>
         <button
           type="button"
@@ -163,30 +181,23 @@ export function TeamPicker({
           {value.length}/{teamSize}
         </span>
       </div>
-      <PokemonSearchField
-        query={query}
-        onQueryChange={setQuery}
-        results={results}
-        selected={null}
-        onSelect={addPokemon}
-        disabled={disabled || value.length >= teamSize || inventoryLoading || registeredCount === 0}
-        placeholder="Clica para ver ou pesquisa por nome…"
-        label="Pesquisar na Pokédex"
-        overlay
-        showResultsOnFocus
-      />
-      <div className={styles.teamFooter}>
-        <Button
-          type="button"
-          variant="primary"
-          size="md"
-          className={styles.teamSubmitBtn}
-          disabled={!canSubmit || !canPickMore}
-          onClick={onSubmit}
-        >
-          <span className={styles.teamBtnCaps}>{loading ? 'A INICIAR…' : submitLabel}</span>
-        </Button>
-      </div>
+      {footer || onSubmit ? (
+        <div className={styles.teamFooter}>
+          {footer}
+          {onSubmit ? (
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              className={styles.teamSubmitBtn}
+              disabled={!canSubmit || !canPickMore}
+              onClick={onSubmit}
+            >
+              <span className={styles.teamBtnCaps}>{loading ? 'A INICIAR…' : submitLabel}</span>
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

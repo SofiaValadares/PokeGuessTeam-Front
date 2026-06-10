@@ -1,6 +1,13 @@
+import {
+  parseFriendMatchActionResponse,
+  parseFriendMatchState,
+} from '../lib/game/parseFriendMatchState';
 import { ApiError, apiFetch, apiFetchJson } from './http';
 import type {
   BotMatchSetupResponse,
+  FriendMatchActionResponse,
+  FriendMatchJoinRequest,
+  FriendMatchStateDto,
   GameBotFinishRequest,
   GameFinishResponse,
   GameHistoryPageResponse,
@@ -10,6 +17,7 @@ import type {
 
 const BOT = '/api/game/bot/match';
 const LOCAL = '/api/game/local/match';
+const FRIEND = '/api/game/friend/match';
 
 export async function validateBotTeam(team: number[]): Promise<BotMatchSetupResponse> {
   return apiFetchJson(`${BOT}/team`, {
@@ -76,4 +84,62 @@ export async function deleteGameHistory(gameId: string): Promise<void> {
   await apiFetchJson<void>(`/api/game/history/${encodeURIComponent(gameId)}`, {
     method: 'DELETE',
   });
+}
+
+export async function fetchActiveFriendMatch(): Promise<FriendMatchStateDto | null> {
+  const res = await apiFetch(FRIEND, { method: 'GET' });
+  if (res.status === 204 || res.status === 404) return null;
+  if (!res.ok) {
+    const text = await res.text();
+    let body: { message?: string } | null = null;
+    try {
+      body = text ? (JSON.parse(text) as { message?: string }) : null;
+    } catch {
+      body = text ? { message: text } : null;
+    }
+    throw new ApiError(res.status, body?.message ?? res.statusText, body);
+  }
+  const raw = (await res.json()) as FriendMatchStateDto;
+  return parseFriendMatchState(raw);
+}
+
+export async function startFriendMatch(team: number[]): Promise<FriendMatchStateDto> {
+  const raw = await apiFetchJson<FriendMatchStateDto>(`${FRIEND}`, {
+    method: 'POST',
+    body: JSON.stringify({ team }),
+  });
+  return parseFriendMatchState(raw);
+}
+
+export async function joinFriendMatch(payload: FriendMatchJoinRequest): Promise<FriendMatchStateDto> {
+  const raw = await apiFetchJson<FriendMatchStateDto>(`${FRIEND}/join`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return parseFriendMatchState(raw);
+}
+
+export async function submitFriendTeam(team: number[]): Promise<FriendMatchActionResponse> {
+  const raw = await apiFetchJson<FriendMatchActionResponse>(`${FRIEND}/team`, {
+    method: 'PUT',
+    body: JSON.stringify({ team }),
+  });
+  return parseFriendMatchActionResponse(raw);
+}
+
+export async function submitFriendGuess(pokedexNumber: number): Promise<FriendMatchActionResponse> {
+  const raw = await apiFetchJson<FriendMatchActionResponse>(`${FRIEND}/guess`, {
+    method: 'POST',
+    body: JSON.stringify({ pokedexNumber }),
+  });
+  return parseFriendMatchActionResponse(raw);
+}
+
+export async function surrenderFriendMatch(): Promise<FriendMatchActionResponse> {
+  const raw = await apiFetchJson<FriendMatchActionResponse>(`${FRIEND}/surrender`, { method: 'POST' });
+  return parseFriendMatchActionResponse(raw);
+}
+
+export async function abandonFriendSetup(): Promise<void> {
+  await apiFetchJson<void>(FRIEND, { method: 'DELETE' });
 }

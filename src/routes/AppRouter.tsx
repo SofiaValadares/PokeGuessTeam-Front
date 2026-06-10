@@ -10,6 +10,7 @@ import PokedexPage from '../pages/inventory/pokedex/pokedex';
 import WildAreaPage from '../pages/inventory/wild-area/wild-area';
 import BotMatchPage from '../pages/game/bot-match/bot-match';
 import LocalMatchPage from '../pages/game/local-match/local-match';
+import FriendMatchPage from '../pages/game/friend-match/friend-match';
 import HistoricoPage from '../pages/game/historico/historico';
 import ForgotPasswordPage from '../pages/auth/forgot-password/forgot-password';
 import RegisterPage from '../pages/auth/register/register';
@@ -19,7 +20,12 @@ import { ProtectedRoute } from './guards';
 
 export function AppRouter() {
   return (
-    <BrowserRouter>
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -41,7 +47,7 @@ export function AppRouter() {
           <Route path="wild-area/gacha" element={<Navigate to="/wild-area" replace />} />
           <Route path="game/bot" element={<BotMatchPage />} />
           <Route path="game/local" element={<LocalMatchPage />} />
-          <Route path="game/amigo" element={<Navigate to="/" replace />} />
+          <Route path="game/amigo" element={<FriendMatchPage />} />
           <Route path="game/historico" element={<HistoricoPage />} />
           <Route path="game" element={<Navigate to="/" replace />} />
           <Route path="jogo" element={<Navigate to="/" replace />} />
