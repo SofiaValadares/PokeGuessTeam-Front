@@ -1,4 +1,4 @@
-import { Button } from '../../ds';
+import { Button } from '../../../../ds';
 import styles from './game.module.css';
 
 type MatchResultModalProps = {

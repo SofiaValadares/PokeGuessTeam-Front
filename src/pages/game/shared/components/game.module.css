@@ -177,6 +177,41 @@
   border-radius: var(--ds-radius-sm);
   background: var(--ds-color-bg-elevated);
   color: var(--ds-color-text-primary);
+  transition:
+    border-color var(--ds-duration-fast) var(--ds-ease-standard),
+    background-color var(--ds-duration-fast) var(--ds-ease-standard),
+    opacity var(--ds-duration-fast) var(--ds-ease-standard);
+}
+
+.searchStateHint {
+  margin: var(--ds-space-2) 0 0;
+  font-size: var(--ds-text-xs);
+  color: var(--ds-color-text-muted);
+}
+
+.pokemonSearchStateActive .searchInput {
+  border-color: var(--ds-color-accent);
+  background: var(--ds-color-bg-elevated);
+}
+
+.pokemonSearchStateActive .searchInput:focus {
+  outline: 2px solid var(--ds-color-accent-muted);
+  outline-offset: 1px;
+}
+
+.pokemonSearchStateLoading .searchInput {
+  border-color: var(--ds-color-accent);
+  background: var(--ds-color-accent-muted);
+  cursor: wait;
+  opacity: 0.92;
+}
+
+.pokemonSearchStateWaiting .searchInput {
+  border-color: var(--ds-color-border-default);
+  background: var(--ds-color-bg-base);
+  color: var(--ds-color-text-muted);
+  cursor: not-allowed;
+  opacity: 0.72;
 }
 
 .searchMeta {
@@ -316,7 +351,11 @@
 .matchLayout {
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    'clues'
+    'guess'
+    'side';
   flex: 1;
   min-height: 0;
   height: 100%;
@@ -327,28 +366,67 @@
 @media (min-width: 56rem) {
   .matchLayout {
     grid-template-columns: minmax(0, 1.35fr) minmax(14rem, 0.85fr);
-    grid-template-rows: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'clues side'
+      'guess side';
   }
 }
 
 .matchLeft {
+  grid-area: clues;
   display: flex;
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
   padding: var(--ds-space-4);
   background: var(--ds-color-bg-base);
-  border-right: 1px solid var(--ds-color-border-default);
+}
+
+.matchGuessBar {
+  grid-area: guess;
+  position: relative;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+  flex-shrink: 0;
+  padding: var(--ds-space-3) var(--ds-space-4);
+  background: var(--ds-color-bg-base);
+  border-top: 1px solid var(--ds-color-border-default);
+}
+
+@media (min-width: 56rem) {
+  .matchLeft {
+    border-right: 1px solid var(--ds-color-border-default);
+  }
+
+  .matchGuessBar {
+    border-right: 1px solid var(--ds-color-border-default);
+    padding-bottom: var(--ds-space-4);
+  }
 }
 
 .matchRight {
+  grid-area: side;
   display: flex;
   flex-direction: column;
   gap: var(--ds-space-4);
   padding: var(--ds-space-4);
   background: var(--ds-color-bg-base);
   min-height: 0;
+  max-height: 42vh;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border-top: 1px solid var(--ds-color-border-default);
+}
+
+@media (min-width: 56rem) {
+  .matchRight {
+    max-height: none;
+    overflow-y: auto;
+    border-top: none;
+  }
 }
 
 .matchLeftHead {
@@ -547,17 +625,6 @@
   background: var(--ds-color-bg-base);
   border: 1px solid var(--ds-color-border-default);
   word-break: break-word;
-}
-
-.matchGuessBar {
-  position: relative;
-  z-index: 25;
-  display: flex;
-  flex-direction: column;
-  gap: var(--ds-space-2);
-  margin-top: auto;
-  padding-top: var(--ds-space-2);
-  flex-shrink: 0;
 }
 
 .matchGuessBtn {

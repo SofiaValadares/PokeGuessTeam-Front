@@ -10,7 +10,7 @@ import { useSpeciesMeta } from '../../../hooks/useSpeciesMeta';
 import { Button, InlineAlert } from '../../../ds';
 import { ApiError } from '../../../services/http';
 import { mapTrainingTeam } from '../../../model';
-import grassStyles from '../../../components/game/grassField.module.css';
+import grassStyles from './training/grassField.module.css';
 import styles from '../home.module.css';
 
 type TrainingTeamEditorModalProps = {

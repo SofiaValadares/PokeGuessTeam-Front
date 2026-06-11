@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { LocalMatchBoard } from '../../../../components/game/LocalMatchBoard';
-import { MatchResultModal } from '../../../../components/game/MatchResultModal';
+import { LocalMatchBoard } from './LocalMatchBoard';
+import { MatchResultModal } from '../../shared/components/MatchResultModal';
 import { useMatchFinishRedirect } from '../../../../hooks/useMatchFinishRedirect';
 import { guessedDexNumbersForSide } from '../../../../lib/game/matchGuesses';
 import { gameResultLabel } from '../../../../lib/game/labels';
@@ -8,7 +8,7 @@ import { InlineAlert } from '../../../../ds';
 import { useAppDispatch } from '../../../../store/hooks';
 import { prepareNewLocalMatch } from '../slice/localMatchSlice';
 import { useLocalMatchPlay } from '../providers/LocalMatchPlayProvider';
-import layout from '../../shared/matchLayout.module.css';
+import layout from '../../shared/layout/matchLayout.module.css';
 
 export function LocalMatchPlayingView() {
   const dispatch = useAppDispatch();

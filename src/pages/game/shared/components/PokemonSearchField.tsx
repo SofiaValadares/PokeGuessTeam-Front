@@ -1,7 +1,30 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import type { PokemonDto } from '../../api/types/pokemon';
-import { PokemonSprite } from '../PokemonSprite';
+import type { PokemonDto } from '../../../../api/types/pokemon';
+import { PokemonSprite } from '../../../../components/PokemonSprite';
 import styles from './game.module.css';
+
+export type PokemonSearchFieldState = 'active' | 'loading' | 'waiting';
+
+const FIELD_STATE_META: Record<
+  PokemonSearchFieldState,
+  { placeholder: string; hint: string | null; ariaLabel: string }
+> = {
+  active: {
+    placeholder: 'Pesquisa um Pokémon e clica ou carrega Enter',
+    hint: null,
+    ariaLabel: 'Palpite — escolhe um Pokémon',
+  },
+  loading: {
+    placeholder: 'A enviar palpite…',
+    hint: 'A enviar palpite…',
+    ariaLabel: 'Palpite — a enviar',
+  },
+  waiting: {
+    placeholder: 'Não é a tua vez',
+    hint: null,
+    ariaLabel: 'Palpite — não é a tua vez',
+  },
+};
 
 type PokemonSearchFieldProps = {
   query: string;
@@ -10,6 +33,8 @@ type PokemonSearchFieldProps = {
   selected: PokemonDto | null;
   onSelect: (pokemon: PokemonDto) => void;
   onPick?: (pokemon: PokemonDto) => void;
+  /** Estado visual do palpite na partida (ativo / carregando / não é a tua vez). */
+  fieldState?: PokemonSearchFieldState;
   disabled?: boolean;
   loading?: boolean;
   placeholder?: string;
@@ -31,6 +56,7 @@ export function PokemonSearchField({
   selected,
   onSelect,
   onPick,
+  fieldState,
   disabled = false,
   loading = false,
   placeholder = 'Pesquisar um Pokémon…',
@@ -47,8 +73,19 @@ export function PokemonSearchField({
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
 
+  const resolvedState: PokemonSearchFieldState =
+    fieldState ?? (loading ? 'loading' : disabled ? 'waiting' : 'active');
+  const isActive = resolvedState === 'active';
+  const isLoading = resolvedState === 'loading';
+  const stateMeta = FIELD_STATE_META[resolvedState];
+  const inputPlaceholder = isActive
+    ? (placeholder ?? stateMeta.placeholder)
+    : stateMeta.placeholder;
+  const inputDisabled = !isActive;
+
   const hasQuery = query.trim().length > 0;
   const showResults =
+    isActive &&
     open &&
     overlay &&
     results.length > 0 &&
@@ -62,13 +99,13 @@ export function PokemonSearchField({
   }, [onClose]);
 
   const openSearch = useCallback(() => {
-    if (disabled) return;
+    if (!isActive) return;
     setOpen(true);
     onOpen?.();
-  }, [disabled, onOpen]);
+  }, [isActive, onOpen]);
 
   const handlePick = (pokemon: PokemonDto) => {
-    if (disabled || isExcluded(pokemon)) return;
+    if (!isActive || isExcluded(pokemon)) return;
     (onPick ?? onSelect)(pokemon);
     close();
     inputRef.current?.blur();
@@ -81,7 +118,7 @@ export function PokemonSearchField({
       inputRef.current?.blur();
       return;
     }
-    if (e.key !== 'Enter' || disabled) return;
+    if (e.key !== 'Enter' || !isActive) return;
     const q = query.trim().toLowerCase();
     if (!q) return;
     const exact = results.find(
@@ -115,15 +152,26 @@ export function PokemonSearchField({
   }, [open, close]);
 
   useEffect(() => {
-    if (disabled && open) {
+    if (!isActive && open) {
       close();
     }
-  }, [disabled, open, close]);
+  }, [isActive, open, close]);
+
+  const stateClass =
+    resolvedState === 'active'
+      ? styles.pokemonSearchStateActive
+      : resolvedState === 'loading'
+        ? styles.pokemonSearchStateLoading
+        : styles.pokemonSearchStateWaiting;
 
   return (
     <div
       ref={wrapRef}
-      className={[styles.pokemonSearch, overlay ? styles.pokemonSearchOverlay : '']
+      className={[
+        styles.pokemonSearch,
+        overlay ? styles.pokemonSearchOverlay : '',
+        fieldState ? stateClass : '',
+      ]
         .filter(Boolean)
         .join(' ')}
     >
@@ -141,13 +189,19 @@ export function PokemonSearchField({
         onChange={(e) => handleChange(e.target.value)}
         onFocus={openSearch}
         onKeyDown={handleKeyDown}
-        placeholder={loading ? 'A enviar palpite…' : placeholder}
-        disabled={disabled || loading}
-        aria-busy={loading}
+        placeholder={inputPlaceholder}
+        disabled={inputDisabled}
+        aria-busy={isLoading}
+        aria-label={fieldState ? stateMeta.ariaLabel : undefined}
         autoComplete="off"
       />
-      {loading ? (
-        <p className={styles.searchSelected} role="status">
+      {fieldState && stateMeta.hint ? (
+        <p className={styles.searchStateHint} role="status">
+          {stateMeta.hint}
+        </p>
+      ) : null}
+      {!fieldState && loading ? (
+        <p className={styles.searchStateHint} role="status">
           A enviar palpite…
         </p>
       ) : null}
@@ -184,7 +238,7 @@ export function PokemonSearchField({
                     .join(' ')}
                   onClick={() => handlePick(p)}
                   onMouseDown={(e) => e.preventDefault()}
-                  disabled={disabled || used}
+                  disabled={!isActive || used}
                   role="option"
                   aria-selected={selected?.id === p.id}
                   aria-disabled={used}

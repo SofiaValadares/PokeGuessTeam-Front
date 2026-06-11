@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Card, InlineAlert, PageSection, PageShell } from '../../../ds';
+import { Card, InlineAlert, PageSection, PageShell } from '../../../../ds';
 import styles from './matchSetupLayout.module.css';
 
 type MatchSetupLayoutProps = {

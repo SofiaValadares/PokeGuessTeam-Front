@@ -1,12 +1,12 @@
 import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { OpponentKnowledgeSlotDto } from '../../api/types/game';
-import { searchPokemon } from '../../api/pokemonApi';
-import type { PokemonDto } from '../../api/types/pokemon';
-import { PokemonSprite } from '../PokemonSprite';
-import { Button } from '../../ds';
+import type { OpponentKnowledgeSlotDto } from '../../../../api/types/game';
+import { searchPokemon } from '../../../../api/pokemonApi';
+import type { PokemonDto } from '../../../../api/types/pokemon';
+import { PokemonSprite } from '../../../../components/PokemonSprite';
+import { Button } from '../../../../ds';
 import { OpponentClueCard } from './OpponentClueCard';
-import { PokemonSearchField } from './PokemonSearchField';
-import { searchRegisteredPokemonList, listRegisteredPokemon } from '../../lib/pokemon/registeredPokedexSearch';
+import { PokemonSearchField, type PokemonSearchFieldState } from './PokemonSearchField';
+import { searchRegisteredPokemonList, listRegisteredPokemon } from '../../../../lib/pokemon/registeredPokedexSearch';
 import styles from './game.module.css';
 
 export type MatchBoardProps = {
@@ -107,7 +107,15 @@ export function MatchBoard({
   }, [query, search]);
 
   const sending = submitting || guessLoading;
-  const canGuess = status === 'ACTIVE' && isYourTurn && !busy && !sending;
+
+  const guessFieldState = useMemo((): PokemonSearchFieldState => {
+    if (status !== 'ACTIVE') return 'waiting';
+    if (sending) return 'loading';
+    if (isYourTurn && !busy) return 'active';
+    return 'waiting';
+  }, [status, sending, isYourTurn, busy]);
+
+  const canGuess = guessFieldState === 'active';
 
   const submitGuess = async (pokemon: PokemonDto) => {
     if (!canGuess || excludedDex.has(pokemon.number) || submittingRef.current) return;
@@ -161,32 +169,31 @@ export function MatchBoard({
             ))}
           </div>
 
-          {status === 'ACTIVE' ? (
-            <div className={styles.matchGuessBar}>
-              <PokemonSearchField
-                query={query}
-                onQueryChange={handleQueryChange}
-                results={results}
-                selected={null}
-                onSelect={(p) => void submitGuess(p)}
-                disabled={!canGuess && !sending}
-                loading={sending}
-                excludedDexNumbers={excludedDex}
-                placeholder={
-                  registeredPokedexOnly
-                    ? 'Clica para ver a Pokédex ou pesquisa por nome'
-                    : 'Pesquisa um Pokémon e clica ou carrega Enter'
-                }
-                overlay
-                showResultsOnFocus={Boolean(registeredPokedexOnly)}
-                onOpen={handleSearchOpen}
-                onClose={handleSearchClose}
-              />
-            </div>
-          ) : (
-            <p className={styles.matchFinishedBanner}>{finishedMessage ?? 'Partida terminada.'}</p>
-          )}
         </section>
+
+        {status === 'ACTIVE' ? (
+          <div className={styles.matchGuessBar}>
+            <PokemonSearchField
+              query={query}
+              onQueryChange={handleQueryChange}
+              results={results}
+              selected={null}
+              onSelect={(p) => void submitGuess(p)}
+              fieldState={guessFieldState}
+              excludedDexNumbers={excludedDex}
+              label="Palpite"
+              placeholder={
+                registeredPokedexOnly
+                  ? 'Clica para ver a Pokédex ou pesquisa por nome'
+                  : undefined
+              }
+              overlay
+              showResultsOnFocus={Boolean(registeredPokedexOnly?.length)}
+              onOpen={handleSearchOpen}
+              onClose={handleSearchClose}
+            />
+          </div>
+        ) : null}
 
         <aside className={styles.matchRight} aria-label="Controlo de turnos">
           <h2 className={styles.matchPanelTitle}>Controlo de turnos</h2>
@@ -198,9 +205,11 @@ export function MatchBoard({
                 isYourTurn ? styles.turnBannerActive : styles.turnBannerWait,
               ].join(' ')}
             >
-              {isYourTurn
-                ? 'A tua vez — escolhe um Pokémon na pesquisa.'
-                : `À espera de ${opponentName}.`}
+              {guessLoading
+                ? 'A enviar palpite…'
+                : isYourTurn
+                  ? 'A tua vez — escolhe um Pokémon na pesquisa.'
+                  : `À espera de ${opponentName}.`}
             </p>
           ) : null}
 
@@ -208,7 +217,9 @@ export function MatchBoard({
             <div
               className={[
                 styles.matchPlayerCard,
-                isYourTurn && status === 'ACTIVE' ? styles.matchPlayerCardActive : '',
+                isYourTurn && !guessLoading && status === 'ACTIVE'
+                  ? styles.matchPlayerCardActive
+                  : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
@@ -228,7 +239,9 @@ export function MatchBoard({
             <div
               className={[
                 styles.matchPlayerCard,
-                !isYourTurn && status === 'ACTIVE' ? styles.matchPlayerCardActive : '',
+                (!isYourTurn || guessLoading) && status === 'ACTIVE'
+                  ? styles.matchPlayerCardActive
+                  : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
@@ -266,6 +279,10 @@ export function MatchBoard({
               ))}
             </ul>
           </section>
+
+          {status !== 'ACTIVE' ? (
+            <p className={styles.matchFinishedBanner}>{finishedMessage ?? 'Partida terminada.'}</p>
+          ) : null}
 
           {status === 'ACTIVE' ? (
             <div className={styles.matchActionsFooter}>

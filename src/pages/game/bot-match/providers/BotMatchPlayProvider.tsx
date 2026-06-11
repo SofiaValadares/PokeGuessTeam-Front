@@ -28,7 +28,6 @@ import type { PokemonDto } from '../../../../api/types/pokemon';
 import {
   appendGuessLog,
   clearGuessLog,
-  mergePokemonDex,
   setActiveBotGuess,
   setBotBusy,
   setBusy,
@@ -37,6 +36,8 @@ import {
   setMatchView,
   setPhase,
 } from '../slice/botMatchSlice';
+import { mergePokemonDex } from '../../shared/slice/matchDexSlice';
+import { selectMatchDex } from '../../shared/slice/matchDexSelectors';
 import { selectBotMatch } from '../slice/botMatchSelectors';
 import { recordToMap } from '../../../../lib/game/pokemonDexMaps';
 
@@ -68,6 +69,7 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
   const dispatch = useAppDispatch();
   const { applyMatchHistory, syncMatchRewards } = useCacheActions();
   const botMatch = useAppSelector(selectBotMatch);
+  const { pokemonByDex } = useAppSelector(selectMatchDex);
   const { availablePokemon: registeredPokemon } = useRegisteredPokedexPokemon();
 
   const registeredDex = useMemo(
@@ -84,23 +86,23 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
       historyEntry: GameHistoryEntry | null = null,
       dexMap?: Map<number, Pokemon>,
     ) => {
-      const map = dexMap ?? recordToMap(botMatch.pokemonByDex);
+      const map = dexMap ?? recordToMap(pokemonByDex);
       if (map.size === 0) return;
       dispatch(setMatchView(toBotMatchView(state, map, historyEntry)));
     },
-    [botMatch.pokemonByDex, dispatch],
+    [pokemonByDex, dispatch],
   );
 
   const applyDexForView = useCallback(
     async (state: ClientMatchState, historyEntry: GameHistoryEntry | null = null) => {
-      const dexMap = await resolveMatchDexMap(botMatch.pokemonByDex, state);
-      const merged = mergeDexRecords(botMatch.pokemonByDex, dexMap);
-      if (Object.keys(merged).length !== Object.keys(botMatch.pokemonByDex).length) {
+      const dexMap = await resolveMatchDexMap(pokemonByDex, state);
+      const merged = mergeDexRecords(pokemonByDex, dexMap);
+      if (Object.keys(merged).length !== Object.keys(pokemonByDex).length) {
         dispatch(mergePokemonDex(merged));
       }
       syncView(state, historyEntry, dexMap);
     },
-    [botMatch.pokemonByDex, dispatch, syncView],
+    [pokemonByDex, dispatch, syncView],
   );
 
   const finishOnServer = useCallback(
@@ -122,7 +124,7 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
 
   const pickBotGuess = useCallback(
     (state: ClientMatchState) => {
-      const dexMap = recordToMap(botMatch.pokemonByDex);
+      const dexMap = recordToMap(pokemonByDex);
       const pool = registeredPokemon;
       if (pool.length === 0 || dexMap.size === 0) return null;
 
@@ -138,12 +140,12 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
       if (remaining.length === 0) return null;
       return remaining[Math.floor(Math.random() * remaining.length)] ?? null;
     },
-    [botMatch.pokemonByDex, registeredPokemon],
+    [pokemonByDex, registeredPokemon],
   );
 
   const runBotTurns = useCallback(
     async (initial: ClientMatchState) => {
-      if (Object.keys(botMatch.pokemonByDex).length === 0 || botRunningRef.current) return;
+      if (Object.keys(pokemonByDex).length === 0 || botRunningRef.current) return;
       botRunningRef.current = true;
       dispatch(setBotBusy(true));
 
@@ -179,20 +181,20 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
         dispatch(setBotBusy(false));
       }
     },
-    [applyDexForView, botMatch.pokemonByDex, dispatch, finishOnServer, pickBotGuess],
+    [applyDexForView, pokemonByDex, dispatch, finishOnServer, pickBotGuess],
   );
 
   runBotTurnsRef.current = runBotTurns;
 
   useEffect(() => {
-    if (botMatch.phase !== 'playing' || Object.keys(botMatch.pokemonByDex).length === 0) return;
+    if (botMatch.phase !== 'playing' || Object.keys(pokemonByDex).length === 0) return;
     const state = botMatch.clientState;
     if (!state || state.status !== 'ACTIVE' || state.currentTurn !== 'OPPONENT') return;
     if (botRunningRef.current) return;
     void runBotTurnsRef.current(state);
   }, [
     botMatch.phase,
-    botMatch.pokemonByDex,
+    pokemonByDex,
     botMatch.clientState,
   ]);
 
@@ -208,10 +210,10 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
 
   useEffect(() => {
     if (botMatch.phase !== 'playing' || !botMatch.clientState) return;
-    if (Object.keys(botMatch.pokemonByDex).length === 0) return;
+    if (Object.keys(pokemonByDex).length === 0) return;
 
     const state = botMatch.clientState;
-    const map = recordToMap(botMatch.pokemonByDex);
+    const map = recordToMap(pokemonByDex);
     const missingDex = !dexMapHasAll(state, map);
     const missingView = !botMatch.matchView || botMatch.matchView.matchId !== state.matchId;
 
@@ -222,12 +224,12 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
     botMatch.clientState,
     botMatch.matchView,
     botMatch.phase,
-    botMatch.pokemonByDex,
+    pokemonByDex,
   ]);
 
   const guess = useCallback(
     async (dex: number) => {
-      const { clientState, botBusy, pokemonByDex } = botMatch;
+      const { clientState, botBusy } = botMatch;
       if (!clientState || Object.keys(pokemonByDex).length === 0 || botBusy || clientState.currentTurn !== 'HOST') {
         return;
       }
@@ -243,7 +245,7 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
         });
         const { feedback, state } = applyGuess(clientState, 'HOST', pokemon);
         dexMap = await resolveMatchDexMap(mergeDexRecords(pokemonByDex, dexMap), state);
-        dispatch(mergePokemonDex(mergeDexRecords(botMatch.pokemonByDex, dexMap)));
+        dispatch(mergePokemonDex(mergeDexRecords(pokemonByDex, dexMap)));
         dispatch(setClientState(state));
         syncView(state, null, dexMap);
         dispatch(appendGuessLog([feedback]));
@@ -257,7 +259,7 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
         dispatch(setBusy(false));
       }
     },
-    [botMatch, dispatch, finishOnServer, registeredDex, syncView],
+    [botMatch, dispatch, finishOnServer, pokemonByDex, registeredDex, syncView],
   );
 
   const surrender = useCallback(async () => {

@@ -135,6 +135,13 @@ export async function submitFriendGuess(pokedexNumber: number): Promise<FriendMa
   return parseFriendMatchActionResponse(raw);
 }
 
+export async function skipFriendTurn(): Promise<FriendMatchActionResponse> {
+  const raw = await apiFetchJson<FriendMatchActionResponse>(`${FRIEND}/skip`, {
+    method: 'POST',
+  });
+  return parseFriendMatchActionResponse(raw);
+}
+
 export async function surrenderFriendMatch(): Promise<FriendMatchActionResponse> {
   const raw = await apiFetchJson<FriendMatchActionResponse>(`${FRIEND}/surrender`, { method: 'POST' });
   return parseFriendMatchActionResponse(raw);

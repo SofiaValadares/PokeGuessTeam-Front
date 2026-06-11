@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { RIVAL } from '../../../../lib/game/characters';
-import { BotMatchBoard } from '../../../../components/game/BotMatchBoard';
-import { BotGuessOverlay } from '../../../../components/game/BotGuessOverlay';
-import { MatchResultModal } from '../../../../components/game/MatchResultModal';
+import { BotMatchBoard } from './BotMatchBoard';
+import { BotGuessOverlay } from './BotGuessOverlay';
+import { MatchResultModal } from '../../shared/components/MatchResultModal';
 import { useMatchFinishRedirect } from '../../../../hooks/useMatchFinishRedirect';
 import { guessedDexNumbersForSide } from '../../../../lib/game/matchGuesses';
 import { gameResultLabel } from '../../../../lib/game/labels';
@@ -10,7 +10,7 @@ import { InlineAlert } from '../../../../ds';
 import { useAppDispatch } from '../../../../store/hooks';
 import { prepareNewBotMatch } from '../slice/botMatchSlice';
 import { useBotMatchPlay } from '../providers/BotMatchPlayProvider';
-import layout from '../../shared/matchLayout.module.css';
+import layout from '../../shared/layout/matchLayout.module.css';
 
 export function BotMatchPlayingView() {
   const dispatch = useAppDispatch();

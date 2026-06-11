@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { PokemonSprite } from '../../../../components/PokemonSprite';
-import grassStyles from '../../../../components/game/grassField.module.css';
+import grassStyles from './grassField.module.css';
 import type { TrainingSlotView } from '../../types/trainingSlot';
 import styles from './training-team.module.css';
 

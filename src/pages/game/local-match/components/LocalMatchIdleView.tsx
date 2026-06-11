@@ -2,7 +2,7 @@ import { accountDisplayName } from '../../../../auth/accountDisplay';
 import { useAuth } from '../../../../store/providers/AuthProvider';
 import { LOCAL_OPPONENT_NAME_MIN } from '../../../../lib/game/constants';
 import { Button, TextField } from '../../../../ds';
-import { MatchSetupLayout } from '../../shared/MatchSetupLayout';
+import { MatchSetupLayout } from '../../shared/layout/MatchSetupLayout';
 import { useLocalMatchSetup } from '../providers/LocalMatchSetupProvider';
 import styles from './local-match-idle.module.css';
 

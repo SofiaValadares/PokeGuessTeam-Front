@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { accountDisplayName } from '../../../../auth/accountDisplay';
 import { useAuth } from '../../../../store/providers/AuthProvider';
-import { FriendMatchBoard } from '../../../../components/game/FriendMatchBoard';
-import { MatchResultModal } from '../../../../components/game/MatchResultModal';
+import { FriendMatchBoard } from './FriendMatchBoard';
+import { MatchResultModal } from '../../shared/components/MatchResultModal';
 import { useMatchFinishRedirect } from '../../../../hooks/useMatchFinishRedirect';
 import { guessedDexNumbersForSide } from '../../../../lib/game/matchGuesses';
 import { gameResultLabel } from '../../../../lib/game/labels';
@@ -18,11 +18,11 @@ import {
 import { FriendMatchResumeBanner } from './FriendMatchResumeBanner';
 import { FriendMatchSyncAction } from './FriendMatchSyncAction';
 import styles from './friend-match.module.css';
-import layout from '../../shared/matchLayout.module.css';
+import layout from '../../shared/layout/matchLayout.module.css';
 
 export function FriendMatchPlayingView() {
   const { me } = useAuth();
-  const { match, finishReward, guessSending, busy, error, guess, surrender, clearMatch } =
+  const { match, finishReward, guessSending, busy, error, guess, surrender, dismissFinishedMatch } =
     useFriendMatch();
   const playerName = accountDisplayName(me);
 
@@ -33,7 +33,7 @@ export function FriendMatchPlayingView() {
   const { secondsLeft, goHomeNow } = useMatchFinishRedirect(
     showResultModal,
     true,
-    clearMatch,
+    dismissFinishedMatch,
     FINISH_MODAL_SECONDS,
   );
 
@@ -65,6 +65,23 @@ export function FriendMatchPlayingView() {
     return [...resultLines, '—', 'Recompensas:', ...rewardLines];
   }, [match?.historyEntry, finishReward, yourResult]);
 
+  const isYourTurn = Boolean(
+    match &&
+      match.status === 'ACTIVE' &&
+      match.currentTurn === match.yourSide &&
+      !busy &&
+      !pendingServerFinish,
+  );
+
+  const opponentTurnActive = Boolean(
+    match &&
+      match.status === 'ACTIVE' &&
+      match.currentTurn !== match.yourSide &&
+      !matchEnded &&
+      !busy &&
+      !showResultModal,
+  );
+
   if (!match) {
     return (
       <div className={layout.matchScreen}>
@@ -72,21 +89,6 @@ export function FriendMatchPlayingView() {
       </div>
     );
   }
-
-  const isYourTurn =
-    match.status === 'ACTIVE' &&
-    match.currentTurn === match.yourSide &&
-    !busy &&
-    !guessSending &&
-    !pendingServerFinish;
-
-  const opponentTurnActive =
-    match.status === 'ACTIVE' &&
-    match.currentTurn !== match.yourSide &&
-    !matchEnded &&
-    !busy &&
-    !guessSending &&
-    !showResultModal;
 
   const youTriggeredFinalResponse =
     match.status === 'ACTIVE' &&
@@ -133,12 +135,6 @@ export function FriendMatchPlayingView() {
           </p>
         ) : null}
 
-        {opponentTurnActive ? (
-          <p className="ds-body-muted" role="status">
-            {opponentName} está a pensar… Carrega em Atualizar partida quando quiseres ver se é a tua vez.
-          </p>
-        ) : null}
-
         {matchEnded && resultReady && yourResult === 'DESISTENCE' ? (
           <p className="ds-body-muted" role="status">
             Desististe da partida.
@@ -180,6 +176,7 @@ export function FriendMatchPlayingView() {
                   mode="refresh"
                   className={styles.matchBoardSyncAction}
                   label={opponentTurnActive ? 'Verificar se é a minha vez' : 'Atualizar partida'}
+                  disabled={!opponentTurnActive}
                 />
               ) : null
             }

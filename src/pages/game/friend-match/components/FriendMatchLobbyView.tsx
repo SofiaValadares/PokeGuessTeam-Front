@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { LogIn, Plus } from 'lucide-react';
-import { TeamPicker } from '../../../../components/game/TeamPicker';
-import { TeamSetupScreen } from '../../../../components/game/TeamSetupScreen';
+import { TeamPicker } from '../../shared/components/TeamPicker';
+import { TeamSetupScreen } from '../../shared/components/TeamSetupScreen';
 import { Button, ConfirmModal, TextField } from '../../../../ds';
 import { useFriendMatch } from '../providers/FriendMatchProvider';
 import { useFriendMatchDex } from '../providers/FriendMatchDexProvider';

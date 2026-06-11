@@ -27,7 +27,6 @@ export function readPersistedBotMatch(): BotMatchSliceState | null {
       clientState: data.clientState,
       matchView: data.matchView,
       guessLog: data.guessLog ?? [],
-      loadingDex: true,
     };
   } catch {
     return null;

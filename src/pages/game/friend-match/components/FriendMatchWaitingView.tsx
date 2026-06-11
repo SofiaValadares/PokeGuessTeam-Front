@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Copy } from 'lucide-react';
-import { MatchSetupLayout } from '../../shared/MatchSetupLayout';
+import { MatchSetupLayout } from '../../shared/layout/MatchSetupLayout';
 import { useFriendMatch } from '../providers/FriendMatchProvider';
 import { FriendMatchResumeBanner } from './FriendMatchResumeBanner';
 import { FriendMatchSyncAction } from './FriendMatchSyncAction';

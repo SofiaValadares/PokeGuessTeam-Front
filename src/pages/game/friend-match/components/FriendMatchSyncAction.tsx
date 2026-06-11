@@ -11,9 +11,15 @@ type FriendMatchSyncActionProps = {
   mode: 'start' | 'refresh';
   label?: string;
   className?: string;
+  disabled?: boolean;
 };
 
-export function FriendMatchSyncAction({ mode, label, className }: FriendMatchSyncActionProps) {
+export function FriendMatchSyncAction({
+  mode,
+  label,
+  className,
+  disabled = false,
+}: FriendMatchSyncActionProps) {
   const { syncMatch, syncing, syncMessage, clearSyncMessage } = useFriendMatch();
   const [helpOpen, setHelpOpen] = useState(false);
 
@@ -28,7 +34,7 @@ export function FriendMatchSyncAction({ mode, label, className }: FriendMatchSyn
           variant="primary"
           size="md"
           className={styles.syncActionBtn}
-          disabled={syncing}
+          disabled={syncing || disabled}
           onClick={() => {
             clearSyncMessage();
             void syncMatch();
@@ -54,7 +60,7 @@ export function FriendMatchSyncAction({ mode, label, className }: FriendMatchSyn
       ) : null}
 
       {syncMessage ? (
-        <InlineAlert tone={syncMessage.tone} role="status">
+        <InlineAlert tone="error" role="status">
           {syncMessage.text}
         </InlineAlert>
       ) : null}
