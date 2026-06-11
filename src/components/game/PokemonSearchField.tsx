@@ -11,6 +11,7 @@ type PokemonSearchFieldProps = {
   onSelect: (pokemon: PokemonDto) => void;
   onPick?: (pokemon: PokemonDto) => void;
   disabled?: boolean;
+  loading?: boolean;
   placeholder?: string;
   label?: string;
   overlay?: boolean;
@@ -31,6 +32,7 @@ export function PokemonSearchField({
   onSelect,
   onPick,
   disabled = false,
+  loading = false,
   placeholder = 'Pesquisar um Pokémon…',
   label,
   overlay = true,
@@ -139,10 +141,16 @@ export function PokemonSearchField({
         onChange={(e) => handleChange(e.target.value)}
         onFocus={openSearch}
         onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        disabled={disabled}
+        placeholder={loading ? 'A enviar palpite…' : placeholder}
+        disabled={disabled || loading}
+        aria-busy={loading}
         autoComplete="off"
       />
+      {loading ? (
+        <p className={styles.searchSelected} role="status">
+          A enviar palpite…
+        </p>
+      ) : null}
       {selected ? (
         <p className={styles.searchSelected}>
           <PokemonSprite dex={selected.number} name={selected.name} size={32} />

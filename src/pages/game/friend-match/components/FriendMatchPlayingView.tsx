@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { accountDisplayName } from '../../../../auth/accountDisplay';
 import { useAuth } from '../../../../store/providers/AuthProvider';
-import { BotGuessOverlay } from '../../../../components/game/BotGuessOverlay';
 import { FriendMatchBoard } from '../../../../components/game/FriendMatchBoard';
 import { MatchResultModal } from '../../../../components/game/MatchResultModal';
 import { useMatchFinishRedirect } from '../../../../hooks/useMatchFinishRedirect';
@@ -20,7 +19,7 @@ import layout from '../../shared/matchLayout.module.css';
 
 export function FriendMatchPlayingView() {
   const { me } = useAuth();
-  const { match, finishReward, activeOpponentGuess, busy, error, guess, surrender, clearMatch } =
+  const { match, finishReward, guessSending, busy, error, guess, surrender, clearMatch } =
     useFriendMatch();
   const playerName = accountDisplayName(me);
 
@@ -75,18 +74,16 @@ export function FriendMatchPlayingView() {
     match.status === 'ACTIVE' &&
     match.currentTurn === match.yourSide &&
     !busy &&
+    !guessSending &&
     !pendingServerFinish;
 
-  const opponentGuessOverlay =
-    activeOpponentGuess !== null && match.currentTurn !== match.yourSide;
-
   const opponentTurnActive =
-    opponentGuessOverlay ||
-    (match.status === 'ACTIVE' &&
-      match.currentTurn !== match.yourSide &&
-      !matchEnded &&
-      !busy &&
-      !showResultModal);
+    match.status === 'ACTIVE' &&
+    match.currentTurn !== match.yourSide &&
+    !matchEnded &&
+    !busy &&
+    !guessSending &&
+    !showResultModal;
 
   const youTriggeredFinalResponse =
     match.status === 'ACTIVE' &&
@@ -105,14 +102,6 @@ export function FriendMatchPlayingView() {
         .filter(Boolean)
         .join(' ')}
     >
-      {activeOpponentGuess ? (
-        <BotGuessOverlay
-          key={activeOpponentGuess.id}
-          guess={activeOpponentGuess}
-          opponentName={opponentName}
-        />
-      ) : null}
-
       <MatchResultModal
         open={showResultModal}
         lines={finishedLines}
@@ -138,7 +127,7 @@ export function FriendMatchPlayingView() {
         </p>
       ) : null}
 
-      {opponentTurnActive && !activeOpponentGuess && match.status === 'ACTIVE' ? (
+      {opponentTurnActive ? (
         <p className="ds-body-muted" role="status">
           {opponentName} está a pensar…
         </p>
@@ -174,7 +163,8 @@ export function FriendMatchPlayingView() {
             opponentHitsOnMyTeam={match.opponentHitsOnYourTeam}
             onGuess={guess}
             onSurrender={() => void surrender()}
-            busy={busy || opponentGuessOverlay || pendingServerFinish}
+            busy={busy || guessSending || pendingServerFinish}
+            guessLoading={guessSending}
             excludedPokedexNumbers={excludedGuesses}
             playerTheme={opponentTurnActive ? 'waiting' : 'default'}
           />

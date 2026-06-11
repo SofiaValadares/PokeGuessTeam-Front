@@ -145,23 +145,6 @@ export type GameHistoryPageResponse = {
   last: boolean;
 };
 
-export type MatchRealtimeEventType =
-  | 'PLAYER_GUESS'
-  | 'MATCH_STATE'
-  | 'TURN_TIMER'
-  | 'MATCH_FINISHED';
-
-export type MatchRealtimeMessage = {
-  type: MatchRealtimeEventType;
-  matchId: string;
-  friendMatch?: FriendMatchStateDto;
-  feedback?: BotMatchGuessFeedbackDto;
-  currentTurn?: MatchPlayerSide;
-  turnDeadlineAt?: string;
-  turnTimeoutSeconds?: number;
-  message?: string;
-};
-
 export type GameMetaResponse = {
   name: string;
   summary: string;

@@ -23,6 +23,7 @@ export type MatchBoardProps = {
   onGuess: (pokedexNumber: number) => Promise<void>;
   onSurrender: () => void;
   busy?: boolean;
+  guessLoading?: boolean;
   finishedMessage?: string | null;
   playerAvatarDex?: number | null;
   opponentAvatarDex?: number | null;
@@ -46,6 +47,7 @@ export function MatchBoard({
   onGuess,
   onSurrender,
   busy = false,
+  guessLoading = false,
   finishedMessage,
   playerAvatarDex,
   opponentAvatarDex,
@@ -101,7 +103,8 @@ export function MatchBoard({
     return () => window.clearTimeout(t);
   }, [query, search]);
 
-  const canGuess = status === 'ACTIVE' && isYourTurn && !busy && !submitting;
+  const sending = submitting || guessLoading;
+  const canGuess = status === 'ACTIVE' && isYourTurn && !busy && !sending;
 
   const submitGuess = async (pokemon: PokemonDto) => {
     if (!canGuess || excludedDex.has(pokemon.number) || submittingRef.current) return;
@@ -163,7 +166,8 @@ export function MatchBoard({
                 results={results}
                 selected={null}
                 onSelect={(p) => void submitGuess(p)}
-                disabled={!canGuess}
+                disabled={!canGuess && !sending}
+                loading={sending}
                 excludedDexNumbers={excludedDex}
                 placeholder={
                   registeredPokedexOnly
