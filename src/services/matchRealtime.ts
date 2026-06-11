@@ -12,9 +12,8 @@ type SocketListeners = {
 
 const DISCONNECT_DELAY_MS = process.env.NODE_ENV === 'production' ? 150 : 1000;
 
-/** CRA proxy: WebSocket costuma falhar; polling + cookie no :3000 funciona. */
-const SOCKET_TRANSPORTS: ('polling' | 'websocket')[] =
-  process.env.NODE_ENV === 'development' ? ['polling'] : ['polling', 'websocket'];
+/** Em produção usa só polling (Vercel/Render não expõem WS de forma fiável). */
+const SOCKET_TRANSPORTS: ('polling' | 'websocket')[] = ['polling'];
 
 let sharedSocket: MatchSocket | null = null;
 let socketRefCount = 0;

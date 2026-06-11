@@ -5,7 +5,7 @@ import { useFriendMatch } from '../providers/FriendMatchProvider';
 import styles from './friend-match.module.css';
 
 export function FriendMatchWaitingView() {
-  const { match, abandonAndGoHome } = useFriendMatch();
+  const { match, busy, error, clearError, refreshMatch, abandonAndGoHome } = useFriendMatch();
   const [copied, setCopied] = useState(false);
 
   if (!match) return null;
@@ -76,6 +76,26 @@ export function FriendMatchWaitingView() {
                 ? 'A preparar o duelo…'
                 : `${opponentName} ainda não confirmou a equipe…`}
         </p>
+
+        {error ? (
+          <p className="ds-body-muted" role="alert">
+            {error}
+          </p>
+        ) : null}
+
+        {bothReady ? (
+          <button
+            type="button"
+            className={styles.setupCodeCopyBtn}
+            disabled={busy}
+            onClick={() => {
+              clearError();
+              void refreshMatch();
+            }}
+          >
+            {busy ? 'A atualizar…' : 'Atualizar estado'}
+          </button>
+        ) : null}
 
         <div className={styles.playersList}>
           <span

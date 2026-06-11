@@ -61,6 +61,7 @@ type FriendMatchContextValue = {
   busy: boolean;
   error: string | null;
   clearError: () => void;
+  refreshMatch: () => Promise<void>;
   createRoom: (team: number[]) => Promise<void>;
   joinRoom: (joinCode: string, team: number[]) => Promise<void>;
   guess: (pokedexNumber: number) => Promise<void>;
@@ -188,7 +189,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
     });
   }, [applyRealtimeMessage]);
 
-  const refreshMatch = useCallback(async () => {
+  const refreshMatch = useCallback(async (options?: { showErrors?: boolean }) => {
     if (
       refreshInFlightRef.current ||
       showingResultsRef.current ||
@@ -205,8 +206,10 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
         clearMatchRef.current?.();
         setError('A partida já não existe (servidor reiniciado ou sala fechada).');
       }
-    } catch {
-      /* ignora falhas de polling */
+    } catch (err) {
+      if (options?.showErrors) {
+        setError(toFriendlyUserMessage(err, 'Não foi possível atualizar a partida.'));
+      }
     } finally {
       refreshInFlightRef.current = false;
     }
@@ -247,17 +250,36 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
 
   const phase = derivePhase(match);
   const waitingGuestUserId = match?.guest?.userId ?? null;
+  const bothTeamsReady =
+    Boolean(match?.host.teamReady) && Boolean(match?.guest?.teamReady);
 
   useEffect(() => {
     if (phase !== 'waiting') return;
 
+    const pollMs = waitingGuestUserId ? (bothTeamsReady ? 800 : 1200) : 2500;
+
     void refreshMatch();
     const intervalId = window.setInterval(() => {
       void refreshMatch();
-    }, 2500);
+    }, pollMs);
 
     return () => window.clearInterval(intervalId);
-  }, [phase, match?.matchId, waitingGuestUserId, refreshMatch]);
+  }, [phase, match?.matchId, waitingGuestUserId, bothTeamsReady, refreshMatch]);
+
+  useEffect(() => {
+    if (phase !== 'waiting' || !bothTeamsReady) return;
+
+    const timeoutId = window.setTimeout(() => {
+      if (matchStatusRef.current === 'SETUP') {
+        void refreshMatch({ showErrors: true });
+        setError(
+          'A partida não iniciou. Confirma que entraste com outra conta, que ambos têm 6 Pokémon e tenta atualizar.',
+        );
+      }
+    }, 12_000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [phase, bothTeamsReady, match?.matchId, refreshMatch]);
 
   useEffect(() => {
     if (phase !== 'playing' || match?.status !== 'ACTIVE') return;
@@ -321,6 +343,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       await runAction(async () => {
         const created = await startFriendMatch(team);
         setMatch(created);
+        await refreshMatch();
       });
     },
     [runAction],
@@ -336,9 +359,12 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       await runAction(async () => {
         const joined = await joinFriendMatch({ joinCode: normalized, team });
         setMatch(joined);
+        if (joined.status === 'SETUP') {
+          await refreshMatch();
+        }
       });
     },
-    [runAction],
+    [runAction, refreshMatch],
   );
 
   const guess = useCallback(async (pokedexNumber: number) => {
@@ -453,6 +479,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       busy,
       error,
       clearError: () => setError(null),
+      refreshMatch: () => refreshMatch({ showErrors: true }),
       createRoom,
       joinRoom,
       guess,
@@ -468,6 +495,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       activeOpponentGuess,
       busy,
       error,
+      refreshMatch,
       createRoom,
       joinRoom,
       guess,
