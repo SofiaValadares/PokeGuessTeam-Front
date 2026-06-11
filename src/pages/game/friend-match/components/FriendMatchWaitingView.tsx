@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { Copy } from 'lucide-react';
 import { MatchSetupLayout } from '../../shared/MatchSetupLayout';
 import { useFriendMatch } from '../providers/FriendMatchProvider';
+import { FriendMatchSyncAction } from './FriendMatchSyncAction';
 import styles from './friend-match.module.css';
 
 export function FriendMatchWaitingView() {
-  const { match, busy, error, clearError, refreshMatch, abandonAndGoHome } = useFriendMatch();
+  const { match, error, abandonAndGoHome } = useFriendMatch();
   const [copied, setCopied] = useState(false);
 
   if (!match) return null;
@@ -45,7 +46,7 @@ export function FriendMatchWaitingView() {
     : waitingForOpponentTeam
       ? 'A tua equipe está pronta. Aguarda o adversário entrar na sala.'
       : bothReady
-        ? 'Ambos na sala — a partida vai começar em instantes.'
+        ? 'Ambos na sala — carrega em Iniciar partida quando estiveres pronto.'
         : 'Aguarda o adversário entrar na sala.';
 
   return (
@@ -73,7 +74,7 @@ export function FriendMatchWaitingView() {
             : waitingForOpponentTeam
               ? `${opponentName} ainda está a montar a equipe…`
               : bothReady
-                ? 'A preparar o duelo…'
+                ? 'Pronto para começar — usa o botão abaixo.'
                 : `${opponentName} ainda não confirmou a equipe…`}
         </p>
 
@@ -83,19 +84,10 @@ export function FriendMatchWaitingView() {
           </p>
         ) : null}
 
-        {bothReady ? (
-          <button
-            type="button"
-            className={styles.setupCodeCopyBtn}
-            disabled={busy}
-            onClick={() => {
-              clearError();
-              void refreshMatch();
-            }}
-          >
-            {busy ? 'A atualizar…' : 'Atualizar estado'}
-          </button>
-        ) : null}
+        <FriendMatchSyncAction
+          mode="start"
+          label={waitingForGuest ? 'Verificar convidado' : 'Iniciar partida'}
+        />
 
         <div className={styles.playersList}>
           <span

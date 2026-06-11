@@ -15,6 +15,8 @@ import {
   FINISH_MODAL_SECONDS,
   useFriendMatch,
 } from '../providers/FriendMatchProvider';
+import { FriendMatchSyncAction } from './FriendMatchSyncAction';
+import styles from './friend-match.module.css';
 import layout from '../../shared/matchLayout.module.css';
 
 export function FriendMatchPlayingView() {
@@ -113,6 +115,12 @@ export function FriendMatchPlayingView() {
         <InlineAlert tone="error" role="alert">
           {error}
         </InlineAlert>
+      ) : null}
+
+      {!showResultModal ? (
+        <div className={styles.playingSyncBar}>
+          <FriendMatchSyncAction mode="refresh" />
+        </div>
       ) : null}
 
       {youTriggeredFinalResponse && !opponentTurnActive ? (

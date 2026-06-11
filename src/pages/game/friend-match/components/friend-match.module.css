@@ -414,3 +414,64 @@
 .playerChipReady {
   border-color: var(--ds-color-success, #22c55e);
 }
+
+.syncAction {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--ds-space-3);
+  width: 100%;
+  max-width: 22rem;
+  margin-inline: auto;
+}
+
+.syncActionRow {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  width: 100%;
+}
+
+.syncActionBtn {
+  flex: 1;
+}
+
+.syncHelpBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid var(--ds-color-border-default);
+  background: var(--ds-color-bg-base);
+  color: var(--ds-color-text-muted);
+  cursor: pointer;
+  transition:
+    border-color var(--ds-duration-fast) var(--ds-ease-standard),
+    color var(--ds-duration-fast) var(--ds-ease-standard);
+}
+
+.syncHelpBtn:hover {
+  border-color: var(--ds-color-accent);
+  color: var(--ds-color-accent);
+}
+
+.syncHelpText {
+  margin: 0;
+  padding: var(--ds-space-3);
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-color-border-default);
+  background: var(--ds-color-bg-raised);
+  font-size: var(--ds-text-xs);
+  color: var(--ds-color-text-muted);
+  line-height: var(--ds-leading-relaxed);
+  text-align: left;
+}
+
+.playingSyncBar {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--ds-space-4);
+}

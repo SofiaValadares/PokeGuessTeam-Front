@@ -29,7 +29,10 @@ import type {
 
 export type FriendMatchPhase = 'lobby' | 'waiting' | 'playing';
 
-const MATCH_POLL_MS = 5_000;
+export type FriendMatchSyncMessage = {
+  tone: 'success' | 'error';
+  text: string;
+};
 
 function derivePhase(match: FriendMatchStateDto | null): FriendMatchPhase {
   if (!match) return 'lobby';
@@ -52,7 +55,11 @@ type FriendMatchContextValue = {
   guessSending: boolean;
   busy: boolean;
   error: string | null;
+  syncMessage: FriendMatchSyncMessage | null;
+  syncing: boolean;
   clearError: () => void;
+  clearSyncMessage: () => void;
+  syncMatch: () => Promise<void>;
   refreshMatch: () => Promise<FriendMatchStateDto | null>;
   createRoom: (team: number[]) => Promise<void>;
   joinRoom: (joinCode: string, team: number[]) => Promise<void>;
@@ -71,7 +78,9 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
   const [finishReward, setFinishReward] = useState<MatchRewardDto | null>(null);
   const [busy, setBusy] = useState(false);
   const [guessSending, setGuessSending] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [syncMessage, setSyncMessage] = useState<FriendMatchSyncMessage | null>(null);
   const matchIdRef = useRef<string | null>(null);
   const matchStatusRef = useRef<MatchStatus | null>(null);
   const abandonTimerRef = useRef<number | null>(null);
@@ -163,38 +172,81 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
   }, [match]);
 
   const phase = derivePhase(match);
-  const waitingGuestUserId = match?.guest?.userId ?? null;
-  const bothTeamsReady =
-    Boolean(match?.host.teamReady) && Boolean(match?.guest?.teamReady);
 
-  useEffect(() => {
-    if (phase !== 'waiting' && phase !== 'playing') return;
-    if (phase === 'playing' && match?.status !== 'ACTIVE' && match?.status !== 'FINISHED') {
-      return;
-    }
-
-    void refreshMatch();
-    const intervalId = window.setInterval(() => {
-      void refreshMatch();
-    }, MATCH_POLL_MS);
-
-    return () => window.clearInterval(intervalId);
-  }, [phase, match?.matchId, match?.status, waitingGuestUserId, bothTeamsReady, refreshMatch]);
-
-  useEffect(() => {
-    if (phase !== 'waiting' || !bothTeamsReady) return;
-
-    const timeoutId = window.setTimeout(() => {
-      if (matchStatusRef.current === 'SETUP') {
-        void refreshMatch({ showErrors: true });
-        setError(
-          'A partida não iniciou. Confirma que entraste com outra conta, que ambos têm 6 Pokémon e tenta atualizar.',
-        );
+  const syncMatch = useCallback(async () => {
+    setSyncing(true);
+    setSyncMessage(null);
+    setError(null);
+    const wasActive = matchStatusRef.current === 'ACTIVE';
+    try {
+      const latest = await refreshMatch({ force: true });
+      if (!latest) {
+        setSyncMessage({
+          tone: 'error',
+          text: 'A partida não existe ou o servidor reiniciou.',
+        });
+        return;
       }
-    }, 12_000);
 
-    return () => window.clearTimeout(timeoutId);
-  }, [phase, bothTeamsReady, match?.matchId, refreshMatch]);
+      if (latest.status === 'ACTIVE') {
+        setSyncMessage({
+          tone: 'success',
+          text: wasActive
+            ? latest.yourTurn
+              ? 'Estado atualizado — é a tua vez!'
+              : 'Estado atualizado — turno do adversário.'
+            : latest.yourTurn
+              ? 'Partida iniciada — é a tua vez!'
+              : 'Partida iniciada — aguarda o turno do adversário.',
+        });
+        return;
+      }
+
+      if (latest.status === 'FINISHED') {
+        setSyncMessage({
+          tone: 'success',
+          text: 'Partida terminada.',
+        });
+        return;
+      }
+
+      if (!latest.guest?.userId) {
+        setSyncMessage({
+          tone: 'error',
+          text: 'O teu amigo ainda não entrou na sala. Partilha o código e tenta de novo.',
+        });
+        return;
+      }
+
+      if (!latest.guest.teamReady) {
+        setSyncMessage({
+          tone: 'error',
+          text: 'O amigo entrou, mas ainda está a preparar a equipe.',
+        });
+        return;
+      }
+
+      if (!latest.host.teamReady) {
+        setSyncMessage({
+          tone: 'error',
+          text: 'A tua equipe ainda não está confirmada no servidor.',
+        });
+        return;
+      }
+
+      setSyncMessage({
+        tone: 'error',
+        text: 'Ambos estão na sala, mas a partida ainda não iniciou. Tenta novamente.',
+      });
+    } catch (err) {
+      setSyncMessage({
+        tone: 'error',
+        text: toFriendlyUserMessage(err, 'Não foi possível verificar a partida.'),
+      });
+    } finally {
+      setSyncing(false);
+    }
+  }, [refreshMatch]);
 
   useEffect(() => {
     const generation = ++abandonGenerationRef.current;
@@ -377,7 +429,11 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       guessSending,
       busy,
       error,
+      syncMessage,
+      syncing,
       clearError: () => setError(null),
+      clearSyncMessage: () => setSyncMessage(null),
+      syncMatch,
       refreshMatch: () => refreshMatch({ showErrors: true }),
       createRoom,
       joinRoom,
@@ -393,6 +449,9 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       guessSending,
       busy,
       error,
+      syncMessage,
+      syncing,
+      syncMatch,
       refreshMatch,
       createRoom,
       joinRoom,
