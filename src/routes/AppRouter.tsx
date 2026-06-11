@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { ApiAvailabilityGate } from '../components/ApiAvailabilityGate';
 import { AuthenticatedLayout } from '../layouts/AuthenticatedLayout';
 import AppearancePage from '../pages/config/appearance/appearance';
 import ConfigurationsLayout from '../pages/config/configurations/ConfigurationsLayout';
@@ -16,6 +17,7 @@ import ForgotPasswordPage from '../pages/auth/forgot-password/forgot-password';
 import RegisterPage from '../pages/auth/register/register';
 import ResetPasswordPage from '../pages/auth/reset-password/reset-password';
 import VerifyEmailPage from '../pages/auth/verify-email/verify-email';
+import { AuthProvider } from '../store/providers';
 import { ProtectedRoute } from './guards';
 
 export function AppRouter() {
@@ -26,46 +28,50 @@ export function AppRouter() {
         v7_relativeSplatPath: true,
       }}
     >
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/verify-email" element={<VerifyEmailPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <AuthenticatedLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<HomePage />} />
-          <Route path="pc" element={<PcPage />} />
-          <Route path="wild-area" element={<WildAreaPage />} />
-          <Route path="area-selvagem" element={<Navigate to="/wild-area" replace />} />
-          <Route path="wild-area/gacha" element={<Navigate to="/wild-area" replace />} />
-          <Route path="game/bot" element={<BotMatchPage />} />
-          <Route path="game/local" element={<LocalMatchPage />} />
-          <Route path="game/amigo" element={<FriendMatchPage />} />
-          <Route path="game/historico" element={<HistoricoPage />} />
-          <Route path="game" element={<Navigate to="/" replace />} />
-          <Route path="jogo" element={<Navigate to="/" replace />} />
-          <Route path="jogo/bot" element={<Navigate to="/game/bot" replace />} />
-          <Route path="jogo/local" element={<Navigate to="/game/local" replace />} />
-          <Route path="jogo/amigo" element={<Navigate to="/game/amigo" replace />} />
-          <Route path="jogo/historico" element={<Navigate to="/game/historico" replace />} />
-          <Route path="pokedex" element={<PokedexPage />} />
-          <Route path="config" element={<ConfigurationsLayout />}>
-            <Route index element={<Navigate to="profile" replace />} />
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="appearance" element={<AppearancePage />} />
-          </Route>
-          <Route path="configuracoes/*" element={<Navigate to="/config/profile" replace />} />
-          <Route path="configuracoes" element={<Navigate to="/config/profile" replace />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <ApiAvailabilityGate>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <AuthenticatedLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<HomePage />} />
+              <Route path="pc" element={<PcPage />} />
+              <Route path="wild-area" element={<WildAreaPage />} />
+              <Route path="area-selvagem" element={<Navigate to="/wild-area" replace />} />
+              <Route path="wild-area/gacha" element={<Navigate to="/wild-area" replace />} />
+              <Route path="game/bot" element={<BotMatchPage />} />
+              <Route path="game/local" element={<LocalMatchPage />} />
+              <Route path="game/amigo" element={<FriendMatchPage />} />
+              <Route path="game/historico" element={<HistoricoPage />} />
+              <Route path="game" element={<Navigate to="/" replace />} />
+              <Route path="jogo" element={<Navigate to="/" replace />} />
+              <Route path="jogo/bot" element={<Navigate to="/game/bot" replace />} />
+              <Route path="jogo/local" element={<Navigate to="/game/local" replace />} />
+              <Route path="jogo/amigo" element={<Navigate to="/game/amigo" replace />} />
+              <Route path="jogo/historico" element={<Navigate to="/game/historico" replace />} />
+              <Route path="pokedex" element={<PokedexPage />} />
+              <Route path="config" element={<ConfigurationsLayout />}>
+                <Route index element={<Navigate to="profile" replace />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="appearance" element={<AppearancePage />} />
+              </Route>
+              <Route path="configuracoes/*" element={<Navigate to="/config/profile" replace />} />
+              <Route path="configuracoes" element={<Navigate to="/config/profile" replace />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AuthProvider>
+      </ApiAvailabilityGate>
     </BrowserRouter>
   );
 }

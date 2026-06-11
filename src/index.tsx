@@ -1,8 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
-import { ApiAvailabilityGate } from './components/ApiAvailabilityGate';
-import { AuthProvider } from './store/providers';
 import './index.css';
 import { AppRouter } from './routes';
 import reportWebVitals from './reportWebVitals';
@@ -18,11 +16,7 @@ root.render(
     <Provider store={store}>
       <ThemeProvider>
         <PreferencesProvider>
-          <ApiAvailabilityGate>
-            <AuthProvider>
-              <AppRouter />
-            </AuthProvider>
-          </ApiAvailabilityGate>
+          <AppRouter />
         </PreferencesProvider>
       </ThemeProvider>
     </Provider>
