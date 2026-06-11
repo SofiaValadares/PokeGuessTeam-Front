@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { Shuffle } from 'lucide-react';
-import { pickRandomDexNumbers } from '../../lib/game/pickRandomTeam';
-import type { PokemonDto } from '../../api/types/pokemon';
-import { useRegisteredPokedexPokemon } from '../../hooks/useRegisteredPokedexPokemon';
+import { pickRandomDexNumbers } from '../lib/pickRandomTeam';
+import type { PokemonDto } from '../../../../api/types/pokemon';
+import { useRegisteredPokedexPokemon } from '../../../../hooks/useRegisteredPokedexPokemon';
 import { PokemonSearchField } from './PokemonSearchField';
-import { PokemonSprite } from '../PokemonSprite';
-import { Button } from '../../ds';
-import grassStyles from './grassField.module.css';
+import { PokemonSprite } from '../../../../components/PokemonSprite';
+import { Button } from '../../../../ds';
+import grassStyles from '../../../home/components/training/grassField.module.css';
 import styles from './game.module.css';
 
 type TeamPickerProps = {

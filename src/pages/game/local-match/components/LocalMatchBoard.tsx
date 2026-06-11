@@ -1,5 +1,5 @@
-import { MatchBoard, type MatchBoardProps } from './MatchBoard';
-import { useLocalMatchPlay } from '../../pages/game/local-match/providers/LocalMatchPlayProvider';
+import { MatchBoard, type MatchBoardProps } from '../../shared/components/MatchBoard';
+import { useLocalMatchPlay } from '../providers/LocalMatchPlayProvider';
 
 type LocalMatchBoardProps = Omit<MatchBoardProps, 'registeredPokedexOnly'>;
 

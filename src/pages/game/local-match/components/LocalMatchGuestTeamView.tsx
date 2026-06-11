@@ -1,5 +1,5 @@
-import { TeamPicker } from '../../../../components/game/TeamPicker';
-import { TeamSetupScreen } from '../../../../components/game/TeamSetupScreen';
+import { TeamPicker } from '../../shared/components/TeamPicker';
+import { TeamSetupScreen } from '../../shared/components/TeamSetupScreen';
 import { useLocalMatchSetup } from '../providers/LocalMatchSetupProvider';
 
 export function LocalMatchGuestTeamView() {

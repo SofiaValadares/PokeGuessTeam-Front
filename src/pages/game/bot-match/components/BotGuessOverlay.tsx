@@ -1,7 +1,7 @@
 import { memo } from 'react';
-import type { BotMatchGuessFeedbackDto } from '../../api/types/game';
-import { PokemonSprite } from '../PokemonSprite';
-import styles from './game.module.css';
+import type { BotMatchGuessFeedbackDto } from '../../../../api/types/game';
+import { PokemonSprite } from '../../../../components/PokemonSprite';
+import styles from '../../shared/components/game.module.css';
 
 type BotGuessOverlayProps = {
   guess: BotMatchGuessFeedbackDto;

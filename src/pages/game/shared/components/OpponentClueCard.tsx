@@ -1,10 +1,10 @@
-import type { OpponentKnowledgeSlotDto } from '../../api/types/game';
+import type { OpponentKnowledgeSlotDto } from '../../../../api/types/game';
 import {
   pokemonColorLabel,
   pokemonEvolutionStageLabel,
   pokemonTypeLabel,
-} from '../../lib/pokemon/labels';
-import { PokemonSprite } from '../PokemonSprite';
+} from '../../../../lib/pokemon/labels';
+import { PokemonSprite } from '../../../../components/PokemonSprite';
 import styles from './game.module.css';
 
 function hintOrUnknown(value: string | null | undefined): string {

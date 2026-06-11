@@ -484,6 +484,19 @@
   width: 100%;
 }
 
+.turnCountdown {
+  margin: 0;
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border-radius: var(--ds-radius-md);
+  border: 1px solid rgb(234 179 8 / 0.5);
+  background: rgb(234 179 8 / 0.12);
+  color: var(--ds-color-text-primary);
+  font-size: var(--ds-text-lg);
+  font-weight: var(--ds-weight-bold);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
 .resumeBanner {
   display: flex;
   flex-direction: column;

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { MatchSetupLayout } from '../../pages/game/shared/MatchSetupLayout';
+import { MatchSetupLayout } from '../layout/MatchSetupLayout';
 import teamSetupStyles from './teamSetupScreen.module.css';
 
 type TeamSetupScreenProps = {

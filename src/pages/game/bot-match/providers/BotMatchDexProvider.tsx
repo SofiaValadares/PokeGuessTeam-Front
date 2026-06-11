@@ -2,13 +2,13 @@ import { createContext, useContext, useEffect } from 'react';
 import { loadMatchPokemonDex } from '../../../../lib/game/clientMatchView';
 import { readAllPokemonFromCache } from '../../../../store/slices/cache/queries';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
+import { setError } from '../slice/botMatchSlice';
 import {
   setAllPokemon,
-  setError,
   setLoadingDex,
   setPokemonDex,
-} from '../slice/botMatchSlice';
-import { selectBotMatch } from '../slice/botMatchSelectors';
+} from '../../shared/slice/matchDexSlice';
+import { selectMatchDex } from '../../shared/slice/matchDexSelectors';
 import { mapToRecord } from '../../../../lib/game/pokemonDexMaps';
 
 type BotMatchDexContextValue = {
@@ -20,7 +20,7 @@ const BotMatchDexContext = createContext<BotMatchDexContextValue | null>(null);
 
 export function BotMatchDexProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
-  const { loadingDex, pokemonByDex } = useAppSelector(selectBotMatch);
+  const { loadingDex, pokemonByDex } = useAppSelector(selectMatchDex);
   const dexReady = Object.keys(pokemonByDex).length > 0;
 
   useEffect(() => {

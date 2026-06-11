@@ -1,6 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { MatchGuessFeedback } from '../../../../model';
-import type { Pokemon } from '../../../../model';
 import type { BotMatchView } from '../../../../model';
 import type { ClientMatchState } from '../../../../lib/game/clientMatchTypes';
 import { appendGuessLog as mergeGuessLog } from '../../../../lib/game/matchSessionUtils';
@@ -19,9 +18,6 @@ const botMatchSlice = createSlice({
       state.botBusy = false;
       state.activeBotGuess = null;
       state.error = null;
-      if (Object.keys(state.pokemonByDex).length === 0) {
-        state.loadingDex = true;
-      }
     },
     /** Limpa partida em curso/terminada; mantém equipe escolhida para nova partida. */
     prepareNewBotMatch(state) {
@@ -52,18 +48,6 @@ const botMatchSlice = createSlice({
     clearGuessLog(state) {
       state.guessLog = [];
     },
-    setPokemonDex(state, action: PayloadAction<Record<number, Pokemon>>) {
-      state.pokemonByDex = action.payload;
-    },
-    mergePokemonDex(state, action: PayloadAction<Record<number, Pokemon>>) {
-      state.pokemonByDex = { ...state.pokemonByDex, ...action.payload };
-    },
-    setAllPokemon(state, action: PayloadAction<Pokemon[]>) {
-      state.allPokemon = action.payload;
-    },
-    setLoadingDex(state, action: PayloadAction<boolean>) {
-      state.loadingDex = action.payload;
-    },
     setBusy(state, action: PayloadAction<boolean>) {
       state.busy = action.payload;
     },
@@ -89,10 +73,6 @@ export const {
   setMatchView,
   appendGuessLog,
   clearGuessLog,
-  setPokemonDex,
-  mergePokemonDex,
-  setAllPokemon,
-  setLoadingDex,
   setBusy,
   setBotBusy,
   setActiveBotGuess,

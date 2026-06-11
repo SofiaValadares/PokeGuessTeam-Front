@@ -1,7 +1,7 @@
 import type { TrainingTeamSlotDto } from '../../../../api/types/game';
 import type { PokemonDto } from '../../../../api/types/pokemon';
 import { Button, PageSection } from '../../../../ds';
-import grassStyles from '../../../../components/game/grassField.module.css';
+import grassStyles from './grassField.module.css';
 import { buildTrainingSlotViews } from '../../lib/buildTrainingSlotViews';
 import type { TrainingSlotView } from '../../types/trainingSlot';
 import { TrainingTeamEmptySlot } from './TrainingTeamEmptySlot';

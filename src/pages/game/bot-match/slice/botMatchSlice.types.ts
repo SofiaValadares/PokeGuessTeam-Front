@@ -1,4 +1,4 @@
-import type { BotMatchView, MatchGuessFeedback, Pokemon } from '../../../../model';
+import type { BotMatchView, MatchGuessFeedback } from '../../../../model';
 import type { ClientMatchState } from '../../../../lib/game/clientMatchTypes';
 
 export type BotMatchPhase = 'setup' | 'playing';
@@ -9,9 +9,6 @@ export type BotMatchSliceState = {
   clientState: ClientMatchState | null;
   matchView: BotMatchView | null;
   guessLog: MatchGuessFeedback[];
-  pokemonByDex: Record<number, Pokemon>;
-  allPokemon: Pokemon[];
-  loadingDex: boolean;
   busy: boolean;
   botBusy: boolean;
   activeBotGuess: MatchGuessFeedback | null;
@@ -24,9 +21,6 @@ export const initialBotMatchState: BotMatchSliceState = {
   clientState: null,
   matchView: null,
   guessLog: [],
-  pokemonByDex: {},
-  allPokemon: [],
-  loadingDex: true,
   busy: false,
   botBusy: false,
   activeBotGuess: null,

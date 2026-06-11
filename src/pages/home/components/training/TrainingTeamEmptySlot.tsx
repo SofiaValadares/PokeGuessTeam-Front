@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import grassStyles from '../../../../components/game/grassField.module.css';
+import grassStyles from './grassField.module.css';
 import styles from './training-team.module.css';
 
 type Props = {

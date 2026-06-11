@@ -5,11 +5,10 @@ import { readAllPokemonFromCache } from '../../../../store/slices/cache/queries'
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import {
   setAllPokemon,
-  setError,
   setLoadingDex,
   setPokemonDex,
-} from '../../bot-match/slice/botMatchSlice';
-import { selectBotMatch } from '../../bot-match/slice/botMatchSelectors';
+} from '../../shared/slice/matchDexSlice';
+import { selectMatchDex } from '../../shared/slice/matchDexSelectors';
 
 type FriendMatchDexContextValue = {
   loadingDex: boolean;
@@ -20,7 +19,7 @@ const FriendMatchDexContext = createContext<FriendMatchDexContextValue | null>(n
 
 export function FriendMatchDexProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
-  const { loadingDex, pokemonByDex } = useAppSelector(selectBotMatch);
+  const { loadingDex, pokemonByDex } = useAppSelector(selectMatchDex);
   const dexReady = Object.keys(pokemonByDex).length > 0;
 
   useEffect(() => {
@@ -38,7 +37,7 @@ export function FriendMatchDexProvider({ children }: { children: React.ReactNode
         dispatch(setAllPokemon(pool));
       })
       .catch(() => {
-        if (!cancelled) dispatch(setError('Não foi possível carregar os Pokémon.'));
+        /* dex opcional via cache; falha silenciosa */
       })
       .finally(() => {
         if (!cancelled) dispatch(setLoadingDex(false));

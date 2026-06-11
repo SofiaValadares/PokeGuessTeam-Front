@@ -1,5 +1,5 @@
-import { TeamPicker } from '../../../../components/game/TeamPicker';
-import { TeamSetupScreen } from '../../../../components/game/TeamSetupScreen';
+import { TeamPicker } from '../../shared/components/TeamPicker';
+import { TeamSetupScreen } from '../../shared/components/TeamSetupScreen';
 import { useBotMatchSetup } from '../providers/BotMatchSetupProvider';
 
 export function BotMatchSetupView() {
