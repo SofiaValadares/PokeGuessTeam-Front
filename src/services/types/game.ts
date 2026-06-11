@@ -89,60 +89,6 @@ export type LocalMatchSetupRequest = {
   opponentTeam: number[];
 };
 
-export type BotMatchStateDto = {
-  matchId: string;
-  status: MatchStatus;
-  currentTurn: MatchPlayerSide;
-  startingPlayer: MatchPlayerSide;
-  finalResponseFor: MatchPlayerSide | null;
-  hostTeam: number[];
-  hostHits: number[];
-  opponentTeam: number[];
-  opponentHits: number[];
-  hostCorrectGuesses: number;
-  opponentCorrectGuesses: number;
-  opponentKnowledge: OpponentKnowledgeSlotDto[];
-  recentGuesses: BotMatchGuessFeedbackDto[];
-  winner: MatchPlayerSide | null;
-  startedAt: string | null;
-  finishedAt: string | null;
-  historyEntry: GameHistoryEntryDto | null;
-};
-
-export type BotMatchActionResponse = {
-  match: BotMatchStateDto;
-  turnFeedbacks: BotMatchGuessFeedbackDto[];
-};
-
-export type LocalMatchStateDto = {
-  matchId: string;
-  hostDisplayName: string;
-  localOpponentName: string;
-  status: MatchStatus;
-  currentTurn: MatchPlayerSide;
-  startingPlayer: MatchPlayerSide;
-  finalResponseFor: MatchPlayerSide | null;
-  hostTeamReady: boolean;
-  opponentTeamReady: boolean;
-  hostTeam: number[];
-  opponentTeam: number[];
-  hostHits: number[];
-  opponentHits: number[];
-  hostCorrectGuesses: number;
-  opponentCorrectGuesses: number;
-  opponentKnowledge: OpponentKnowledgeSlotDto[];
-  recentGuesses: BotMatchGuessFeedbackDto[];
-  winner: MatchPlayerSide | null;
-  startedAt: string | null;
-  finishedAt: string | null;
-  historyEntry: GameHistoryEntryDto | null;
-};
-
-export type LocalMatchActionResponse = {
-  match: LocalMatchStateDto;
-  turnFeedbacks: BotMatchGuessFeedbackDto[];
-};
-
 export type FriendMatchJoinRequest = {
   joinCode: string;
   team: number[];
@@ -201,25 +147,18 @@ export type GameHistoryPageResponse = {
 
 export type MatchRealtimeEventType =
   | 'PLAYER_GUESS'
-  | 'BOT_TURN_START'
-  | 'BOT_GUESS'
   | 'MATCH_STATE'
   | 'TURN_TIMER'
-  | 'TIMEOUT_PENALTY'
-  | 'OPPONENT_REPLACED_BY_BOT'
   | 'MATCH_FINISHED';
 
 export type MatchRealtimeMessage = {
   type: MatchRealtimeEventType;
   matchId: string;
-  botMatch?: BotMatchStateDto;
   friendMatch?: FriendMatchStateDto;
   feedback?: BotMatchGuessFeedbackDto;
   currentTurn?: MatchPlayerSide;
   turnDeadlineAt?: string;
   turnTimeoutSeconds?: number;
-  timeoutPenalties?: number;
-  maxTimeoutPenalties?: number;
   message?: string;
 };
 

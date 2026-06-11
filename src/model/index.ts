@@ -21,14 +21,9 @@ export type { Pokemon, EvolutionLine, PokedexEntry, PcLine } from './pokemon';
 export type { ProfileMe, PokeballInventoryRow, PokeballInventory } from './profile';
 
 export {
-  mapMatchGuessFeedback,
-  mapOpponentKnowledgeSlot,
   mapGameHistoryEntry,
-  mapBotMatchView,
-  mapLocalMatchView,
   mapGachaDrawResult,
   mapTrainingTeam,
-  mapPokedexEntriesFromDto,
   mapGameHistoryList,
 } from './mappers/game';
 
@@ -36,7 +31,6 @@ export {
   mapPokemon,
   mapPcLine,
   mapPokedexEntry,
-  mapPokemonList,
   mapPcLineList,
   mapPokedexEntryList,
 } from './mappers/pokemon';

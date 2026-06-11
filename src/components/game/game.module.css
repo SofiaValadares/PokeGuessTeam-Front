@@ -32,31 +32,6 @@
   width: 100%;
 }
 
-.localGuestFields {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ds-space-4);
-  margin-bottom: var(--ds-space-2);
-}
-
-.localGuestFavorite {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ds-space-2);
-}
-
-.localGuestFavoriteLabel {
-  font-size: var(--ds-text-sm);
-  color: var(--ds-color-text-secondary);
-}
-
-.localGuestFavoriteCurrent {
-  display: flex;
-  align-items: center;
-  gap: var(--ds-space-3);
-  font-size: var(--ds-text-sm);
-}
-
 .teamBtnCaps {
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -735,7 +710,6 @@
   border-right-color: rgb(120 120 128 / 0.25);
 }
 
-.matchTurnModalBackdrop,
 .matchResultModalBackdrop {
   position: fixed;
   inset: 0;
@@ -747,7 +721,6 @@
   background: rgb(0 0 0 / 0.72);
 }
 
-.matchTurnModalPanel,
 .matchResultModalPanel {
   width: min(24rem, 100%);
   padding: var(--ds-space-6);
@@ -758,7 +731,6 @@
   text-align: center;
 }
 
-.matchTurnModalEyebrow,
 .matchResultModalCountdown {
   margin: 0 0 var(--ds-space-2);
   font-size: var(--ds-text-xs);
@@ -767,17 +739,10 @@
   color: var(--ds-color-text-muted);
 }
 
-.matchTurnModalTitle,
 .matchResultModalTitle {
   margin: 0;
   font-size: var(--ds-text-2xl);
   color: var(--ds-color-text-primary);
-}
-
-.matchTurnModalHint {
-  margin: var(--ds-space-3) 0 0;
-  font-size: var(--ds-text-sm);
-  color: var(--ds-color-text-secondary);
 }
 
 .matchResultModalBody {
@@ -792,16 +757,6 @@
 
 .matchResultModalCountdown {
   margin-bottom: var(--ds-space-4);
-}
-
-.localTurnDelayBanner {
-  margin: 0 0 var(--ds-space-3);
-  padding: var(--ds-space-3);
-  border-radius: var(--ds-radius-md);
-  background: var(--ds-color-accent-muted);
-  text-align: center;
-  font-size: var(--ds-text-sm);
-  color: var(--ds-color-text-primary);
 }
 
 .matchHitUnknown {

@@ -26,10 +26,6 @@ export function mapPokedexEntry(dto: PokedexEntryDto): PokedexEntry {
   };
 }
 
-export function mapPokemonList(dtos: PokemonDto[]): Pokemon[] {
-  return dtos.map(mapPokemon);
-}
-
 export function mapPcLineList(dtos: PcLineDto[]): PcLine[] {
   return dtos.map(mapPcLine);
 }
