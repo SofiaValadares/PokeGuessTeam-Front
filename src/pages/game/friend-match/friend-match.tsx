@@ -5,7 +5,6 @@ import { FriendMatchProvider, useFriendMatch } from './providers/FriendMatchProv
 import { FriendMatchLobbyView } from './components/FriendMatchLobbyView';
 import { FriendMatchWaitingView } from './components/FriendMatchWaitingView';
 import { FriendMatchPlayingView } from './components/FriendMatchPlayingView';
-import layout from '../shared/matchLayout.module.css';
 
 function FriendMatchContent() {
   const { phase } = useFriendMatch();

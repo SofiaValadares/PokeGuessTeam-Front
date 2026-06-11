@@ -282,6 +282,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
     return () => {
       const matchId = matchIdRef.current;
       const status = matchStatusRef.current;
+      const generationAtUnmount = generation;
       stopSocket();
       if (opponentGuessTimerRef.current != null) {
         window.clearTimeout(opponentGuessTimerRef.current);
@@ -290,7 +291,9 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
 
       abandonTimerRef.current = window.setTimeout(() => {
         abandonTimerRef.current = null;
-        if (abandonGenerationRef.current !== generation) return;
+        // Stale unmount guard — compare against ref after async delay, not during cleanup.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        if (generationAtUnmount !== abandonGenerationRef.current) return;
         if (leaveIntentionalRef.current) return;
         if (status === 'SETUP') {
           void abandonFriendSetup().catch(() => undefined);
