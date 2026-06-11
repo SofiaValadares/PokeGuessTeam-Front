@@ -1,0 +1,104 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+  margin-bottom: var(--ds-space-4);
+}
+
+.label {
+  font-size: var(--ds-text-sm);
+  font-weight: var(--ds-weight-medium);
+  color: var(--ds-color-text-secondary);
+}
+
+.inputWrap {
+  position: relative;
+  width: 100%;
+}
+
+.inputWithToggle {
+  padding-right: 2.75rem;
+}
+
+.toggle {
+  position: absolute;
+  right: var(--ds-space-2);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ds-space-2);
+  margin: 0;
+  border: none;
+  border-radius: var(--ds-radius-sm);
+  background: transparent;
+  color: var(--ds-color-text-secondary);
+  cursor: pointer;
+  line-height: 0;
+}
+
+.toggle:hover:not(:disabled) {
+  color: var(--ds-color-text-primary);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--ds-color-accent);
+  outline-offset: 2px;
+}
+
+.toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.toggleIcon {
+  display: block;
+}
+
+.input {
+  width: 100%;
+  padding: var(--ds-space-3) var(--ds-space-4);
+  font-family: var(--ds-font-sans);
+  font-size: var(--ds-text-md);
+  color: var(--ds-color-text-primary);
+  background: var(--ds-color-bg-input);
+  border: 1px solid var(--ds-color-border-default);
+  border-radius: var(--ds-radius-md);
+  transition:
+    border-color var(--ds-duration-normal) var(--ds-ease-standard),
+    box-shadow var(--ds-duration-normal) var(--ds-ease-standard);
+}
+
+.input::placeholder {
+  color: var(--ds-color-text-muted);
+}
+
+.input:hover:not(:disabled) {
+  border-color: var(--ds-color-border-strong);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--ds-color-accent);
+  box-shadow: 0 0 0 3px var(--ds-color-accent-muted);
+}
+
+.inputError {
+  border-color: var(--ds-color-danger);
+}
+
+.inputError:focus {
+  box-shadow: 0 0 0 3px var(--ds-color-danger-muted);
+}
+
+.hint {
+  font-size: var(--ds-text-xs);
+  color: var(--ds-color-text-muted);
+  margin: 0;
+}
+
+.error {
+  composes: hint;
+  color: var(--ds-color-danger);
+}

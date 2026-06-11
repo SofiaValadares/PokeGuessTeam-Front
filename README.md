@@ -1,46 +1,63 @@
-# Getting Started with Create React App
+# PokeTeamGuess — Frontend (React)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Cliente do **PokeTeamGuess**: inventário, gacha, partidas bot/local (motor no browser) e amigo online (API + Socket.io).
 
-## Available Scripts
+## Desenvolvimento local
 
-In the project directory, you can run:
+```bash
+npm install
+npm start
+```
 
-### `npm start`
+API em `http://localhost:8080` via proxy do CRA (`setupProxy.js`).
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Opcional: copie `.env.example` → `.env.local` e ajuste `WDS_SOCKET_PATH` se o HMR conflitar com o backend.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Deploy (Vercel)
 
-### `npm test`
+### 1. Preparar `vercel.json`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Substitua `pokeguessteam-api.onrender.com` pela URL real do backend no Render (ex.: `https://meu-app.onrender.com`).
 
-### `npm run build`
+O proxy no mesmo domínio evita problemas com o cookie `JSESSIONID`.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 2. Variáveis no Vercel
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+| Variável | Valor |
+|----------|-------|
+| `REACT_APP_API_URL` | *(vazio)* |
+| `REACT_APP_SOCKET_URL` | *(vazio)* |
+| `REACT_APP_API_WAKE_URL` | `https://SEU-APP.onrender.com` |
+| `REACT_APP_API_COLD_START_AVERAGE_SECONDS` | `50` |
+| `REACT_APP_ENABLE_API_HEALTH_CHECK` | `true` *(opcional em dev)* |
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 3. Importar repositório
 
-### `npm run eject`
+1. [vercel.com](https://vercel.com) → **Add New Project**
+2. Framework: **Create React App**
+3. Build: `npm run build` · Output: `build`
+4. Deploy
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### 4. CORS no backend
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+No Render, defina:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+```text
+APP_CORS_ALLOWED_ORIGIN_PATTERNS=https://seu-app.vercel.app
+```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## Página “API a acordar”
 
-## Learn More
+Em **produção**, se o backend Render estiver suspenso (plano free), o utilizador vê uma página explicando:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- tempo médio de espera (~50s);
+- que é um projeto académico com hospedagem gratuita;
+- retry automático até a API responder (`GET /api/meta`).
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Scripts
+
+| Comando | Descrição |
+|---------|-----------|
+| `npm start` | Dev server `:3000` |
+| `npm run build` | Build de produção |
+| `npm test` | Testes |

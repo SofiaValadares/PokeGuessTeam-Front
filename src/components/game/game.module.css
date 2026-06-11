@@ -1,0 +1,946 @@
+.teamPicker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4);
+  overflow: visible;
+}
+
+.teamPickerFullscreen {
+  flex: 1;
+  min-height: 0;
+  gap: var(--ds-space-4);
+  width: 100%;
+}
+
+.teamFieldWrap {
+  flex: 1;
+  min-height: min(28rem, 55vh);
+  display: flex;
+  flex-direction: column;
+}
+
+.teamFooter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  margin-top: auto;
+  padding-top: var(--ds-space-4);
+}
+
+.teamSubmitBtn,
+.teamBackBtn {
+  width: 100%;
+}
+
+.teamBtnCaps {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: var(--ds-weight-semibold);
+}
+
+.teamHint {
+  margin: 0;
+  color: var(--ds-color-text-muted);
+  font-size: var(--ds-text-sm);
+}
+
+.teamError {
+  margin: 0;
+  color: var(--ds-color-text-danger, #c53030);
+  font-size: var(--ds-text-sm);
+}
+
+.teamSlots {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--ds-space-2);
+}
+
+@media (max-width: 40rem) {
+  .teamSlots {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.teamSlot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 4rem;
+  border: 2px dashed var(--ds-color-border-default);
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-color-bg-base);
+}
+
+.teamSlotEmpty {
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-muted);
+}
+
+.teamRemove {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  border: none;
+  background: var(--ds-color-danger-muted);
+  color: var(--ds-color-danger);
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+.teamActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-3);
+  flex-shrink: 0;
+}
+
+.randomTeamBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  padding: var(--ds-space-2) var(--ds-space-4);
+  border-radius: var(--ds-radius-full, 999px);
+  border: 1px solid #3d8b37;
+  background: linear-gradient(180deg, rgba(90, 173, 74, 0.22) 0%, rgba(61, 139, 55, 0.12) 100%);
+  color: var(--ds-color-text-primary);
+  font-size: var(--ds-text-sm);
+  font-weight: var(--ds-weight-semibold);
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(61, 139, 55, 0.15);
+  transition:
+    transform var(--ds-duration-fast) var(--ds-ease-standard),
+    border-color var(--ds-duration-fast) var(--ds-ease-standard),
+    background var(--ds-duration-fast) var(--ds-ease-standard),
+    box-shadow var(--ds-duration-fast) var(--ds-ease-standard);
+}
+
+.randomTeamBtn:not(:disabled):hover {
+  transform: translateY(-1px);
+  border-color: #4fa043;
+  background: linear-gradient(180deg, rgba(90, 173, 74, 0.32) 0%, rgba(61, 139, 55, 0.18) 100%);
+  box-shadow: 0 4px 14px rgba(61, 139, 55, 0.22);
+}
+
+.randomTeamBtn:not(:disabled):active {
+  transform: translateY(0);
+}
+
+.randomTeamBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.randomTeamIconSpin {
+  animation: randomTeamSpin 0.55s ease-in-out;
+}
+
+@keyframes randomTeamSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.teamCount {
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.searchLabel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+  width: 100%;
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-secondary);
+}
+
+.searchInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--ds-space-2) var(--ds-space-3);
+  font-size: var(--ds-text-sm);
+  font-family: inherit;
+  border: 1px solid var(--ds-color-border-default);
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-color-bg-elevated);
+  color: var(--ds-color-text-primary);
+}
+
+.searchMeta {
+  margin: 0;
+  font-size: var(--ds-text-xs);
+  color: var(--ds-color-text-muted);
+}
+
+.searchResults {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 12rem;
+  overflow-y: auto;
+  border: 1px solid var(--ds-color-border-default);
+  border-radius: var(--ds-radius-sm);
+}
+
+.searchResultBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  width: 100%;
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: var(--ds-color-text-primary);
+}
+
+.searchResultBtn:hover:not(:disabled) {
+  background: var(--ds-color-accent-muted);
+}
+
+.searchResultBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.searchResultSelected {
+  background: var(--ds-color-accent-muted);
+}
+
+.searchResultUsed {
+  opacity: 0.55;
+}
+
+.searchUsedTag {
+  font-size: var(--ds-text-xs);
+  color: var(--ds-color-text-muted);
+  font-weight: var(--ds-weight-normal);
+  text-transform: lowercase;
+}
+
+.searchDex {
+  color: var(--ds-color-text-muted);
+  font-size: var(--ds-text-xs);
+}
+
+.pokemonSearch {
+  position: relative;
+  width: 100%;
+  align-self: stretch;
+}
+
+.pokemonSearchOverlay {
+  z-index: 20;
+}
+
+.searchSelected {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  margin: var(--ds-space-2) 0 0;
+  font-size: var(--ds-text-sm);
+}
+
+.searchResultsOverlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + var(--ds-space-2));
+  z-index: 30;
+  list-style: none;
+  margin: 0;
+  padding: var(--ds-space-2);
+  max-height: min(22rem, 45vh);
+  overflow-y: auto;
+  border: 1px solid var(--ds-color-border-default);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-color-bg-elevated);
+  box-shadow: var(--ds-shadow-lg, 0 12px 40px rgba(0, 0, 0, 0.35));
+}
+
+.searchResultsOverlay.searchResultsOverlayBelow {
+  top: calc(100% + var(--ds-space-2));
+  bottom: auto;
+}
+
+.searchResultsOverlay .searchResultBtn {
+  padding: var(--ds-space-3);
+  border-radius: var(--ds-radius-sm);
+}
+
+/* —— Partida (layout v1) —— */
+.matchShell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  width: 100%;
+  border-radius: var(--ds-radius-lg);
+  border: 2px solid var(--ds-color-border-default);
+  background: var(--ds-color-bg-elevated);
+  overflow: hidden;
+  animation: dsScaleIn var(--ds-duration-slow) var(--ds-ease-standard) both;
+}
+
+.matchShellHeader {
+  padding: var(--ds-space-3) var(--ds-space-4);
+  background: var(--ds-color-bg-base);
+  border-bottom: 1px solid var(--ds-color-border-default);
+}
+
+.matchShellTitle {
+  font-size: var(--ds-text-sm);
+  font-weight: var(--ds-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ds-color-text-primary);
+}
+
+.matchLayout {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: minmax(0, 1fr) auto;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  gap: 0;
+}
+
+@media (min-width: 56rem) {
+  .matchLayout {
+    grid-template-columns: minmax(0, 1.35fr) minmax(14rem, 0.85fr);
+    grid-template-rows: minmax(0, 1fr);
+  }
+}
+
+.matchLeft {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: var(--ds-space-4);
+  background: var(--ds-color-bg-base);
+  border-right: 1px solid var(--ds-color-border-default);
+}
+
+.matchRight {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4);
+  padding: var(--ds-space-4);
+  background: var(--ds-color-bg-base);
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.matchLeftHead {
+  margin-bottom: var(--ds-space-3);
+  flex-shrink: 0;
+}
+
+.matchPanelTitle {
+  margin: 0;
+  font-size: var(--ds-text-xs);
+  font-weight: var(--ds-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ds-color-text-muted);
+}
+
+.matchPanelSub {
+  margin: var(--ds-space-1) 0 0;
+  font-size: var(--ds-text-xs);
+  color: var(--ds-color-text-secondary);
+}
+
+.clueList {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  padding-right: var(--ds-space-1);
+  margin-bottom: var(--ds-space-3);
+  -webkit-overflow-scrolling: touch;
+}
+
+.clueCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-color-bg-elevated);
+  border: 1px solid var(--ds-color-border-default);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.clueCardRevealed {
+  border-color: color-mix(in srgb, var(--ds-color-success, #22c55e) 45%, var(--ds-color-border-default));
+}
+
+.clueCardBanner {
+  margin: 0;
+  padding: var(--ds-space-2) var(--ds-space-4);
+  font-size: var(--ds-text-xs);
+  font-weight: var(--ds-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--ds-color-text-primary);
+  background: var(--ds-color-bg-base);
+  border-bottom: 1px solid var(--ds-color-border-default);
+}
+
+.clueCardRevealed .clueCardBanner {
+  color: var(--ds-color-success, #16a34a);
+  background: color-mix(in srgb, var(--ds-color-success, #22c55e) 10%, var(--ds-color-bg-base));
+}
+
+.clueCardBody {
+  display: grid;
+  grid-template-columns: minmax(7rem, auto) minmax(0, 1fr);
+  gap: var(--ds-space-4);
+  padding: var(--ds-space-4);
+}
+
+.clueCardLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ds-space-3);
+}
+
+.clueCardRight {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  min-width: 0;
+  justify-content: center;
+}
+
+.clueTypeStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+  width: 100%;
+}
+
+.clueTypePill {
+  display: block;
+  width: 100%;
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border-radius: var(--ds-radius-full, 999px);
+  font-size: var(--ds-text-xs);
+  font-weight: var(--ds-weight-semibold);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ds-color-text-primary);
+  background: var(--ds-color-bg-base);
+  border: 1px solid var(--ds-color-border-default);
+}
+
+.clueHintField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-1);
+  min-width: 0;
+}
+
+.clueHintFieldWide {
+  width: 100%;
+}
+
+.clueHintPair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ds-space-3);
+}
+
+.clueSpriteBox {
+  width: 6.5rem;
+  height: 6.5rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-color-bg-base);
+  border: 1px solid var(--ds-color-border-default);
+}
+
+.clueUnknownSprite {
+  font-size: var(--ds-text-xl);
+  font-weight: var(--ds-weight-semibold);
+  color: var(--ds-color-text-muted);
+}
+
+.clueHints {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ds-space-2) var(--ds-space-4);
+  align-content: start;
+}
+
+@media (max-width: 40rem) {
+  .clueCardBody {
+    grid-template-columns: 1fr;
+  }
+
+  .clueCardLeft {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  .clueTypeStack {
+    flex: 1;
+  }
+}
+
+.clueHintRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: var(--ds-text-sm);
+}
+
+.clueHintLabel {
+  font-weight: var(--ds-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: var(--ds-text-xs);
+  color: var(--ds-color-text-muted);
+}
+
+.clueHintValue {
+  display: block;
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border-radius: var(--ds-radius-full, 999px);
+  font-weight: var(--ds-weight-semibold);
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-primary);
+  background: var(--ds-color-bg-base);
+  border: 1px solid var(--ds-color-border-default);
+  word-break: break-word;
+}
+
+.matchGuessBar {
+  position: relative;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+  margin-top: auto;
+  padding-top: var(--ds-space-2);
+  flex-shrink: 0;
+}
+
+.matchGuessBtn {
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.matchFinishedBanner {
+  margin: auto 0 0;
+  padding: var(--ds-space-3);
+  border-radius: var(--ds-radius-sm);
+  text-align: center;
+  font-size: var(--ds-text-sm);
+  background: var(--ds-color-accent-muted);
+  color: var(--ds-color-text-primary);
+}
+
+.turnBanner {
+  margin: 0;
+  padding: var(--ds-space-3);
+  border-radius: var(--ds-radius-sm);
+  font-size: var(--ds-text-sm);
+  text-align: center;
+}
+
+.turnBannerActive {
+  background: var(--ds-color-accent-muted);
+  color: var(--ds-color-accent);
+  font-weight: var(--ds-weight-semibold);
+}
+
+.turnBannerWait {
+  background: var(--ds-color-bg-elevated);
+  color: var(--ds-color-text-muted);
+}
+
+.matchPlayers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ds-space-3);
+}
+
+.matchPlayerCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ds-space-2);
+  padding: var(--ds-space-3);
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-color-border-default);
+  background: var(--ds-color-bg-elevated);
+}
+
+.matchPlayerCardActive {
+  border-color: var(--ds-color-accent);
+  box-shadow: 0 0 0 2px var(--ds-color-accent-muted);
+}
+
+.matchPlayerAvatar {
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.matchPlayerName {
+  font-size: var(--ds-text-xs);
+  font-weight: var(--ds-weight-semibold);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.matchPlayerScore {
+  font-size: var(--ds-text-xl);
+  font-weight: var(--ds-weight-semibold);
+  color: var(--ds-color-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.matchHitsSection {
+  flex: 1;
+}
+
+.matchHitsTitle {
+  margin: 0;
+  font-size: var(--ds-text-xs);
+  font-weight: var(--ds-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ds-color-text-muted);
+}
+
+.matchHitsSub {
+  margin: var(--ds-space-1) 0 var(--ds-space-3);
+  font-size: var(--ds-text-xs);
+  color: var(--ds-color-text-secondary);
+}
+
+.matchHitsGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--ds-space-2);
+}
+
+.matchHitCell {
+  aspect-ratio: 1;
+  min-height: 5.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ds-radius-sm);
+  border: 1px dashed var(--ds-color-border-default);
+  background: var(--ds-color-bg-elevated);
+  padding: var(--ds-space-2);
+}
+
+.matchShellGuest {
+  border-color: rgb(220 38 38 / 0.55);
+  box-shadow: 0 0 0 1px rgb(220 38 38 / 0.2);
+}
+
+.matchShellGuest .matchShellHeader,
+.matchShellGuest .matchLeft,
+.matchShellGuest .matchRight {
+  background: linear-gradient(180deg, rgb(42 15 15 / 0.95) 0%, rgb(26 8 8 / 0.98) 100%);
+}
+
+.matchShellGuest .matchLeft {
+  border-right-color: rgb(220 38 38 / 0.25);
+}
+
+.matchShellWaiting {
+  border-color: rgb(120 120 128 / 0.45);
+  opacity: 0.92;
+}
+
+.matchShellWaiting .matchShellHeader,
+.matchShellWaiting .matchLeft,
+.matchShellWaiting .matchRight {
+  background: linear-gradient(180deg, rgb(38 38 42 / 0.98) 0%, rgb(24 24 28 / 0.98) 100%);
+}
+
+.matchShellWaiting .matchLeft {
+  border-right-color: rgb(120 120 128 / 0.25);
+}
+
+.matchResultModalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ds-space-6);
+  background: rgb(0 0 0 / 0.72);
+}
+
+.matchResultModalPanel {
+  width: min(24rem, 100%);
+  padding: var(--ds-space-6);
+  border-radius: var(--ds-radius-lg);
+  border: 2px solid var(--ds-color-accent);
+  background: var(--ds-color-bg-elevated);
+  box-shadow: 0 20px 50px rgb(0 0 0 / 0.35);
+  text-align: center;
+}
+
+.matchResultModalCountdown {
+  margin: 0 0 var(--ds-space-2);
+  font-size: var(--ds-text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ds-color-text-muted);
+}
+
+.matchResultModalTitle {
+  margin: 0;
+  font-size: var(--ds-text-2xl);
+  color: var(--ds-color-text-primary);
+}
+
+.matchResultModalBody {
+  margin: var(--ds-space-4) 0;
+}
+
+.matchResultModalLine {
+  margin: var(--ds-space-2) 0;
+  font-size: var(--ds-text-md);
+  color: var(--ds-color-text-primary);
+}
+
+.matchResultModalCountdown {
+  margin-bottom: var(--ds-space-4);
+}
+
+.matchHitUnknown {
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-muted);
+}
+
+.matchSurrenderBtn {
+  width: 100%;
+  margin-top: auto;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ds-color-danger, #e53e3e);
+  border: 1px solid var(--ds-color-danger, #e53e3e);
+}
+
+.matchSurrenderBtn:hover:not(:disabled) {
+  background: var(--ds-color-danger-muted, rgba(229, 62, 62, 0.12));
+}
+
+.sectionTitle {
+  margin: 0 0 var(--ds-space-3);
+  font-size: var(--ds-text-sm);
+  font-weight: var(--ds-weight-semibold);
+  color: var(--ds-color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.modeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--ds-space-4);
+}
+
+.modeCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-5);
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-color-border-default);
+  background: var(--ds-color-bg-elevated);
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.modeCard:hover {
+  border-color: var(--ds-color-accent);
+  transform: translateY(-2px);
+}
+
+.modeCardTitle {
+  margin: 0;
+  font-size: var(--ds-text-lg);
+  font-weight: var(--ds-weight-semibold);
+}
+
+.modeCardDesc {
+  margin: 0;
+  flex: 1;
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-muted);
+  line-height: var(--ds-leading-relaxed);
+}
+
+.lobbyCode {
+  font-family: ui-monospace, monospace;
+  font-size: var(--ds-text-2xl);
+  letter-spacing: 0.2em;
+  color: var(--ds-color-accent);
+}
+
+.gachaResult {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ds-space-4);
+  padding: var(--ds-space-6);
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-color-border-default);
+  background: var(--ds-color-bg-elevated);
+}
+
+.botGuessOverlay {
+  position: fixed;
+  top: var(--ds-space-4);
+  left: 50%;
+  z-index: 1200;
+  width: min(22rem, calc(100vw - var(--ds-space-8)));
+  transform: translate(-50%, 0);
+  opacity: 1;
+  pointer-events: none;
+}
+
+.botGuessOverlayEnter {
+  animation: botGuessSlideIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes botGuessSlideIn {
+  from {
+    transform: translate(-50%, -120%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+.botGuessOverlayVisible {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+
+.botGuessOverlayCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-4);
+  border-radius: var(--ds-radius-lg);
+  border: 2px solid var(--ds-color-accent);
+  background: var(--ds-color-bg-elevated);
+  box-shadow:
+    0 12px 40px rgb(0 0 0 / 0.28),
+    0 0 0 1px rgb(255 255 255 / 0.04);
+}
+
+.botGuessOverlayLabel {
+  margin: 0;
+  font-size: var(--ds-text-xs);
+  font-weight: var(--ds-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ds-color-text-muted);
+  text-align: center;
+}
+
+.botGuessOverlayPokemon {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-4);
+}
+
+.botGuessOverlayMeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-1);
+  min-width: 0;
+}
+
+.botGuessOverlayName {
+  font-size: var(--ds-text-lg);
+  font-weight: var(--ds-weight-semibold);
+  color: var(--ds-color-text-primary);
+}
+
+.botGuessOverlayDex {
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-secondary);
+}
+
+.botGuessOverlayResult {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-top: var(--ds-space-1);
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--ds-radius-full);
+  font-size: var(--ds-text-xs);
+  font-weight: var(--ds-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.botGuessOverlayHit {
+  background: rgb(34 197 94 / 0.18);
+  color: rgb(74 222 128);
+}
+
+.botGuessOverlayMiss {
+  background: rgb(248 113 113 / 0.15);
+  color: rgb(252 165 165);
+}

@@ -1,54 +1,88 @@
-import { useAuth } from '../../auth/AuthContext';
-import { Button, Card, PageShell } from '../../ds';
+import { useMemo, useState } from 'react';
+import { PageShell } from '../../ds';
+import { useSpeciesMeta } from '../../hooks/useSpeciesMeta';
+import { GameLaunchPanel } from './components/GameLaunchPanel';
+import { IntroDialogue } from './components/IntroDialogue';
+import { PokemonDetailModal } from './components/PokemonDetailModal';
+import { ProfileSummaryCard } from './components/ProfileSummaryCard';
+import { TrainingTeamCard } from './components/TrainingTeamCard';
+import { TrainingTeamEditorModal } from './components/TrainingTeamEditorModal';
+import type { TrainingSlotView } from './types/trainingSlot';
+import { HomeProvider, useHome } from './providers/HomeProvider';
+import styles from './home.module.css';
 
-export default function HomePage() {
-  const { me, logout } = useAuth();
+function HomeContent() {
+  const {
+    me,
+    showIntroDialogue,
+    dismissIntroDialogue,
+    trainingTeam,
+    loading,
+    errorMessage,
+    playerName,
+    homeUi,
+    openEditor,
+    closeEditor,
+  } = useHome();
+
+  const [selectedSlot, setSelectedSlot] = useState<TrainingSlotView | null>(null);
+
+  const memberDexList = useMemo(
+    () => (trainingTeam?.slots ?? []).flatMap((s) => s.line?.members ?? []),
+    [trainingTeam?.slots],
+  );
+  const { speciesByDex, evolutionLevelByDex } = useSpeciesMeta(memberDexList);
+
+  const showIntro = me != null && showIntroDialogue;
 
   return (
-    <PageShell width="wide">
-      <header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 'var(--ds-space-4)',
-          flexWrap: 'wrap',
-          marginBottom: 'var(--ds-space-6)',
+    <PageShell width="fluid" className={styles.homeShell}>
+      <IntroDialogue open={showIntro} playerName={playerName} onComplete={dismissIntroDialogue} />
+
+      <div className={`${styles.layout} ds-motion-stagger`}>
+        <div className={styles.leftColumn}>
+          <ProfileSummaryCard />
+          <TrainingTeamCard
+            loading={loading}
+            errorMessage={errorMessage}
+            slots={trainingTeam?.slots ?? []}
+            speciesByDex={speciesByDex}
+            evolutionLevelByDex={evolutionLevelByDex}
+            onSelect={setSelectedSlot}
+            onEdit={openEditor}
+          />
+        </div>
+
+        <div className={styles.rightColumn}>
+          <GameLaunchPanel />
+        </div>
+      </div>
+
+      <PokemonDetailModal
+        open={selectedSlot != null}
+        line={selectedSlot?.line ?? null}
+        displayDex={selectedSlot?.displayDex ?? 0}
+        displayName={selectedSlot?.displayName ?? ''}
+        onClose={() => setSelectedSlot(null)}
+        onLineUpdated={(updatedLine) => {
+          setSelectedSlot((prev) => (prev != null ? { ...prev, line: updatedLine } : prev));
         }}
-      >
-        <h1 className="ds-h1" style={{ margin: 0 }}>
-          PokeTeamGuess
-        </h1>
-        <Button type="button" variant="secondary" size="md" onClick={() => void logout()}>
-          Sair
-        </Button>
-      </header>
-      <Card padding="md">
-        <h2 className="ds-h2">Sessão ativa</h2>
-        {me ? (
-          <ul
-            style={{
-              lineHeight: 'var(--ds-leading-relaxed)',
-              color: 'var(--ds-color-text-secondary)',
-              paddingLeft: 'var(--ds-space-6)',
-              margin: '0 0 var(--ds-space-4)',
-            }}
-          >
-            <li>
-              <strong style={{ color: 'var(--ds-color-text-primary)' }}>Conta:</strong> {me.authenticatedAs}
-            </li>
-            <li>
-              <strong style={{ color: 'var(--ds-color-text-primary)' }}>ID:</strong> {String(me.userId)}
-            </li>
-          </ul>
-        ) : (
-          <p className="ds-body-muted">Carregando perfil…</p>
-        )}
-        <p className="ds-body-muted" style={{ marginBottom: 0 }}>
-          Cookie <code>JSESSIONID</code> (HttpOnly) enviado automaticamente nas chamadas a <code>/api/**</code>{' '}
-          com <code>credentials: &apos;include&apos;</code> e o proxy de desenvolvimento.
-        </p>
-      </Card>
+      />
+
+      <TrainingTeamEditorModal
+        open={homeUi.teamEditorOpen}
+        currentSlots={trainingTeam?.slots ?? []}
+        onClose={closeEditor}
+        onSaved={closeEditor}
+      />
     </PageShell>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <HomeProvider>
+      <HomeContent />
+    </HomeProvider>
   );
 }

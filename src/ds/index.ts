@@ -1,10 +1,18 @@
+export { AppHeader } from './components/AppHeader';
+export type { AppHeaderProps } from './components/AppHeader';
 export { Button } from './components/Button';
 export type { ButtonProps } from './components/Button';
 export { Card } from './components/Card';
 export type { CardProps } from './components/Card';
+export { ConfirmModal } from './components/ConfirmModal';
+export type { ConfirmModalProps } from './components/ConfirmModal';
 export { InlineAlert } from './components/InlineAlert';
 export type { InlineAlertProps } from './components/InlineAlert';
 export { PageShell } from './components/PageShell';
 export type { PageShellProps } from './components/PageShell';
+export { PageSection } from './components/PageSection/PageSection';
+export type { PageSectionProps } from './components/PageSection/PageSection';
+export { ThemeToggle } from './components/ThemeToggle';
+export type { ThemeToggleProps } from './components/ThemeToggle';
 export { TextField } from './components/TextField';
 export type { TextFieldProps } from './components/TextField';

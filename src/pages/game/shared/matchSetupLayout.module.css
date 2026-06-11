@@ -1,0 +1,61 @@
+.pageShell {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  max-width: none !important;
+  padding: var(--ds-space-4) var(--ds-space-5) !important;
+  box-sizing: border-box;
+}
+
+.card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: visible;
+}
+
+.pageTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: var(--ds-space-1);
+  margin: calc(var(--ds-space-1) * -1);
+  border: none;
+  background: transparent;
+  color: var(--ds-color-text-muted);
+  text-decoration: none;
+  border-radius: var(--ds-radius-sm);
+  cursor: pointer;
+  transition:
+    color var(--ds-duration-fast) var(--ds-ease-standard),
+    transform var(--ds-duration-fast) var(--ds-ease-standard);
+}
+
+.backLink:hover {
+  color: var(--ds-color-text-primary);
+  transform: translateX(-2px);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4);
+  overflow: visible;
+}
+
+.alertWrap {
+  flex-shrink: 0;
+}

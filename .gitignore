@@ -13,6 +13,13 @@
 
 # misc
 .DS_Store
+
+# Segredos e env local (nunca versionar)
+.env
+.env.*
+!.env.example
+
+# CRA legacy names
 .env.local
 .env.development.local
 .env.test.local
