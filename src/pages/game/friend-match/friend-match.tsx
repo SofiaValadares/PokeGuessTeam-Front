@@ -5,6 +5,7 @@ import { FriendMatchProvider, useFriendMatch } from './providers/FriendMatchProv
 import { FriendMatchLobbyView } from './components/FriendMatchLobbyView';
 import { FriendMatchWaitingView } from './components/FriendMatchWaitingView';
 import { FriendMatchPlayingView } from './components/FriendMatchPlayingView';
+import { FriendMatchStaleBlockModal } from './components/FriendMatchStaleBlockModal';
 
 function FriendMatchContent() {
   const { phase } = useFriendMatch();
@@ -29,6 +30,7 @@ export default function FriendMatchPage() {
   return (
     <FriendMatchDexProvider>
       <FriendMatchProvider>
+        <FriendMatchStaleBlockModal />
         <FriendMatchContent />
       </FriendMatchProvider>
     </FriendMatchDexProvider>

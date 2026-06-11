@@ -426,6 +426,11 @@
   flex-shrink: 0;
 }
 
+.matchBoardSyncAction {
+  max-width: none;
+  margin-inline: 0;
+}
+
 .syncActionRow {
   display: flex;
   align-items: center;
@@ -471,20 +476,34 @@
   text-align: left;
 }
 
-.playingSyncBar {
-  display: flex;
-  flex-shrink: 0;
-  justify-content: center;
-  width: 100%;
-  padding-top: var(--ds-space-3);
-  padding-bottom: max(var(--ds-space-2), env(safe-area-inset-bottom, 0px));
-  z-index: 2;
-}
-
 .playingStatusStack {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   gap: var(--ds-space-2);
   width: 100%;
+}
+
+.resumeBanner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  width: 100%;
+  padding: var(--ds-space-3) var(--ds-space-4);
+  border-radius: var(--ds-radius-md);
+  border: 1px solid rgb(234 179 8 / 0.35);
+  background: rgb(234 179 8 / 0.08);
+}
+
+.resumeBannerText {
+  margin: 0;
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-muted);
+  line-height: var(--ds-leading-relaxed);
+}
+
+.resumeBannerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
 }

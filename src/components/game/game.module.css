@@ -764,9 +764,17 @@
   color: var(--ds-color-text-muted);
 }
 
-.matchSurrenderBtn {
+.matchActionsFooter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
   width: 100%;
   margin-top: auto;
+  flex-shrink: 0;
+}
+
+.matchSurrenderBtn {
+  width: 100%;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--ds-color-danger, #e53e3e);

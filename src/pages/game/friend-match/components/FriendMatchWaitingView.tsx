@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Copy } from 'lucide-react';
 import { MatchSetupLayout } from '../../shared/MatchSetupLayout';
 import { useFriendMatch } from '../providers/FriendMatchProvider';
+import { FriendMatchResumeBanner } from './FriendMatchResumeBanner';
 import { FriendMatchSyncAction } from './FriendMatchSyncAction';
 import styles from './friend-match.module.css';
 
@@ -68,6 +69,8 @@ export function FriendMatchWaitingView() {
       ) : null}
 
       <div className={styles.waitingBody}>
+        <FriendMatchResumeBanner />
+
         <p className="ds-body-muted" role="status">
           {waitingForGuest
             ? 'À espera de um jogador entrar na sala…'

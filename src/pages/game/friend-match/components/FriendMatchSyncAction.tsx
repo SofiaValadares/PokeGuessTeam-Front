@@ -10,9 +10,10 @@ export const FRIEND_MATCH_SYNC_HELP =
 type FriendMatchSyncActionProps = {
   mode: 'start' | 'refresh';
   label?: string;
+  className?: string;
 };
 
-export function FriendMatchSyncAction({ mode, label }: FriendMatchSyncActionProps) {
+export function FriendMatchSyncAction({ mode, label, className }: FriendMatchSyncActionProps) {
   const { syncMatch, syncing, syncMessage, clearSyncMessage } = useFriendMatch();
   const [helpOpen, setHelpOpen] = useState(false);
 
@@ -20,7 +21,7 @@ export function FriendMatchSyncAction({ mode, label }: FriendMatchSyncActionProp
     label ?? (mode === 'start' ? 'Iniciar partida' : 'Atualizar partida');
 
   return (
-    <div className={styles.syncAction}>
+    <div className={[styles.syncAction, className].filter(Boolean).join(' ')}>
       <div className={styles.syncActionRow}>
         <Button
           type="button"

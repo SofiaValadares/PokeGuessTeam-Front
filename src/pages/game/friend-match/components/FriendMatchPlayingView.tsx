@@ -15,6 +15,7 @@ import {
   FINISH_MODAL_SECONDS,
   useFriendMatch,
 } from '../providers/FriendMatchProvider';
+import { FriendMatchResumeBanner } from './FriendMatchResumeBanner';
 import { FriendMatchSyncAction } from './FriendMatchSyncAction';
 import styles from './friend-match.module.css';
 import layout from '../../shared/matchLayout.module.css';
@@ -111,6 +112,8 @@ export function FriendMatchPlayingView() {
         onGoHome={goHomeNow}
       />
 
+      <FriendMatchResumeBanner />
+
       <div className={styles.playingStatusStack}>
         {error ? (
           <InlineAlert tone="error" role="alert">
@@ -171,15 +174,15 @@ export function FriendMatchPlayingView() {
             guessLoading={guessSending}
             excludedPokedexNumbers={excludedGuesses}
             playerTheme={opponentTurnActive ? 'waiting' : 'default'}
-          />
-        </div>
-      ) : null}
-
-      {!showResultModal ? (
-        <div className={styles.playingSyncBar}>
-          <FriendMatchSyncAction
-            mode="refresh"
-            label={opponentTurnActive ? 'Verificar se é a minha vez' : 'Atualizar partida'}
+            actionsBelowSurrender={
+              !showResultModal ? (
+                <FriendMatchSyncAction
+                  mode="refresh"
+                  className={styles.matchBoardSyncAction}
+                  label={opponentTurnActive ? 'Verificar se é a minha vez' : 'Atualizar partida'}
+                />
+              ) : null
+            }
           />
         </div>
       ) : null}

@@ -9,9 +9,9 @@ import {
 } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  abandonFriendSetup,
   fetchActiveFriendMatch,
   joinFriendMatch,
+  leaveFriendMatch,
   startFriendMatch,
   submitFriendGuess,
   surrenderFriendMatch,
@@ -33,6 +33,14 @@ export type FriendMatchSyncMessage = {
   tone: 'success' | 'error';
   text: string;
 };
+
+export type FriendMatchStaleBlock = {
+  action: 'create' | 'join';
+  team: number[];
+  joinCode?: string;
+};
+
+const MATCH_ALREADY_IN_PROGRESS = 'GAME_MATCH_ALREADY_IN_PROGRESS';
 
 function derivePhase(match: FriendMatchStateDto | null): FriendMatchPhase {
   if (!match) return 'lobby';
@@ -66,6 +74,13 @@ type FriendMatchContextValue = {
   guess: (pokedexNumber: number) => Promise<void>;
   surrender: () => Promise<void>;
   clearMatch: () => void;
+  resumeNotice: boolean;
+  staleBlock: FriendMatchStaleBlock | null;
+  leavingMatch: boolean;
+  dismissResumeNotice: () => void;
+  leaveCurrentMatch: () => Promise<void>;
+  continueStaleBlock: () => void;
+  abandonStaleBlockAndRetry: () => Promise<void>;
   abandonAndGoHome: () => Promise<void>;
 };
 
@@ -81,10 +96,12 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [syncMessage, setSyncMessage] = useState<FriendMatchSyncMessage | null>(null);
+  const [resumeNotice, setResumeNotice] = useState(false);
+  const [staleBlock, setStaleBlock] = useState<FriendMatchStaleBlock | null>(null);
+  const [leavingMatch, setLeavingMatch] = useState(false);
   const matchIdRef = useRef<string | null>(null);
+  const initialHydrateRef = useRef(true);
   const matchStatusRef = useRef<MatchStatus | null>(null);
-  const abandonTimerRef = useRef<number | null>(null);
-  const abandonGenerationRef = useRef(0);
   const leaveIntentionalRef = useRef(false);
   const refreshInFlightRef = useRef(false);
   const guessInFlightRef = useRef(false);
@@ -144,7 +161,14 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       if (latest) {
         const parsed = parseFriendMatchState(latest);
         setMatch(parsed);
+        if (initialHydrateRef.current) {
+          initialHydrateRef.current = false;
+          setResumeNotice(true);
+        }
         return parsed;
+      }
+      if (initialHydrateRef.current) {
+        initialHydrateRef.current = false;
       }
       if (matchIdRef.current && !showingResultsRef.current) {
         clearMatchRef.current?.();
@@ -249,54 +273,74 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
   }, [refreshMatch]);
 
   useEffect(() => {
-    const generation = ++abandonGenerationRef.current;
-
-    if (abandonTimerRef.current != null) {
-      window.clearTimeout(abandonTimerRef.current);
-      abandonTimerRef.current = null;
-    }
-
     return () => {
       const matchId = matchIdRef.current;
       const status = matchStatusRef.current;
-      const generationAtUnmount = generation;
       if (!matchId || status === 'FINISHED' || leaveIntentionalRef.current) return;
-
-      abandonTimerRef.current = window.setTimeout(() => {
-        abandonTimerRef.current = null;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        if (generationAtUnmount !== abandonGenerationRef.current) return;
-        if (leaveIntentionalRef.current) return;
-        if (status === 'SETUP') {
-          void abandonFriendSetup().catch(() => undefined);
-        } else if (status === 'ACTIVE') {
-          void surrenderFriendMatch().catch(() => undefined);
-        }
-      }, 250);
+      void leaveFriendMatch().catch(() => undefined);
     };
   }, []);
 
-  const runAction = useCallback(async (action: () => Promise<void>) => {
-    setBusy(true);
-    setError(null);
-    try {
-      await action();
-    } catch (err) {
-      setError(toFriendlyUserMessage(err, 'Não foi possível concluir a ação.'));
-    } finally {
-      setBusy(false);
-    }
-  }, []);
+  const tryHandleStaleMatchConflict = useCallback(
+    async (err: unknown, block: FriendMatchStaleBlock): Promise<boolean> => {
+      if (!(err instanceof ApiError) || err.status !== 409) return false;
+      if (err.body?.code !== MATCH_ALREADY_IN_PROGRESS) return false;
+
+      const latest = await fetchActiveFriendMatch();
+      if (latest) {
+        setMatch(parseFriendMatchState(latest));
+        setStaleBlock(block);
+        setError(null);
+        return true;
+      }
+
+      try {
+        await leaveFriendMatch();
+        clearMatchRef.current?.();
+        if (block.action === 'create') {
+          const created = await startFriendMatch(block.team);
+          setMatch(created);
+        } else if (block.joinCode) {
+          const joined = await joinFriendMatch({
+            joinCode: block.joinCode,
+            team: block.team,
+          });
+          setMatch(joined);
+        }
+        setResumeNotice(false);
+        setStaleBlock(null);
+        return true;
+      } catch (retryErr) {
+        setError(
+          toFriendlyUserMessage(
+            retryErr,
+            'Não foi possível iniciar uma nova partida após limpar a anterior.',
+          ),
+        );
+        return true;
+      }
+    },
+    [],
+  );
 
   const createRoom = useCallback(
     async (team: number[]) => {
-      await runAction(async () => {
+      setBusy(true);
+      setError(null);
+      try {
         const created = await startFriendMatch(team);
         setMatch(created);
+        setResumeNotice(false);
+        setStaleBlock(null);
         await refreshMatch();
-      });
+      } catch (err) {
+        if (await tryHandleStaleMatchConflict(err, { action: 'create', team })) return;
+        setError(toFriendlyUserMessage(err, 'Não foi possível criar a sala.'));
+      } finally {
+        setBusy(false);
+      }
     },
-    [runAction, refreshMatch],
+    [refreshMatch, tryHandleStaleMatchConflict],
   );
 
   const joinRoom = useCallback(
@@ -306,15 +350,32 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
         setError('Introduz o código da sala.');
         return;
       }
-      await runAction(async () => {
+      setBusy(true);
+      setError(null);
+      try {
         const joined = await joinFriendMatch({ joinCode: normalized, team });
         setMatch(joined);
+        setResumeNotice(false);
+        setStaleBlock(null);
         if (joined.status === 'SETUP') {
           await refreshMatch();
         }
-      });
+      } catch (err) {
+        if (
+          await tryHandleStaleMatchConflict(err, {
+            action: 'join',
+            team,
+            joinCode: normalized,
+          })
+        ) {
+          return;
+        }
+        setError(toFriendlyUserMessage(err, 'Não foi possível entrar na sala.'));
+      } finally {
+        setBusy(false);
+      }
     },
-    [runAction, refreshMatch],
+    [refreshMatch, tryHandleStaleMatchConflict],
   );
 
   const guess = useCallback(async (pokedexNumber: number) => {
@@ -393,19 +454,68 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
     matchStatusRef.current = null;
     setError(null);
     setGuessSending(false);
+    setResumeNotice(false);
+    setStaleBlock(null);
   }, []);
 
   clearMatchRef.current = clearMatch;
+
+  const leaveCurrentMatch = useCallback(async () => {
+    setLeavingMatch(true);
+    setError(null);
+    leaveIntentionalRef.current = true;
+    try {
+      await leaveFriendMatch();
+    } catch (err) {
+      if (!isFriendMatchGone(err)) {
+        setError(toFriendlyUserMessage(err, 'Não foi possível sair da partida.'));
+        leaveIntentionalRef.current = false;
+        return;
+      }
+    }
+    clearMatch();
+    leaveIntentionalRef.current = false;
+    setLeavingMatch(false);
+  }, [clearMatch]);
+
+  const continueStaleBlock = useCallback(() => {
+    setStaleBlock(null);
+    setResumeNotice(false);
+    setError(null);
+  }, []);
+
+  const abandonStaleBlockAndRetry = useCallback(async () => {
+    const block = staleBlock;
+    if (!block) return;
+    setLeavingMatch(true);
+    setError(null);
+    try {
+      await leaveFriendMatch();
+      clearMatch();
+      leaveIntentionalRef.current = false;
+      if (block.action === 'create') {
+        const created = await startFriendMatch(block.team);
+        setMatch(created);
+      } else if (block.joinCode) {
+        const joined = await joinFriendMatch({ joinCode: block.joinCode, team: block.team });
+        setMatch(joined);
+      }
+      setStaleBlock(null);
+      setResumeNotice(false);
+    } catch (err) {
+      setError(toFriendlyUserMessage(err, 'Não foi possível sair e tentar de novo.'));
+    } finally {
+      setLeavingMatch(false);
+    }
+  }, [staleBlock, clearMatch]);
 
   const abandonAndGoHome = useCallback(async () => {
     leaveIntentionalRef.current = true;
     setBusy(true);
     setError(null);
     try {
-      if (match?.status === 'SETUP') {
-        await abandonFriendSetup();
-      } else if (match?.status === 'ACTIVE') {
-        await surrenderFriendMatch();
+      if (match) {
+        await leaveFriendMatch();
       }
     } catch (err) {
       if (isFriendMatchGone(err)) {
@@ -413,13 +523,14 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       } else {
         setError(toFriendlyUserMessage(err, 'Não foi possível sair da partida.'));
         setBusy(false);
+        leaveIntentionalRef.current = false;
         return;
       }
     }
     clearMatch();
     setBusy(false);
     navigate('/', { replace: true });
-  }, [match?.status, navigate, clearMatch]);
+  }, [match, navigate, clearMatch]);
 
   const value = useMemo(
     (): FriendMatchContextValue => ({
@@ -440,6 +551,13 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       guess,
       surrender,
       clearMatch,
+      resumeNotice,
+      staleBlock,
+      leavingMatch,
+      dismissResumeNotice: () => setResumeNotice(false),
+      leaveCurrentMatch,
+      continueStaleBlock,
+      abandonStaleBlockAndRetry,
       abandonAndGoHome,
     }),
     [
@@ -458,6 +576,12 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       guess,
       surrender,
       clearMatch,
+      resumeNotice,
+      staleBlock,
+      leavingMatch,
+      leaveCurrentMatch,
+      continueStaleBlock,
+      abandonStaleBlockAndRetry,
       abandonAndGoHome,
     ],
   );

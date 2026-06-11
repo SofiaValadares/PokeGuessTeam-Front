@@ -140,6 +140,10 @@ export async function surrenderFriendMatch(): Promise<FriendMatchActionResponse>
   return parseFriendMatchActionResponse(raw);
 }
 
-export async function abandonFriendSetup(): Promise<void> {
+/** Abandona sala (SETUP), desiste (ACTIVE) ou limpa bloqueios órfãos. */
+export async function leaveFriendMatch(): Promise<void> {
   await apiFetchJson<void>(FRIEND, { method: 'DELETE' });
 }
+
+/** @deprecated use leaveFriendMatch */
+export const abandonFriendSetup = leaveFriendMatch;

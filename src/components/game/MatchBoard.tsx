@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { OpponentKnowledgeSlotDto } from '../../api/types/game';
 import { searchPokemon } from '../../api/pokemonApi';
 import type { PokemonDto } from '../../api/types/pokemon';
@@ -31,6 +31,8 @@ export type MatchBoardProps = {
   playerTheme?: 'default' | 'guest' | 'waiting';
   /** When set, search is limited to these Pokémon (e.g. registered Pokédex). */
   registeredPokedexOnly?: PokemonDto[];
+  /** Conteúdo extra abaixo do botão de desistir (ex.: atualizar partida online). */
+  actionsBelowSurrender?: ReactNode;
 };
 
 export function MatchBoard({
@@ -54,6 +56,7 @@ export function MatchBoard({
   excludedPokedexNumbers = [],
   playerTheme = 'default',
   registeredPokedexOnly,
+  actionsBelowSurrender,
 }: MatchBoardProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PokemonDto[]>([]);
@@ -265,16 +268,19 @@ export function MatchBoard({
           </section>
 
           {status === 'ACTIVE' ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="md"
-              className={styles.matchSurrenderBtn}
-              disabled={busy || submitting}
-              onClick={onSurrender}
-            >
-              DESISTIR
-            </Button>
+            <div className={styles.matchActionsFooter}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="md"
+                className={styles.matchSurrenderBtn}
+                disabled={busy || submitting}
+                onClick={onSurrender}
+              >
+                DESISTIR
+              </Button>
+              {actionsBelowSurrender}
+            </div>
           ) : null}
         </aside>
       </div>
