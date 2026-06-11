@@ -1,6 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { fetchAllGameHistory } from '../../../services/gameService';
-import { fetchPokedexAll } from '../../../services/pokedexService';
+import { fetchAllPokedexPages } from '../../../services/pokedexService';
 import { fetchAllPcLines } from '../../../services/pcService';
 import {
   fetchProfileCollection,
@@ -19,15 +19,14 @@ import { readPersistedCache } from './storage';
 import { emptyUserCacheState, type UserCacheState } from './types';
 
 async function loadFromNetwork(userId: string): Promise<UserCacheState> {
-  const [pokedexDto, pcLinesDto, collection, trainingTeamDto, gameHistoryDto, profileMeDto] =
-    await Promise.all([
-      fetchPokedexAll(),
-      fetchAllPcLines(),
-      fetchProfileCollection(),
-      fetchTrainingTeam(),
-      fetchAllGameHistory(),
-      fetchProfileMe(),
-    ]);
+  const [pcLinesDto, collection, trainingTeamDto, gameHistoryDto, profileMeDto] = await Promise.all([
+    fetchAllPcLines(),
+    fetchProfileCollection(),
+    fetchTrainingTeam(),
+    fetchAllGameHistory(),
+    fetchProfileMe(),
+  ]);
+  const pokedexDto = await fetchAllPokedexPages();
 
   return {
     userId,

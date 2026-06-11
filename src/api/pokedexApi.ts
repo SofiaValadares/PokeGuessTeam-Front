@@ -1,6 +1,7 @@
 export {
   POKEDEX_DEFAULT_PAGE_SIZE,
   POKEDEX_MAX_PAGE_SIZE,
+  fetchAllPokedexPages,
   fetchPokedexAll,
   fetchPokedexPage,
 } from '../services/pokedexService';

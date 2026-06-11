@@ -37,8 +37,8 @@ export async function getPokedexPage(page = 0, size = 25): Promise<Page<PokedexE
 export async function getPokedexAll(): Promise<PokedexEntry[]> {
   const entries = getPokedexAllFromCache();
   if (entries.length > 0) return entries;
-  const { fetchPokedexAll } = await import('../../../services/pokedexService');
-  return mapPokedexEntryList(await fetchPokedexAll());
+  const { fetchAllPokedexPages } = await import('../../../services/pokedexService');
+  return mapPokedexEntryList(await fetchAllPokedexPages());
 }
 
 export async function getPokemonPcPage(page = 0, size = 20): Promise<Page<PcLine>> {
