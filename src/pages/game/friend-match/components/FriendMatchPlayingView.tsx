@@ -111,51 +111,47 @@ export function FriendMatchPlayingView() {
         onGoHome={goHomeNow}
       />
 
-      {error ? (
-        <InlineAlert tone="error" role="alert">
-          {error}
-        </InlineAlert>
-      ) : null}
+      <div className={styles.playingStatusStack}>
+        {error ? (
+          <InlineAlert tone="error" role="alert">
+            {error}
+          </InlineAlert>
+        ) : null}
 
-      {!showResultModal ? (
-        <div className={styles.playingSyncBar}>
-          <FriendMatchSyncAction mode="refresh" />
-        </div>
-      ) : null}
+        {youTriggeredFinalResponse && !opponentTurnActive ? (
+          <p className="ds-body-muted" role="status">
+            Encontraste os 6 — {opponentName} tem uma ronda extra para tentar empatar.
+          </p>
+        ) : null}
 
-      {youTriggeredFinalResponse && !opponentTurnActive ? (
-        <p className="ds-body-muted" role="status">
-          Encontraste os 6 — {opponentName} tem uma ronda extra para tentar empatar.
-        </p>
-      ) : null}
+        {opponentFinalResponseTurn && !opponentTurnActive ? (
+          <p className="ds-body-muted" role="status">
+            Ronda final — {opponentName} pode tentar empatar.
+          </p>
+        ) : null}
 
-      {opponentFinalResponseTurn && !opponentTurnActive ? (
-        <p className="ds-body-muted" role="status">
-          Ronda final — {opponentName} pode tentar empatar.
-        </p>
-      ) : null}
+        {opponentTurnActive ? (
+          <p className="ds-body-muted" role="status">
+            {opponentName} está a pensar… Carrega em Atualizar partida quando quiseres ver se é a tua vez.
+          </p>
+        ) : null}
 
-      {opponentTurnActive ? (
-        <p className="ds-body-muted" role="status">
-          {opponentName} está a pensar…
-        </p>
-      ) : null}
+        {matchEnded && resultReady && yourResult === 'DESISTENCE' ? (
+          <p className="ds-body-muted" role="status">
+            Desististe da partida.
+          </p>
+        ) : null}
 
-      {matchEnded && resultReady && yourResult === 'DESISTENCE' ? (
-        <p className="ds-body-muted" role="status">
-          Desististe da partida.
-        </p>
-      ) : null}
+        {matchEnded && resultReady && yourResult === 'WIN' ? (
+          <p className="ds-body-muted" role="status">
+            {opponentName} desistiu — vitória para ti.
+          </p>
+        ) : null}
 
-      {matchEnded && resultReady && yourResult === 'WIN' ? (
-        <p className="ds-body-muted" role="status">
-          {opponentName} desistiu — vitória para ti.
-        </p>
-      ) : null}
-
-      {pendingServerFinish ? (
-        <p className="ds-body-muted">A guardar resultado…</p>
-      ) : null}
+        {pendingServerFinish ? (
+          <p className="ds-body-muted">A guardar resultado…</p>
+        ) : null}
+      </div>
 
       {!matchEnded || pendingServerFinish ? (
         <div className={layout.matchBoardWrap}>
@@ -175,6 +171,15 @@ export function FriendMatchPlayingView() {
             guessLoading={guessSending}
             excludedPokedexNumbers={excludedGuesses}
             playerTheme={opponentTurnActive ? 'waiting' : 'default'}
+          />
+        </div>
+      ) : null}
+
+      {!showResultModal ? (
+        <div className={styles.playingSyncBar}>
+          <FriendMatchSyncAction
+            mode="refresh"
+            label={opponentTurnActive ? 'Verificar se é a minha vez' : 'Atualizar partida'}
           />
         </div>
       ) : null}

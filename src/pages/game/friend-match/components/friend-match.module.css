@@ -423,6 +423,7 @@
   width: 100%;
   max-width: 22rem;
   margin-inline: auto;
+  flex-shrink: 0;
 }
 
 .syncActionRow {
@@ -472,6 +473,18 @@
 
 .playingSyncBar {
   display: flex;
+  flex-shrink: 0;
   justify-content: center;
-  margin-bottom: var(--ds-space-4);
+  width: 100%;
+  padding-top: var(--ds-space-3);
+  padding-bottom: max(var(--ds-space-2), env(safe-area-inset-bottom, 0px));
+  z-index: 2;
+}
+
+.playingStatusStack {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: var(--ds-space-2);
+  width: 100%;
 }
