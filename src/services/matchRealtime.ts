@@ -12,8 +12,8 @@ type SocketListeners = {
 
 const DISCONNECT_DELAY_MS = process.env.NODE_ENV === 'production' ? 150 : 1000;
 
-/** Em produção usa só polling (Vercel/Render não expõem WS de forma fiável). */
-const SOCKET_TRANSPORTS: ('polling' | 'websocket')[] = ['polling'];
+/** Polling primeiro; upgrade WS quando o proxy nginx suportar. */
+const SOCKET_TRANSPORTS: ('polling' | 'websocket')[] = ['polling', 'websocket'];
 
 let sharedSocket: MatchSocket | null = null;
 let socketRefCount = 0;

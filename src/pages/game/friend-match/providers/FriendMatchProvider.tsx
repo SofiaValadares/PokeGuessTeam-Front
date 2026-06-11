@@ -283,12 +283,14 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (phase !== 'playing' || match?.status !== 'ACTIVE') return;
-    if (socketStatus === 'connected') return;
+
+    const pollMs =
+      socketStatus === 'connected' ? 2_000 : socketStatus === 'error' ? 1_000 : 1_500;
 
     void refreshMatch();
     const intervalId = window.setInterval(() => {
       void refreshMatch();
-    }, 3000);
+    }, pollMs);
 
     return () => window.clearInterval(intervalId);
   }, [phase, match?.status, match?.matchId, socketStatus, refreshMatch]);
