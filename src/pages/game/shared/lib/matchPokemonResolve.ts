@@ -1,30 +1,29 @@
 import type { PokemonDto } from '../../../../api/types/pokemon';
-import { getPokemonSpecies } from '../../../../api/pokemonApi';
-import { getPokemonFromCache } from '../../../../store/slices/cache/queries';
+import { fetchPokemonSpeciesBatch } from '../../../../services/pokemonService';
 import type { ClientMatchState } from './clientMatchTypes';
-
-/** Garante que a espécie está no mapa usado por buildTeamKnowledge. */
-export async function resolvePokemonForMatch(
+/** Resolve espécie já carregada no mapa (sem pedido de rede isolado). */
+export function resolvePokemonForMatch(
   dex: number,
   dexMap: Map<number, PokemonDto>,
-  onDexMapUpdate: (next: Map<number, PokemonDto>) => void,
-): Promise<PokemonDto> {
+): PokemonDto {
   const cached = dexMap.get(dex);
   if (cached) return cached;
+  throw new Error(`Espécie #${dex} não está carregada para a partida.`);
+}
 
-  const fromSession = getPokemonFromCache(dex);
-  if (fromSession) {
-    const next = new Map(dexMap);
-    next.set(dex, fromSession);
-    onDexMapUpdate(next);
-    return fromSession;
-  }
-
-  const pokemon = await getPokemonSpecies(dex);
-  const next = new Map(dexMap);
-  next.set(dex, pokemon);
-  onDexMapUpdate(next);
-  return pokemon;
+/** Garante que o palpite está no mapa (batch só para dex em falta). */
+export async function ensureGuessDexInMap(
+  dex: number,
+  base: Record<number, PokemonDto>,
+  state: ClientMatchState,
+): Promise<Map<number, PokemonDto>> {
+  const map = await resolveMatchDexMap(base, state);
+  if (map.has(dex)) return map;
+  const fetched = await fetchPokemonSpeciesBatch([dex]);
+  fetched.forEach((pokemon, number) => {
+    map.set(number, pokemon);
+  });
+  return map;
 }
 
 function collectMatchDexNumbers(state: ClientMatchState): number[] {
@@ -40,16 +39,14 @@ export async function resolveMatchDexMap(
   base: Record<number, PokemonDto>,
   state: ClientMatchState,
 ): Promise<Map<number, PokemonDto>> {
-  let map = new Map(Object.entries(base).map(([k, v]) => [Number(k), v]));
-  const needed = new Set(collectMatchDexNumbers(state));
+  const map = new Map(Object.entries(base).map(([k, v]) => [Number(k), v]));
+  const missing = Array.from(new Set(collectMatchDexNumbers(state))).filter((dex) => !map.has(dex));
+  if (missing.length === 0) return map;
 
-  for (const dex of Array.from(needed)) {
-    if (map.has(dex)) continue;
-    const pokemon = await resolvePokemonForMatch(dex, map, () => undefined);
-    map = new Map(map);
+  const fetched = await fetchPokemonSpeciesBatch(missing);
+  fetched.forEach((pokemon, dex) => {
     map.set(dex, pokemon);
-  }
-
+  });
   return map;
 }
 

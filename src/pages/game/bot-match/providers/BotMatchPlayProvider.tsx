@@ -7,7 +7,8 @@ import {
   useRef,
 } from 'react';
 import { RIVAL } from '../../../../lib/game/characters';
-import { finishBotMatch } from '../../../../api/gameApi';
+import { finishBotMatch as finishBotMatchService } from '../../../../services/gameService';
+import { buildOpponentTeamSnapshot } from '../../../../lib/game/historyOpponentTeam';
 import { ApiError } from '../../../../services/http';
 import { useCacheActions } from '../../../../store/providers/CacheProvider';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
@@ -17,6 +18,7 @@ import { resolveUserResult, type ClientMatchState } from '../../../../lib/game/c
 import { toBotMatchView } from '../../../../lib/game/clientMatchView';
 import {
   dexMapHasAll,
+  ensureGuessDexInMap,
   mergeDexRecords,
   resolveMatchDexMap,
   resolvePokemonForMatch,
@@ -67,7 +69,7 @@ type BotMatchPlayProviderProps = {
 
 export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProviderProps) {
   const dispatch = useAppDispatch();
-  const { applyMatchHistory, syncMatchRewards } = useCacheActions();
+  const { syncMatchRewards } = useCacheActions();
   const botMatch = useAppSelector(selectBotMatch);
   const { pokemonByDex } = useAppSelector(selectMatchDex);
   const { availablePokemon: registeredPokemon } = useRegisteredPokedexPokemon();
@@ -108,18 +110,18 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
   const finishOnServer = useCallback(
     async (state: ClientMatchState, surrendered: boolean) => {
       const result = resolveUserResult(state, surrendered);
-      const response = await finishBotMatch({
+      const response = await finishBotMatchService({
         userCorrectGuesses: state.hostHits.length,
         opponentCorrectGuesses: state.opponentHits.length,
         result,
+        opponentTeam: buildOpponentTeamSnapshot(state),
       });
       const entry = mapGameHistoryEntry(response.historyEntry);
-      applyMatchHistory(entry);
       await syncMatchRewards();
       dispatch(setClientState(state));
       await applyDexForView(state, entry);
     },
-    [applyMatchHistory, applyDexForView, dispatch, syncMatchRewards],
+    [applyDexForView, dispatch, syncMatchRewards],
   );
 
   const pickBotGuess = useCallback(
@@ -239,10 +241,8 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
       dispatch(setBusy(true));
       dispatch(setError(null));
       try {
-        let dexMap = await resolveMatchDexMap(pokemonByDex, clientState);
-        const pokemon = await resolvePokemonForMatch(dex, dexMap, (next) => {
-          dexMap = next;
-        });
+        let dexMap = await ensureGuessDexInMap(dex, pokemonByDex, clientState);
+        const pokemon = resolvePokemonForMatch(dex, dexMap);
         const { feedback, state } = applyGuess(clientState, 'HOST', pokemon);
         dexMap = await resolveMatchDexMap(mergeDexRecords(pokemonByDex, dexMap), state);
         dispatch(mergePokemonDex(mergeDexRecords(pokemonByDex, dexMap)));
@@ -252,6 +252,8 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
 
         if (state.status === 'FINISHED') {
           await finishOnServer(state, false);
+        } else if (state.currentTurn === 'OPPONENT') {
+          void runBotTurnsRef.current(state);
         }
       } catch (e) {
         dispatch(setError(e instanceof Error ? e.message : 'Palpite inválido.'));

@@ -1,0 +1,28 @@
+.evolving {
+  animation: pokemonEvolve 1.4s ease-in-out;
+}
+
+@keyframes pokemonEvolve {
+  0% {
+    filter: brightness(1) drop-shadow(0 0 0 transparent);
+    transform: scale(1);
+  }
+  20% {
+    filter: brightness(1.8) drop-shadow(0 0 12px rgba(255, 230, 120, 0.9));
+    transform: scale(1.08);
+  }
+  45% {
+    filter: brightness(3) saturate(0.2);
+    opacity: 0.35;
+    transform: scale(0.75) rotate(-6deg);
+  }
+  70% {
+    filter: brightness(1.4) drop-shadow(0 0 16px rgba(120, 200, 255, 0.85));
+    opacity: 1;
+    transform: scale(1.18) rotate(4deg);
+  }
+  100% {
+    filter: brightness(1) drop-shadow(0 0 0 transparent);
+    transform: scale(1);
+  }
+}

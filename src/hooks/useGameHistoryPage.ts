@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getGameHistoryPage } from '../store/slices/cache/queries';
+import { mapGameHistoryList } from '../model';
+import { fetchGameHistory } from '../services/gameService';
 import type { GameHistoryPageResponse } from '../services/types/game';
 import { ApiError } from '../services/http';
 import { FetchStatus } from '../types/fetchStatus';
@@ -15,7 +16,8 @@ export function useGameHistoryPage(initialPage = 0, initialSize = 10) {
     setStatus(FetchStatus.Loading);
     setError(null);
     try {
-      setData(await getGameHistoryPage(p, size));
+      const res = await fetchGameHistory(p, size);
+      setData({ ...res, content: mapGameHistoryList(res.content) });
       setStatus(FetchStatus.Success);
     } catch (e) {
       setData(null);

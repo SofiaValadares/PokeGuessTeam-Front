@@ -6,6 +6,14 @@ import { MatchResultModal } from '../../shared/components/MatchResultModal';
 import { useMatchFinishRedirect } from '../../../../hooks/useMatchFinishRedirect';
 import { guessedDexNumbersForSide } from '../../../../lib/game/matchGuesses';
 import { gameResultLabel } from '../../../../lib/game/labels';
+import {
+  appendMatchRewardsToLines,
+  botMatchRewardForResult,
+} from '../../../../lib/game/matchRewardLabels';
+import { turnHintFromGuess } from '../../shared/lib/turnHintFromGuess';
+import { viewerOpponentTeamFromHistory } from '../../../../lib/game/historyPlayer';
+import { buildOpponentTeamSnapshot } from '../../../../lib/game/historyOpponentTeam';
+import { useProfileMe } from '../../../../hooks/useProfileMe';
 import { InlineAlert } from '../../../../ds';
 import { useAppDispatch } from '../../../../store/hooks';
 import { prepareNewBotMatch } from '../slice/botMatchSlice';
@@ -14,6 +22,7 @@ import layout from '../../shared/layout/matchLayout.module.css';
 
 export function BotMatchPlayingView() {
   const dispatch = useAppDispatch();
+  const { profileMe } = useProfileMe();
   const {
     hostName,
     matchView,
@@ -53,11 +62,33 @@ export function BotMatchPlayingView() {
     [guessLog],
   );
 
-  const finishedLines = matchView?.historyEntry
-    ? matchView.historyEntry.players.map(
-        (p) => `${p.username ?? 'Jogador'}: ${gameResultLabel(p.result)} (${p.correctGuesses}/6)`,
-      )
-    : ['Partida terminada.'];
+  const finishedLines = useMemo(() => {
+    if (!matchView?.historyEntry) return ['Partida terminada.'];
+
+    const resultLines = matchView.historyEntry.players.map(
+      (p) => `${p.username ?? 'Jogador'}: ${gameResultLabel(p.result)} (${p.correctGuesses}/6)`,
+    );
+
+    const yourResult = matchView.historyEntry.players.find((p) => p.slot === 1)?.result;
+    const reward = yourResult ? botMatchRewardForResult(yourResult) : null;
+    return appendMatchRewardsToLines(resultLines, reward);
+  }, [matchView?.historyEntry]);
+
+  const turnHint = useMemo(
+    () => turnHintFromGuess(guessLog.at(-1), 'HOST'),
+    [guessLog],
+  );
+
+  const opponentTeam = useMemo(() => {
+    const fromHistory = viewerOpponentTeamFromHistory(
+      matchView?.historyEntry,
+      profileMe?.profileId ?? null,
+      hostName,
+    );
+    if (fromHistory.length > 0) return fromHistory;
+    if (clientState) return buildOpponentTeamSnapshot(clientState);
+    return [];
+  }, [matchView?.historyEntry, profileMe?.profileId, hostName, clientState]);
 
   if (!matchView) {
     return (
@@ -84,6 +115,7 @@ export function BotMatchPlayingView() {
       <MatchResultModal
         open={showResultModal}
         lines={finishedLines}
+        opponentTeam={opponentTeam}
         secondsLeft={secondsLeft}
         onGoHome={goHomeNow}
       />
@@ -123,6 +155,7 @@ export function BotMatchPlayingView() {
             onGuess={guess}
             onSurrender={() => void surrender()}
             busy={busy || botTurnActive || pendingServerFinish}
+            turnHint={turnHint}
             excludedPokedexNumbers={excludedGuesses}
             playerTheme={botTurnActive ? 'waiting' : 'default'}
           />

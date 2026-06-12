@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { accountDisplayName } from '../../../../auth/accountDisplay';
 import { useAuth } from '../../../../store/providers/AuthProvider';
+import { RegisteredPokedexProvider } from '../../../../store/providers/RegisteredPokedexProvider';
 import { useAppSelector } from '../../../../store/hooks';
 import { selectBotMatch } from '../slice/botMatchSelectors';
 import { BotMatchDexProvider } from './BotMatchDexProvider';
@@ -25,9 +26,11 @@ function BotMatchProvidersInner({ children }: { children: React.ReactNode }) {
 
 export function BotMatchProvider({ children }: { children: React.ReactNode }) {
   return (
-    <BotMatchDexProvider>
-      <BotMatchProvidersInner>{children}</BotMatchProvidersInner>
-    </BotMatchDexProvider>
+    <RegisteredPokedexProvider>
+      <BotMatchDexProvider>
+        <BotMatchProvidersInner>{children}</BotMatchProvidersInner>
+      </BotMatchDexProvider>
+    </RegisteredPokedexProvider>
   );
 }
 

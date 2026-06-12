@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect } from 'react';
-import { loadMatchPokemonDex } from '../../../../lib/game/clientMatchView';
+import { useRegisteredPokedexPokemon } from '../../../../store/providers/RegisteredPokedexProvider';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import { pokemonDexMapToRecord } from '../../../../lib/game/matchSessionUtils';
-import { setError, setPokemonDex } from '../slice/localMatchSlice';
+import { setPokemonDex } from '../slice/localMatchSlice';
 import { selectLocalMatch } from '../slice/localMatchSelectors';
 
 type LocalMatchDexContextValue = {
@@ -14,27 +14,14 @@ const LocalMatchDexContext = createContext<LocalMatchDexContextValue | null>(nul
 export function LocalMatchDexProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
   const { pokemonByDex } = useAppSelector(selectLocalMatch);
+  const { availablePokemon } = useRegisteredPokedexPokemon();
   const dexReady = Object.keys(pokemonByDex).length > 0;
 
   useEffect(() => {
-    let cancelled = false;
-    if (Object.keys(pokemonByDex).length > 0) {
-      return () => {
-        cancelled = true;
-      };
-    }
-    void loadMatchPokemonDex()
-      .then((dex) => {
-        if (cancelled) return;
-        dispatch(setPokemonDex(pokemonDexMapToRecord(dex)));
-      })
-      .catch(() => {
-        if (!cancelled) dispatch(setError('Não foi possível carregar os Pokémon.'));
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [dispatch, pokemonByDex]);
+    if (availablePokemon.length === 0 || dexReady) return;
+    const byDex = new Map(availablePokemon.map((pokemon) => [pokemon.number, pokemon]));
+    dispatch(setPokemonDex(pokemonDexMapToRecord(byDex)));
+  }, [availablePokemon, dexReady, dispatch]);
 
   return (
     <LocalMatchDexContext.Provider value={{ dexReady }}>

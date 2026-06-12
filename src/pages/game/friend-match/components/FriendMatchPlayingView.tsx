@@ -1,29 +1,43 @@
 import { useMemo } from 'react';
 import { accountDisplayName } from '../../../../auth/accountDisplay';
 import { useAuth } from '../../../../store/providers/AuthProvider';
+import { BotGuessOverlay } from '../../bot-match/components/BotGuessOverlay';
 import { FriendMatchBoard } from './FriendMatchBoard';
 import { MatchResultModal } from '../../shared/components/MatchResultModal';
 import { useMatchFinishRedirect } from '../../../../hooks/useMatchFinishRedirect';
 import { guessedDexNumbersForSide } from '../../../../lib/game/matchGuesses';
 import { gameResultLabel } from '../../../../lib/game/labels';
 import {
-  formatMatchRewardLines,
+  appendMatchRewardsToLines,
   friendMatchRewardForResult,
 } from '../../../../lib/game/matchRewardLabels';
+import { turnHintFromGuess } from '../../shared/lib/turnHintFromGuess';
+import { viewerOpponentTeamFromHistory } from '../../../../lib/game/historyPlayer';
+import { useProfileMe } from '../../../../hooks/useProfileMe';
 import { InlineAlert } from '../../../../ds';
 import {
   FINISH_MODAL_SECONDS,
   useFriendMatch,
 } from '../providers/FriendMatchProvider';
 import { FriendMatchResumeBanner } from './FriendMatchResumeBanner';
-import { FriendMatchSyncAction } from './FriendMatchSyncAction';
 import styles from './friend-match.module.css';
 import layout from '../../shared/layout/matchLayout.module.css';
 
 export function FriendMatchPlayingView() {
   const { me } = useAuth();
-  const { match, finishReward, guessSending, busy, error, guess, surrender, dismissFinishedMatch } =
-    useFriendMatch();
+  const { profileMe } = useProfileMe();
+  const {
+    match,
+    finishReward,
+    activeOpponentGuess,
+    guessSending,
+    busy,
+    error,
+    guess,
+    surrender,
+    dismissFinishedMatch,
+    socketStatus,
+  } = useFriendMatch();
   const playerName = accountDisplayName(me);
 
   const matchEnded = match?.status === 'FINISHED';
@@ -35,6 +49,11 @@ export function FriendMatchPlayingView() {
     true,
     dismissFinishedMatch,
     FINISH_MODAL_SECONDS,
+  );
+
+  const turnHint = useMemo(
+    () => turnHintFromGuess(match?.recentGuesses?.at(-1), match?.yourSide),
+    [match?.recentGuesses, match?.yourSide],
   );
 
   const opponentName =
@@ -59,27 +78,17 @@ export function FriendMatchPlayingView() {
 
     const reward =
       finishReward ?? (yourResult ? friendMatchRewardForResult(yourResult) : null);
-    const rewardLines = formatMatchRewardLines(reward);
-
-    if (rewardLines.length === 0) return resultLines;
-    return [...resultLines, '—', 'Recompensas:', ...rewardLines];
+    return appendMatchRewardsToLines(resultLines, reward);
   }, [match?.historyEntry, finishReward, yourResult]);
 
-  const isYourTurn = Boolean(
-    match &&
-      match.status === 'ACTIVE' &&
-      match.currentTurn === match.yourSide &&
-      !busy &&
-      !pendingServerFinish,
-  );
-
-  const opponentTurnActive = Boolean(
-    match &&
-      match.status === 'ACTIVE' &&
-      match.currentTurn !== match.yourSide &&
-      !matchEnded &&
-      !busy &&
-      !showResultModal,
+  const opponentTeam = useMemo(
+    () =>
+      viewerOpponentTeamFromHistory(
+        match?.historyEntry,
+        profileMe?.profileId ?? null,
+        me?.username ?? null,
+      ),
+    [match?.historyEntry, profileMe?.profileId, me?.username],
   );
 
   if (!match) {
@@ -89,6 +98,23 @@ export function FriendMatchPlayingView() {
       </div>
     );
   }
+
+  const isYourTurn =
+    match.status === 'ACTIVE' &&
+    match.currentTurn === match.yourSide &&
+    !busy &&
+    !pendingServerFinish;
+
+  const opponentGuessOverlay =
+    activeOpponentGuess !== null && match.currentTurn !== match.yourSide;
+
+  const opponentTurnActive =
+    opponentGuessOverlay ||
+    (match.status === 'ACTIVE' &&
+      match.currentTurn !== match.yourSide &&
+      !matchEnded &&
+      !busy &&
+      !showResultModal);
 
   const youTriggeredFinalResponse =
     match.status === 'ACTIVE' &&
@@ -107,9 +133,18 @@ export function FriendMatchPlayingView() {
         .filter(Boolean)
         .join(' ')}
     >
+      {activeOpponentGuess ? (
+        <BotGuessOverlay
+          key={activeOpponentGuess.id}
+          guess={activeOpponentGuess}
+          opponentName={opponentName}
+        />
+      ) : null}
+
       <MatchResultModal
         open={showResultModal}
         lines={finishedLines}
+        opponentTeam={opponentTeam}
         secondsLeft={secondsLeft}
         onGoHome={goHomeNow}
       />
@@ -120,6 +155,18 @@ export function FriendMatchPlayingView() {
         {error ? (
           <InlineAlert tone="error" role="alert">
             {error}
+          </InlineAlert>
+        ) : null}
+
+        {socketStatus === 'connecting' ? (
+          <p className="ds-body-muted" role="status">
+            A ligar à partida em tempo real…
+          </p>
+        ) : null}
+
+        {socketStatus === 'error' ? (
+          <InlineAlert tone="error" role="status">
+            Ligação em tempo real indisponível. Recarrega a página ou tenta mais tarde.
           </InlineAlert>
         ) : null}
 
@@ -168,18 +215,9 @@ export function FriendMatchPlayingView() {
             onSurrender={() => void surrender()}
             busy={busy || guessSending || pendingServerFinish}
             guessLoading={guessSending}
+            turnHint={turnHint}
             excludedPokedexNumbers={excludedGuesses}
             playerTheme={opponentTurnActive ? 'waiting' : 'default'}
-            actionsBelowSurrender={
-              !showResultModal ? (
-                <FriendMatchSyncAction
-                  mode="refresh"
-                  className={styles.matchBoardSyncAction}
-                  label={opponentTurnActive ? 'Verificar se é a minha vez' : 'Atualizar partida'}
-                  disabled={!opponentTurnActive}
-                />
-              ) : null
-            }
           />
         </div>
       ) : null}

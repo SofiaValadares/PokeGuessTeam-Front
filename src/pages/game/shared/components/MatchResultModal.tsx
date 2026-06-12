@@ -1,10 +1,13 @@
+import type { GameHistoryOpponentSlot } from '../../../../model';
 import { Button } from '../../../../ds';
+import { MatchResultOpponentTeam } from './MatchResultOpponentTeam';
 import styles from './game.module.css';
 
 type MatchResultModalProps = {
   open: boolean;
   title?: string;
   lines: string[];
+  opponentTeam?: GameHistoryOpponentSlot[];
   secondsLeft: number;
   onGoHome: () => void;
 };
@@ -13,6 +16,7 @@ export function MatchResultModal({
   open,
   title = 'Partida terminada',
   lines,
+  opponentTeam = [],
   secondsLeft,
   onGoHome,
 }: MatchResultModalProps) {
@@ -35,6 +39,7 @@ export function MatchResultModal({
               {line}
             </p>
           ))}
+          <MatchResultOpponentTeam slots={opponentTeam} />
         </div>
         <p className={styles.matchResultModalCountdown}>
           A voltar ao início em {Math.max(secondsLeft, 0)}s…

@@ -1,0 +1,1 @@
+export { EvolutionSprite } from './EvolutionSprite';

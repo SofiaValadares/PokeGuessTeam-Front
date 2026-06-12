@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Copy } from 'lucide-react';
+import { InlineAlert } from '../../../../ds';
 import { MatchSetupLayout } from '../../shared/layout/MatchSetupLayout';
 import { useFriendMatch } from '../providers/FriendMatchProvider';
 import { FriendMatchResumeBanner } from './FriendMatchResumeBanner';
-import { FriendMatchSyncAction } from './FriendMatchSyncAction';
 import styles from './friend-match.module.css';
 
 export function FriendMatchWaitingView() {
-  const { match, error, abandonAndGoHome } = useFriendMatch();
+  const { match, error, socketStatus, abandonAndGoHome } = useFriendMatch();
   const [copied, setCopied] = useState(false);
 
   if (!match) return null;
@@ -43,12 +43,12 @@ export function FriendMatchWaitingView() {
         : 'Sala de espera';
 
   const subtitle = waitingForGuest
-    ? 'Partilha o código abaixo. A partida começa quando o amigo entrar com a equipe dele.'
+    ? 'Partilha o código abaixo. A sala atualiza automaticamente quando o amigo entrar.'
     : waitingForOpponentTeam
-      ? 'A tua equipe está pronta. Aguarda o adversário entrar na sala.'
+      ? 'A tua equipe está pronta. Aguarda o adversário confirmar a equipe dele.'
       : bothReady
-        ? 'Ambos na sala — carrega em Iniciar partida quando estiveres pronto.'
-        : 'Aguarda o adversário entrar na sala.';
+        ? 'Ambos prontos — a partida vai iniciar automaticamente.'
+        : 'Aguarda o adversário confirmar a equipe.';
 
   return (
     <MatchSetupLayout
@@ -77,20 +77,33 @@ export function FriendMatchWaitingView() {
             : waitingForOpponentTeam
               ? `${opponentName} ainda está a montar a equipe…`
               : bothReady
-                ? 'Pronto para começar — usa o botão abaixo.'
+                ? 'A iniciar partida…'
                 : `${opponentName} ainda não confirmou a equipe…`}
         </p>
 
-        {error ? (
-          <p className="ds-body-muted" role="alert">
-            {error}
+        {socketStatus === 'connecting' ? (
+          <p className="ds-body-muted" role="status">
+            A ligar à sala em tempo real…
           </p>
         ) : null}
 
-        <FriendMatchSyncAction
-          mode="start"
-          label={waitingForGuest ? 'Verificar convidado' : 'Iniciar partida'}
-        />
+        {socketStatus === 'connected' ? (
+          <p className="ds-body-muted" role="status">
+            Ligação ativa — vais ver quando o amigo entrar.
+          </p>
+        ) : null}
+
+        {socketStatus === 'error' ? (
+          <InlineAlert tone="error" role="status">
+            Ligação em tempo real indisponível. Recarrega a página para voltar a receber atualizações.
+          </InlineAlert>
+        ) : null}
+
+        {error ? (
+          <InlineAlert tone="error" role="alert">
+            {error}
+          </InlineAlert>
+        ) : null}
 
         <div className={styles.playersList}>
           <span

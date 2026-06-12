@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { PC_DEFAULT_PAGE_SIZE } from '../../../services/pokemonService';
+import { fetchAllPcLines } from '../../../services/pcService';
 import { PokemonBillGrid } from '../../../components/PokemonBillGrid';
 import { PokemonGridPagination } from '../../../components/PokemonGridPagination';
 import { resolveCurrentMemberDex } from '../../../lib/pokemon/pcCurrentForm';
-import { selectPcLines } from '../../../store/slices/cache/selectors';
-import { useAppSelector } from '../../../store/hooks';
 import { PC_PAGE_SIZE_OPTIONS } from '../../../lib/ui/gridPageSizes';
 import { usePokemonPcPage } from '../../../hooks/usePokemonPcPage';
 import { useSpeciesMeta } from '../../../hooks/useSpeciesMeta';
@@ -16,7 +15,6 @@ import { buildPcGridData } from '../../../lib/pc/buildGridData';
 import styles from './pc.module.css';
 
 export default function PcPage() {
-  const cachedPcLines = useAppSelector(selectPcLines);
   const [pageSize, setPageSize] = useState(PC_DEFAULT_PAGE_SIZE);
   const [searchQuery, setSearchQuery] = useState('');
   const { page, setPage, data, status, errorMessage } = usePokemonPcPage(0, pageSize);
@@ -34,9 +32,24 @@ export default function PcPage() {
       return;
     }
 
-    setSearchLines(cachedPcLines);
-    setSearchStatus(FetchStatus.Success);
-  }, [cachedPcLines, isSearching, trimmedSearch]);
+    let cancelled = false;
+    setSearchStatus(FetchStatus.Loading);
+    void fetchAllPcLines()
+      .then((lines) => {
+        if (cancelled) return;
+        setSearchLines(lines);
+        setSearchStatus(FetchStatus.Success);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setSearchLines([]);
+        setSearchStatus(FetchStatus.Error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSearching, trimmedSearch]);
 
   const loading = isSearching ? searchStatus === FetchStatus.Loading : status === FetchStatus.Loading;
   const lines = useMemo(

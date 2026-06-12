@@ -1,25 +1,26 @@
 import type { PersistedUserCache } from './types';
 
-const STORAGE_KEY = 'pokeguessteam:user-cache';
-
+/** Persistência local desativada — dados vêm sempre da API. */
 export function readPersistedCache(): PersistedUserCache | null {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as PersistedUserCache;
-  } catch {
-    return null;
-  }
+  return null;
 }
 
-export function writePersistedCache(data: PersistedUserCache): void {
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+export function writePersistedCache(_data: PersistedUserCache): void {
+  /* no-op */
 }
 
 export function clearPersistedCache(): void {
-  sessionStorage.removeItem(STORAGE_KEY);
+  try {
+    sessionStorage.removeItem('pokeguessteam:user-cache');
+    sessionStorage.removeItem('pokeguessteam:bot-match');
+    sessionStorage.removeItem('pokeguessteam:local-match');
+    localStorage.removeItem('pokeguessteam-preferences');
+    localStorage.removeItem('pokeguessteam-theme');
+  } catch {
+    /* ignore */
+  }
 }
 
 export function hasPersistedCache(): boolean {
-  return sessionStorage.getItem(STORAGE_KEY) != null;
+  return false;
 }

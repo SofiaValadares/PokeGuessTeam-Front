@@ -1,15 +1,13 @@
 import { createContext, useContext, useEffect } from 'react';
-import { loadMatchPokemonDex } from '../../../../lib/game/clientMatchView';
-import { readAllPokemonFromCache } from '../../../../store/slices/cache/queries';
+import { mapToRecord } from '../../../../lib/game/pokemonDexMaps';
+import { useRegisteredPokedexPokemon } from '../../../../store/providers/RegisteredPokedexProvider';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
-import { setError } from '../slice/botMatchSlice';
 import {
   setAllPokemon,
   setLoadingDex,
   setPokemonDex,
 } from '../../shared/slice/matchDexSlice';
 import { selectMatchDex } from '../../shared/slice/matchDexSelectors';
-import { mapToRecord } from '../../../../lib/game/pokemonDexMaps';
 
 type BotMatchDexContextValue = {
   loadingDex: boolean;
@@ -21,32 +19,23 @@ const BotMatchDexContext = createContext<BotMatchDexContextValue | null>(null);
 export function BotMatchDexProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
   const { loadingDex, pokemonByDex } = useAppSelector(selectMatchDex);
+  const { availablePokemon, loading: registeredLoading } = useRegisteredPokedexPokemon();
   const dexReady = Object.keys(pokemonByDex).length > 0;
 
   useEffect(() => {
-    let cancelled = false;
-    dispatch(setLoadingDex(true));
-    const cachedPool = readAllPokemonFromCache();
-    if (cachedPool.length > 0) {
-      dispatch(setAllPokemon(cachedPool));
+    if (availablePokemon.length === 0) {
+      if (!registeredLoading) {
+        dispatch(setLoadingDex(false));
+      }
+      return;
     }
-    void loadMatchPokemonDex()
-      .then((dex) => {
-        if (cancelled) return;
-        dispatch(setPokemonDex(mapToRecord(dex)));
-        const pool = cachedPool.length > 0 ? cachedPool : Array.from(dex.values());
-        dispatch(setAllPokemon(pool));
-      })
-      .catch(() => {
-        if (!cancelled) dispatch(setError('Não foi possível carregar os Pokémon.'));
-      })
-      .finally(() => {
-        if (!cancelled) dispatch(setLoadingDex(false));
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [dispatch]);
+
+    dispatch(setLoadingDex(true));
+    const byDex = new Map(availablePokemon.map((pokemon) => [pokemon.number, pokemon]));
+    dispatch(setAllPokemon(availablePokemon));
+    dispatch(setPokemonDex(mapToRecord(byDex)));
+    dispatch(setLoadingDex(false));
+  }, [availablePokemon, dispatch, registeredLoading]);
 
   return (
     <BotMatchDexContext.Provider value={{ loadingDex, dexReady }}>

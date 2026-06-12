@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { FRIEND_MATCH_ENABLED } from '../../../lib/config/featureFlags';
+import { RegisteredPokedexProvider } from '../../../store/providers/RegisteredPokedexProvider';
 import { FriendMatchDexProvider } from './providers/FriendMatchDexProvider';
 import { FriendMatchProvider, useFriendMatch } from './providers/FriendMatchProvider';
 import { FriendMatchLobbyView } from './components/FriendMatchLobbyView';
@@ -28,11 +29,13 @@ export default function FriendMatchPage() {
   }
 
   return (
-    <FriendMatchDexProvider>
-      <FriendMatchProvider>
-        <FriendMatchStaleBlockModal />
-        <FriendMatchContent />
-      </FriendMatchProvider>
-    </FriendMatchDexProvider>
+    <RegisteredPokedexProvider>
+      <FriendMatchDexProvider>
+        <FriendMatchProvider>
+          <FriendMatchStaleBlockModal />
+          <FriendMatchContent />
+        </FriendMatchProvider>
+      </FriendMatchDexProvider>
+    </RegisteredPokedexProvider>
   );
 }

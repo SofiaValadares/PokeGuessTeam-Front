@@ -3,7 +3,6 @@ import { useAuth } from '../../../../store/providers/AuthProvider';
 import { useProfileMe } from '../../../../hooks/useProfileMe';
 import { Button, InlineAlert, TextField } from '../../../../ds';
 import { PokemonSprite } from '../../../../components/PokemonSprite';
-import { FetchStatus } from '../../../../types/fetchStatus';
 import { useFavoritePokemonEditor } from '../hooks';
 import type { useProfileSettings } from '../hooks/useProfileSettings';
 import { ProfileEditButton } from './ProfileEditButton';
@@ -13,11 +12,10 @@ type Settings = ReturnType<typeof useProfileSettings>;
 
 export function ProfileIdentityBar({ settings }: { settings: Settings }) {
   const { me } = useAuth();
-  const { profileMe, status: profileStatus, errorMessage: profileError, refresh } = useProfileMe();
-  const favorite = useFavoritePokemonEditor(profileMe, () => void refresh());
+  const { profileMe, loading, error: profileError, reload } = useProfileMe();
+  const favorite = useFavoritePokemonEditor(profileMe, () => void reload());
 
   const displayName = accountDisplayName(me);
-  const loading = profileStatus === FetchStatus.Loading;
 
   return (
     <section className={styles.identitySection} aria-label="Identidade do perfil">

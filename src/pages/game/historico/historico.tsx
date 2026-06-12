@@ -3,21 +3,17 @@ import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useGameHistoryPage } from '../../../hooks/useGameHistoryPage';
 import { useAuth } from '../../../store/providers/AuthProvider';
-import { useAppSelector } from '../../../store/hooks';
-import { selectProfileMe } from '../../../store/slices/cache/selectors';
+import { useProfileMe } from '../../../hooks/useProfileMe';
 import { PokemonGridPagination } from '../../../components/PokemonGridPagination';
 import { Card, InlineAlert, PageSection, PageShell } from '../../../ds';
 import { deleteGameHistory } from '../../../services/gameService';
 import { ApiError } from '../../../services/http';
-import { useAppDispatch } from '../../../store/hooks';
-import { removeGameHistoryEntry } from '../../../store/slices/cache';
 import { HistoryRow } from './components/HistoryRow';
 import styles from './historico.module.css';
 
 export default function HistoricoPage() {
-  const dispatch = useAppDispatch();
   const { me } = useAuth();
-  const profileMe = useAppSelector(selectProfileMe);
+  const { profileMe } = useProfileMe();
   const { page, setPage, pageSize, setPageSize, data, loading, error, reload } = useGameHistoryPage();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -31,7 +27,6 @@ export default function HistoricoPage() {
       setDeleteError(null);
       try {
         await deleteGameHistory(gameId);
-        dispatch(removeGameHistoryEntry(gameId));
         reload();
       } catch (e) {
         setDeleteError(e instanceof ApiError ? e.message : 'Não foi possível remover a partida.');
@@ -39,7 +34,7 @@ export default function HistoricoPage() {
         setDeletingId(null);
       }
     },
-    [deletingId, dispatch, reload],
+    [deletingId, reload],
   );
 
   return (
@@ -75,9 +70,9 @@ export default function HistoricoPage() {
                     <th>Data</th>
                     <th>Modo</th>
                     <th>Adversário</th>
-                    <th>Jogadores</th>
                     <th>Placar</th>
                     <th>Resultado</th>
+                    <th>Equipa rival</th>
                     <th aria-label="Ações" />
                   </tr>
                 </thead>

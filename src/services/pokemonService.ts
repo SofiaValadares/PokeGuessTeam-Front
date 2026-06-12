@@ -1,3 +1,9 @@
+import {
+  dedupeSpeciesBatch,
+  readCachedSpecies,
+  readCachedSpeciesMap,
+  writeCachedSpeciesMap,
+} from '../lib/pokemon/speciesRequestCache';
 import { apiFetchJson } from './http';
 import type { PokeballDrawResponse } from './types/game';
 import type { PcPageResponse, PokemonDto } from './types/pokemon';
@@ -17,33 +23,50 @@ export async function fetchPokemonPcPage(
   return apiFetchJson<PcPageResponse>(`/api/pokemon/pc?${params.toString()}`, { method: 'GET' });
 }
 
+/** @deprecated Preferir {@link fetchPokemonSpeciesBatch} — evita pedidos 1-a-1. */
 export async function fetchPokemonSpecies(pokedexNumber: number): Promise<PokemonDto> {
-  return apiFetchJson<PokemonDto>(`/api/pokemon/species/${pokedexNumber}`, { method: 'GET' });
+  const cached = readCachedSpecies(pokedexNumber);
+  if (cached) return cached;
+  const batch = await fetchPokemonSpeciesBatch([pokedexNumber]);
+  const pokemon = batch.get(pokedexNumber);
+  if (!pokemon) {
+    throw new Error(`Espécie #${pokedexNumber} não encontrada.`);
+  }
+  return pokemon;
 }
 
 export async function fetchPokemonSpeciesBatch(
   pokedexNumbers: number[],
 ): Promise<Map<number, PokemonDto>> {
-  const unique = Array.from(new Set(pokedexNumbers.filter((n) => n > 0)));
+  const unique = Array.from(new Set(pokedexNumbers.filter((n) => n > 0))).sort((a, b) => a - b);
   if (unique.length === 0) return new Map();
 
-  const params = new URLSearchParams({ numbers: unique.join(',') });
-  const list = await apiFetchJson<PokemonDto[]>(
-    `/api/pokemon/species?${params.toString()}`,
-    { method: 'GET' },
-  );
+  const cacheKey = unique.join(',');
+  return dedupeSpeciesBatch(cacheKey, async () => {
+    const result = readCachedSpeciesMap(unique);
+    const missing = unique.filter((dex) => !result.has(dex));
+    if (missing.length === 0) return result;
 
-  const result = new Map<number, PokemonDto>();
-  for (const dto of list) {
-    result.set(dto.number, dto);
-  }
-  return result;
+    const chunkSize = 100;
+    for (let offset = 0; offset < missing.length; offset += chunkSize) {
+      const chunk = missing.slice(offset, offset + chunkSize);
+      const params = new URLSearchParams({ numbers: chunk.join(',') });
+      const list = await apiFetchJson<PokemonDto[]>(
+        `/api/pokemon/species?${params.toString()}`,
+        { method: 'GET' },
+      );
+      for (const dto of list) {
+        result.set(dto.number, dto);
+      }
+    }
+
+    writeCachedSpeciesMap(result);
+    return result;
+  });
 }
 
 export async function searchPokemonFromNetwork(query: string, limit = 30): Promise<PokemonDto[]> {
-  const q = query.trim();
-  if (!q) return [];
-  const params = new URLSearchParams({ q, limit: String(limit) });
+  const params = new URLSearchParams({ q: query.trim(), limit: String(limit) });
   return apiFetchJson<PokemonDto[]>(`/api/pokemon/search?${params.toString()}`, { method: 'GET' });
 }
 

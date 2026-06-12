@@ -1,15 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { updateFavoritePokemon } from '../../../../services/profileService';
 import { searchPokemon } from '../../../../store/slices/cache/queries';
-import { useCacheActions } from '../../../../store/providers/CacheProvider';
 import type { PokemonDto } from '../../../../api/types/pokemon';
-import type { ProfileMeResponse } from '../../../../api/types/profile';
+import type { ProfileMe } from '../../../../model';
 import { FetchStatus } from '../../../../types/fetchStatus';
-import { mapProfileMe } from '../../../../model';
 import { mapProfileSubmitError } from '../actions/form';
 
-export function useFavoritePokemonEditor(profileMe: ProfileMeResponse | null, onSaved: () => void) {
-  const { applyFavorite } = useCacheActions();
+export function useFavoritePokemonEditor(profileMe: ProfileMe | null, onSaved: () => void) {
   const [editorOpen, setEditorOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PokemonDto[]>([]);
@@ -57,8 +54,7 @@ export function useFavoritePokemonEditor(profileMe: ProfileMeResponse | null, on
     setSubmitError(null);
     setSubmitStatus(FetchStatus.Loading);
     try {
-      const profile = await updateFavoritePokemon(selected.number);
-      applyFavorite(mapProfileMe(profile));
+      await updateFavoritePokemon(selected.number);
       setSuccess(true);
       setEditorOpen(false);
       resetEditor();
@@ -68,7 +64,7 @@ export function useFavoritePokemonEditor(profileMe: ProfileMeResponse | null, on
       setSubmitStatus(FetchStatus.Error);
       setSubmitError(mapProfileSubmitError(err));
     }
-  }, [applyFavorite, onSaved, resetEditor, selected]);
+  }, [onSaved, resetEditor, selected]);
 
   const currentDex = profileMe?.favoritePokemonId
     ? Number.parseInt(profileMe.favoritePokemonId, 10)

@@ -1,14 +1,38 @@
-import { useMemo } from 'react';
-import type { PokemonDto } from '../services/types/pokemon';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { PcLine } from '../model';
+import { mapPcLineList } from '../model';
+import { fetchAllPcLines } from '../services/pcService';
 import { resolveCurrentMemberDex } from '../lib/pokemon/pcCurrentForm';
 import { useSpeciesMeta } from './useSpeciesMeta';
-import { selectPcLines, selectUserCache } from '../store/slices/cache/selectors';
-import { useAppSelector } from '../store/hooks';
+import { ApiError } from '../services/http';
 import { FetchStatus } from '../types/fetchStatus';
 
-export function usePcTeamInventory() {
-  const lines = useAppSelector(selectPcLines);
-  const cacheStatus = useAppSelector(selectUserCache).status;
+/** Linhas evolutivas completas do PC (para montar o time de treino). */
+export function usePcTeamInventory(enabled = true) {
+  const [lines, setLines] = useState<PcLine[]>([]);
+  const [status, setStatus] = useState(FetchStatus.Idle);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setStatus(FetchStatus.Loading);
+    setErrorMessage(null);
+    try {
+      const fetched = mapPcLineList(await fetchAllPcLines());
+      setLines(fetched);
+      setStatus(FetchStatus.Success);
+    } catch (e) {
+      setLines([]);
+      setErrorMessage(
+        e instanceof ApiError ? e.message : 'Não foi possível carregar o PC.',
+      );
+      setStatus(FetchStatus.Error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!enabled) return;
+    void load();
+  }, [enabled, load]);
 
   const allMemberDex = useMemo(
     () => lines.flatMap((line) => line.members),
@@ -17,32 +41,39 @@ export function usePcTeamInventory() {
 
   const { speciesByDex, evolutionLevelByDex, loading: metaLoading } = useSpeciesMeta(allMemberDex);
 
-  const availablePokemon = useMemo(() => {
-    const seen = new Set<number>();
-    const list: PokemonDto[] = [];
-
-    for (const line of lines) {
-      const dex = resolveCurrentMemberDex(line.members, line.level, evolutionLevelByDex);
-      if (dex <= 0 || seen.has(dex)) continue;
-      const species = speciesByDex.get(dex);
-      if (!species) continue;
-      seen.add(dex);
-      list.push(species);
-    }
-
-    return list.sort((a, b) => a.number - b.number);
-  }, [lines, speciesByDex, evolutionLevelByDex]);
-
-  const loading = cacheStatus === FetchStatus.Loading || metaLoading;
-  const ready = cacheStatus === FetchStatus.Success && !metaLoading;
+  const loading = status === FetchStatus.Loading || metaLoading;
+  const ready = status === FetchStatus.Success && !metaLoading;
 
   return {
     lines,
-    availablePokemon,
+    evolutionLevelByDex,
+    speciesByDex,
     lineCount: lines.length,
     loading,
     ready,
-    errorMessage: cacheStatus === FetchStatus.Error ? 'Erro ao carregar o PC.' : null,
-    refresh: async () => undefined,
+    errorMessage,
+    refresh: load,
   };
+}
+
+export function filterPcLinesByQuery(
+  lines: PcLine[],
+  query: string,
+  speciesByDex: Map<number, { name: string; number: number }>,
+  evolutionLevelByDex: Map<number, number | null>,
+): PcLine[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return lines;
+
+  return lines.filter((line) => {
+    const dex = resolveCurrentMemberDex(line.members, line.level, evolutionLevelByDex);
+    const name = speciesByDex.get(dex)?.name ?? `pokémon #${dex}`;
+    const dexStr = String(dex);
+    return (
+      name.toLowerCase().includes(q) ||
+      dexStr.includes(q) ||
+      String(line.evolutionLineKey).includes(q) ||
+      line.rarity.toLowerCase().includes(q)
+    );
+  });
 }

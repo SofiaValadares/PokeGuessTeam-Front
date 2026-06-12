@@ -1,22 +1,8 @@
 import type {
   FriendMatchActionResponse,
   FriendMatchStateDto,
-  MatchPlayerSide,
   OpponentKnowledgeSlotDto,
 } from '../../../../services/types/game';
-
-export function otherFriendMatchSide(side: MatchPlayerSide): MatchPlayerSide {
-  return side === 'HOST' ? 'OPPONENT' : 'HOST';
-}
-
-/** Atualização otimista: assume troca de turno ao enviar palpite/skip (servidor corrige se KEEP_TURN). */
-export function withOptimisticTurnHandoff(match: FriendMatchStateDto): FriendMatchStateDto {
-  if (match.status !== 'ACTIVE' || match.currentTurn !== match.yourSide) {
-    return match;
-  }
-  const currentTurn = otherFriendMatchSide(match.yourSide);
-  return parseFriendMatchState({ ...match, currentTurn });
-}
 
 type RawDiscoveredHints = {
   nome?: string | null;
@@ -90,14 +76,15 @@ function parseOpponentKnowledgeSlot(raw: RawOpponentKnowledgeSlot): OpponentKnow
 }
 
 export function parseFriendMatchState(raw: FriendMatchStateDto): FriendMatchStateDto {
-  const opponentKnowledge = (raw.opponentKnowledge as unknown as RawOpponentKnowledgeSlot[]).map(
-    parseOpponentKnowledgeSlot,
+  const opponentKnowledge = (raw.opponentKnowledge ?? []).map((slot) =>
+    parseOpponentKnowledgeSlot(slot as unknown as RawOpponentKnowledgeSlot),
   );
 
   const yourTurn = raw.currentTurn === raw.yourSide;
 
   return {
     ...raw,
+    recentGuesses: raw.recentGuesses ?? [],
     yourTurn,
     opponentKnowledge,
   };

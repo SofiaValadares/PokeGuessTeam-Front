@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect } from 'react';
-import { loadMatchPokemonDex } from '../../../../lib/game/clientMatchView';
 import { mapToRecord } from '../../../../lib/game/pokemonDexMaps';
-import { readAllPokemonFromCache } from '../../../../store/slices/cache/queries';
+import { useRegisteredPokedexPokemon } from '../../../../store/providers/RegisteredPokedexProvider';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import {
   setAllPokemon,
@@ -20,32 +19,23 @@ const FriendMatchDexContext = createContext<FriendMatchDexContextValue | null>(n
 export function FriendMatchDexProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
   const { loadingDex, pokemonByDex } = useAppSelector(selectMatchDex);
+  const { availablePokemon, loading: registeredLoading } = useRegisteredPokedexPokemon();
   const dexReady = Object.keys(pokemonByDex).length > 0;
 
   useEffect(() => {
-    let cancelled = false;
-    dispatch(setLoadingDex(true));
-    const cachedPool = readAllPokemonFromCache();
-    if (cachedPool.length > 0) {
-      dispatch(setAllPokemon(cachedPool));
+    if (availablePokemon.length === 0) {
+      if (!registeredLoading) {
+        dispatch(setLoadingDex(false));
+      }
+      return;
     }
-    void loadMatchPokemonDex()
-      .then((dex) => {
-        if (cancelled) return;
-        dispatch(setPokemonDex(mapToRecord(dex)));
-        const pool = cachedPool.length > 0 ? cachedPool : Array.from(dex.values());
-        dispatch(setAllPokemon(pool));
-      })
-      .catch(() => {
-        /* dex opcional via cache; falha silenciosa */
-      })
-      .finally(() => {
-        if (!cancelled) dispatch(setLoadingDex(false));
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [dispatch]);
+
+    dispatch(setLoadingDex(true));
+    const byDex = new Map(availablePokemon.map((pokemon) => [pokemon.number, pokemon]));
+    dispatch(setAllPokemon(availablePokemon));
+    dispatch(setPokemonDex(mapToRecord(byDex)));
+    dispatch(setLoadingDex(false));
+  }, [availablePokemon, dispatch, registeredLoading]);
 
   return (
     <FriendMatchDexContext.Provider value={{ loadingDex, dexReady }}>

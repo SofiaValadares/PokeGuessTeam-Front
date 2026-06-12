@@ -16,3 +16,13 @@ export function findHistoryPlayerForUser(
   const hostSlot = entry.players.find((p) => p.slot === 1);
   return hostSlot ?? entry.players[0] ?? null;
 }
+
+export function viewerOpponentTeamFromHistory(
+  entry: GameHistoryEntry | null | undefined,
+  profileId: string | null | undefined,
+  username: string | null | undefined,
+) {
+  if (!entry) return [];
+  const me = findHistoryPlayerForUser(entry, profileId, username);
+  return me?.opponentTeam ?? [];
+}

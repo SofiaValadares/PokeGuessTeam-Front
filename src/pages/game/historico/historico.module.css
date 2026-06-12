@@ -140,3 +140,66 @@
 .pagination {
   flex-shrink: 0;
 }
+
+.teamCell {
+  min-width: 16rem;
+}
+
+.teamEmpty {
+  color: var(--ds-color-text-muted);
+}
+
+.opponentTeam {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+}
+
+.opponentSlot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--ds-radius-sm);
+  border: 2px solid var(--ds-color-border-default);
+  background: var(--ds-color-bg-elevated);
+}
+
+.opponentSlotAccepted {
+  border-color: #22c55e;
+}
+
+.opponentSlotMissed {
+  border-color: #ef4444;
+  opacity: 0.85;
+}
+
+.opponentSlotBadge {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  background: var(--ds-color-bg-raised);
+  border: 1px solid var(--ds-color-border-default);
+}
+
+.opponentSlotAccepted .opponentSlotBadge {
+  color: #22c55e;
+}
+
+.opponentSlotMissed .opponentSlotBadge {
+  color: #ef4444;
+}
+
+.historyRow td {
+  vertical-align: top;
+  padding-top: var(--ds-space-3);
+  padding-bottom: var(--ds-space-3);
+}

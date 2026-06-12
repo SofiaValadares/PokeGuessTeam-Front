@@ -23,9 +23,6 @@ function WildAreaContent() {
           }
           headingLevel="h1"
           divider
-        />
-
-        <PageSection
           grow
           bodyClassName={`${styles.content} ds-motion-stagger`}
         >

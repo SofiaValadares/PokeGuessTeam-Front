@@ -17,25 +17,28 @@ import {
   submitFriendGuess,
   surrenderFriendMatch,
 } from '../../../../services/gameService';
+import {
+  getSharedFriendMatchSocket,
+  joinFriendMatchRoom,
+  leaveFriendMatchRoom,
+  subscribeFriendMatchSocket,
+  type MatchSocketStatus,
+} from '../../../../services/matchRealtime';
 import { ApiError, toFriendlyUserMessage } from '../../../../services/http';
 import {
   parseFriendMatchState,
-  withOptimisticTurnHandoff,
 } from '../../../../lib/game/parseFriendMatchState';
 import { friendMatchRewardForResult } from '../../../../lib/game/matchRewardLabels';
-import { mapGameHistoryEntry } from '../../../../model';
 import { useCacheActions } from '../../../../store/providers/CacheProvider';
 import type {
+  BotMatchGuessFeedbackDto,
   FriendMatchStateDto,
+  MatchRealtimeMessage,
   MatchRewardDto,
   MatchStatus,
 } from '../../../../services/types/game';
 
 export type FriendMatchPhase = 'lobby' | 'waiting' | 'playing';
-
-export type FriendMatchSyncMessage = {
-  text: string;
-};
 
 export type FriendMatchStaleBlock = {
   action: 'create' | 'join';
@@ -63,14 +66,12 @@ type FriendMatchContextValue = {
   phase: FriendMatchPhase;
   match: FriendMatchStateDto | null;
   finishReward: MatchRewardDto | null;
+  socketStatus: MatchSocketStatus;
+  activeOpponentGuess: BotMatchGuessFeedbackDto | null;
   guessSending: boolean;
   busy: boolean;
   error: string | null;
-  syncMessage: FriendMatchSyncMessage | null;
-  syncing: boolean;
   clearError: () => void;
-  clearSyncMessage: () => void;
-  syncMatch: () => Promise<void>;
   refreshMatch: () => Promise<FriendMatchStateDto | null>;
   createRoom: (team: number[]) => Promise<void>;
   joinRoom: (joinCode: string, team: number[]) => Promise<void>;
@@ -78,7 +79,6 @@ type FriendMatchContextValue = {
   skipTurn: () => Promise<void>;
   surrender: () => Promise<void>;
   clearMatch: () => void;
-  /** Sai da partida terminada no servidor e limpa estado local (modal → home). */
   dismissFinishedMatch: () => void;
   resumeNotice: boolean;
   staleBlock: FriendMatchStaleBlock | null;
@@ -94,14 +94,16 @@ const FriendMatchContext = createContext<FriendMatchContextValue | null>(null);
 
 export function FriendMatchProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const { applyMatchHistory, syncMatchRewards } = useCacheActions();
+  const { syncMatchRewards } = useCacheActions();
   const [match, setMatch] = useState<FriendMatchStateDto | null>(null);
   const [finishReward, setFinishReward] = useState<MatchRewardDto | null>(null);
+  const [socketStatus, setSocketStatus] = useState<MatchSocketStatus>('disconnected');
+  const [activeOpponentGuess, setActiveOpponentGuess] = useState<BotMatchGuessFeedbackDto | null>(
+    null,
+  );
   const [busy, setBusy] = useState(false);
   const [guessSending, setGuessSending] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [syncMessage, setSyncMessage] = useState<FriendMatchSyncMessage | null>(null);
   const [resumeNotice, setResumeNotice] = useState(false);
   const [staleBlock, setStaleBlock] = useState<FriendMatchStaleBlock | null>(null);
   const [leavingMatch, setLeavingMatch] = useState(false);
@@ -113,6 +115,11 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
   const clearMatchRef = useRef<(() => void) | null>(null);
   const showingResultsRef = useRef(false);
   const postMatchSyncedRef = useRef<string | null>(null);
+  const socketUnsubRef = useRef<(() => void) | null>(null);
+  const opponentGuessTimerRef = useRef<number | null>(null);
+  const refreshMatchRef = useRef<
+    (options?: { showErrors?: boolean; force?: boolean }) => Promise<FriendMatchStateDto | null>
+  >(async () => null);
 
   const markShowingResults = useCallback((next: FriendMatchStateDto | null) => {
     if (next?.status === 'FINISHED' && next.historyEntry) {
@@ -139,15 +146,79 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
         (yourResult ? friendMatchRewardForResult(yourResult) : null);
       setFinishReward(resolvedReward ?? null);
 
-      applyMatchHistory(mapGameHistoryEntry(finishedMatch.historyEntry));
       try {
         await syncMatchRewards();
       } catch {
         /* perfil pode falhar; modal de resultados mantém-se */
       }
     },
-    [applyMatchHistory, markShowingResults, syncMatchRewards],
+    [markShowingResults, syncMatchRewards],
   );
+
+  const applyRealtimeMessage = useCallback(
+    (message: MatchRealtimeMessage) => {
+      try {
+        const parsedMatch = message.friendMatch
+          ? parseFriendMatchState(message.friendMatch)
+          : null;
+
+        if (parsedMatch) {
+          if (parsedMatch.status === 'FINISHED' && parsedMatch.historyEntry) {
+            markShowingResults(parsedMatch);
+          }
+          setMatch(parsedMatch);
+          if (parsedMatch.status === 'FINISHED' && parsedMatch.historyEntry) {
+            void applyFinishSideEffects(parsedMatch, parsedMatch.yourReward ?? null);
+          }
+        }
+
+        if (message.type === 'MATCH_FINISHED') {
+          setActiveOpponentGuess(null);
+          if (opponentGuessTimerRef.current != null) {
+            window.clearTimeout(opponentGuessTimerRef.current);
+            opponentGuessTimerRef.current = null;
+          }
+          if (parsedMatch) {
+            void applyFinishSideEffects(parsedMatch, parsedMatch.yourReward ?? null);
+          }
+        }
+
+        if (
+          message.type === 'PLAYER_GUESS' &&
+          message.feedback &&
+          parsedMatch &&
+          message.feedback.playerSide !== parsedMatch.yourSide
+        ) {
+          const turnPassedToYou = parsedMatch.currentTurn === parsedMatch.yourSide;
+          setActiveOpponentGuess(message.feedback);
+          if (opponentGuessTimerRef.current != null) {
+            window.clearTimeout(opponentGuessTimerRef.current);
+          }
+          opponentGuessTimerRef.current = window.setTimeout(() => {
+            setActiveOpponentGuess(null);
+            opponentGuessTimerRef.current = null;
+          }, turnPassedToYou ? 1400 : 2600);
+        }
+      } catch {
+        void refreshMatchRef.current({ force: true });
+      }
+    },
+    [applyFinishSideEffects, markShowingResults],
+  );
+
+  const stopSocket = useCallback(() => {
+    socketUnsubRef.current?.();
+    socketUnsubRef.current = null;
+    setSocketStatus('disconnected');
+  }, []);
+
+  const startSocket = useCallback(() => {
+    if (socketUnsubRef.current) return;
+    socketUnsubRef.current = subscribeFriendMatchSocket({
+      onEvent: applyRealtimeMessage,
+      onStatus: setSocketStatus,
+    });
+  }, [applyRealtimeMessage]);
 
   const discardServerMatchSilently = useCallback(async () => {
     leaveIntentionalRef.current = true;
@@ -161,6 +232,9 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const refreshMatch = useCallback(async (options?: { showErrors?: boolean; force?: boolean }) => {
+    if (guessInFlightRef.current && !options?.force) {
+      return null;
+    }
     if (
       !options?.force &&
       (refreshInFlightRef.current ||
@@ -194,66 +268,75 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
     }
   }, [applyFinishSideEffects]);
 
+  refreshMatchRef.current = refreshMatch;
+
   useEffect(() => {
     matchIdRef.current = match?.matchId ?? null;
     matchStatusRef.current = match?.status ?? null;
     showingResultsRef.current = match?.status === 'FINISHED' && Boolean(match?.historyEntry);
   }, [match]);
 
-  const phase = derivePhase(match);
-
-  const syncMatch = useCallback(async () => {
-    setSyncing(true);
-    setSyncMessage(null);
-    setError(null);
-    try {
-      const latest = await refreshMatch({ force: true });
-      if (!latest) {
-        setSyncMessage({ text: 'A partida não existe ou o servidor reiniciou.' });
-        return;
-      }
-
-      if (latest.status === 'ACTIVE' || latest.status === 'FINISHED') {
-        return;
-      }
-
-      if (!latest.guest?.userId) {
-        setSyncMessage({
-          text: 'O teu amigo ainda não entrou na sala. Partilha o código e tenta de novo.',
-        });
-        return;
-      }
-
-      if (!latest.guest.teamReady) {
-        setSyncMessage({ text: 'O amigo entrou, mas ainda está a preparar a equipe.' });
-        return;
-      }
-
-      if (!latest.host.teamReady) {
-        setSyncMessage({ text: 'A tua equipe ainda não está confirmada no servidor.' });
-        return;
-      }
-
-      setSyncMessage({
-        text: 'Ambos estão na sala, mas a partida ainda não iniciou. Tenta novamente.',
-      });
-    } catch (err) {
-      setSyncMessage({
-        text: toFriendlyUserMessage(err, 'Não foi possível verificar a partida.'),
-      });
-    } finally {
-      setSyncing(false);
+  useEffect(() => {
+    if (!match?.matchId) {
+      stopSocket();
+      return;
     }
-  }, [refreshMatch]);
+    startSocket();
+  }, [match?.matchId, startSocket, stopSocket]);
 
   useEffect(() => {
+    const matchId = match?.matchId;
+    if (!matchId || socketStatus !== 'connected') return;
+
+    const socket = getSharedFriendMatchSocket();
+    if (!socket) return;
+
+    joinFriendMatchRoom(socket, matchId);
+    if (!guessInFlightRef.current) {
+      void refreshMatch({ force: true });
+    }
+
     return () => {
-      const matchId = matchIdRef.current;
-      const status = matchStatusRef.current;
-      if (!matchId || status === 'FINISHED' || leaveIntentionalRef.current) return;
-      void leaveFriendMatch().catch(() => undefined);
+      leaveFriendMatchRoom(socket, matchId);
     };
-  }, []);
+  }, [match?.matchId, socketStatus, refreshMatch]);
+
+  const phase = derivePhase(match);
+
+  useEffect(() => {
+    if (phase !== 'waiting' || !match?.matchId) return;
+
+    const poll = window.setInterval(() => {
+      void refreshMatch({ force: true });
+    }, 2500);
+
+    return () => window.clearInterval(poll);
+  }, [phase, match?.matchId, refreshMatch]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const latest = await fetchActiveFriendMatch();
+        if (cancelled || !latest) return;
+        const parsed = parseFriendMatchState(latest);
+        setMatch(parsed);
+        if (parsed.status === 'FINISHED' && parsed.historyEntry) {
+          await applyFinishSideEffects(parsed, parsed.yourReward ?? null);
+        } else if (parsed.status !== 'FINISHED') {
+          setResumeNotice(true);
+        }
+        startSocket();
+      } catch {
+        /* sem partida ativa ou erro transitório */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [applyFinishSideEffects, startSocket]);
 
   const tryHandleStaleMatchConflict = useCallback(
     async (err: unknown, block: FriendMatchStaleBlock): Promise<boolean> => {
@@ -296,9 +379,10 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       try {
         const created = await startFriendMatch(team);
         setMatch(created);
+        startSocket();
         setResumeNotice(false);
         setStaleBlock(null);
-        await refreshMatch();
+        await refreshMatch({ force: true });
       } catch (err) {
         if (await tryHandleStaleMatchConflict(err, { action: 'create', team })) return;
         setError(toFriendlyUserMessage(err, 'Não foi possível criar a sala.'));
@@ -306,7 +390,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
         setBusy(false);
       }
     },
-    [refreshMatch, tryHandleStaleMatchConflict],
+    [refreshMatch, startSocket, tryHandleStaleMatchConflict],
   );
 
   const joinRoom = useCallback(
@@ -321,6 +405,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       try {
         const joined = await joinFriendMatch({ joinCode: normalized, team });
         setMatch(joined);
+        startSocket();
         setResumeNotice(false);
         setStaleBlock(null);
         if (joined.status === 'SETUP') {
@@ -341,7 +426,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
         setBusy(false);
       }
     },
-    [refreshMatch, tryHandleStaleMatchConflict],
+    [refreshMatch, startSocket, tryHandleStaleMatchConflict],
   );
 
   const guess = useCallback(async (pokedexNumber: number) => {
@@ -349,7 +434,6 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
     guessInFlightRef.current = true;
     setGuessSending(true);
     setError(null);
-    setMatch((prev) => (prev ? withOptimisticTurnHandoff(prev) : prev));
     try {
       const res = await submitFriendGuess(pokedexNumber);
       if (res.match.status === 'FINISHED' && res.match.historyEntry) {
@@ -386,7 +470,6 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
     guessInFlightRef.current = true;
     setGuessSending(true);
     setError(null);
-    setMatch((prev) => (prev ? withOptimisticTurnHandoff(prev) : prev));
     try {
       const res = await skipFriendTurn();
       if (res.match.status === 'FINISHED' && res.match.historyEntry) {
@@ -450,9 +533,15 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
     matchStatusRef.current = null;
     setError(null);
     setGuessSending(false);
+    setActiveOpponentGuess(null);
+    if (opponentGuessTimerRef.current != null) {
+      window.clearTimeout(opponentGuessTimerRef.current);
+      opponentGuessTimerRef.current = null;
+    }
+    stopSocket();
     setResumeNotice(false);
     setStaleBlock(null);
-  }, []);
+  }, [stopSocket]);
 
   const dismissFinishedMatch = useCallback(() => {
     leaveIntentionalRef.current = true;
@@ -543,14 +632,12 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       phase,
       match,
       finishReward,
+      socketStatus,
+      activeOpponentGuess,
       guessSending,
       busy,
       error,
-      syncMessage,
-      syncing,
       clearError: () => setError(null),
-      clearSyncMessage: () => setSyncMessage(null),
-      syncMatch,
       refreshMatch: () => refreshMatch({ showErrors: true }),
       createRoom,
       joinRoom,
@@ -572,12 +659,11 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       phase,
       match,
       finishReward,
+      socketStatus,
+      activeOpponentGuess,
       guessSending,
       busy,
       error,
-      syncMessage,
-      syncing,
-      syncMatch,
       refreshMatch,
       createRoom,
       joinRoom,

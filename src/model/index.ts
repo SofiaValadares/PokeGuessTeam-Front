@@ -7,6 +7,7 @@ export type {
   OpponentKnowledgeSlot,
   MatchGuessFeedback,
   GameHistoryPlayer,
+  GameHistoryOpponentSlot,
   GameHistoryEntry,
   BotMatchView,
   LocalMatchView,

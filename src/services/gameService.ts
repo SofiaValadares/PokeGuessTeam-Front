@@ -152,5 +152,25 @@ export async function leaveFriendMatch(): Promise<void> {
   await apiFetchJson<void>(FRIEND, { method: 'DELETE' });
 }
 
+/** Remove partida bot ativa órfã no servidor (motor no cliente). */
+export async function abandonBotMatch(): Promise<void> {
+  const res = await apiFetch(BOT, { method: 'DELETE' });
+  if (res.status === 204 || res.status === 404) return;
+  if (!res.ok) {
+    const text = await res.text();
+    throw new ApiError(res.status, text || res.statusText, null);
+  }
+}
+
+/** Remove partida local ativa órfã no servidor (motor no cliente). */
+export async function abandonLocalMatch(): Promise<void> {
+  const res = await apiFetch(LOCAL, { method: 'DELETE' });
+  if (res.status === 204 || res.status === 404) return;
+  if (!res.ok) {
+    const text = await res.text();
+    throw new ApiError(res.status, text || res.statusText, null);
+  }
+}
+
 /** @deprecated use leaveFriendMatch */
 export const abandonFriendSetup = leaveFriendMatch;

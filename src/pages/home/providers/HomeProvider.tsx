@@ -1,29 +1,39 @@
-import { createContext, useCallback, useContext, useMemo } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { accountDisplayName } from '../../../auth/accountDisplay';
 import { useAuth } from '../../../store/providers/AuthProvider';
-import { useAppDispatch, useAppSelector } from '../../../store/hooks';
-import {
-  selectProfileMe,
-  selectRegisteredPokemonCount,
-  selectTrainingTeam,
-  selectUserCache,
-} from '../../../store/slices/cache/selectors';
-import { FetchStatus } from '../../../types/fetchStatus';
+import { useAppDispatch } from '../../../store/hooks';
+import { useProfileMe } from '../../../hooks/useProfileMe';
+import { useTrainingTeam } from '../../../hooks/useTrainingTeam';
+import { useRegisteredPokedexPokemon } from '../../../hooks/useRegisteredPokedexPokemon';
+import { setTrainingTeam } from '../../../store/slices/cache';
+import { selectTrainingTeam } from '../../../store/slices/cache/selectors';
 import { closeTeamEditor, openTeamEditor, selectHomeUi } from '../slice/homeUiSlice';
+import { useAppSelector } from '../../../store/hooks';
 
 function useHomeData() {
-  const { me, showIntroDialogue, dismissIntroDialogue } = useAuth();
-  const profileMe = useAppSelector(selectProfileMe);
-  const trainingTeam = useAppSelector(selectTrainingTeam);
-  const pokedexRegisteredCount = useAppSelector(selectRegisteredPokemonCount);
-  const cache = useAppSelector(selectUserCache);
-  const cacheStatus = cache.status;
-  const cacheError = cache.error;
+  const { me, authenticated, showIntroDialogue, dismissIntroDialogue } = useAuth();
+  const { profileMe, loading: profileLoading, error: profileError, reload: reloadProfile } =
+    useProfileMe(authenticated);
+  const { trainingTeam: fetchedTeam, loading: teamLoading, error: teamError, reload: reloadTraining } =
+    useTrainingTeam(authenticated);
+  const cachedTeam = useAppSelector(selectTrainingTeam);
+  const trainingTeam = cachedTeam ?? fetchedTeam;
+  const {
+    registeredCount: pokedexRegisteredCount,
+    loading: dexLoading,
+    errorMessage: dexError,
+  } = useRegisteredPokedexPokemon();
+  const dispatch = useAppDispatch();
   const homeUi = useAppSelector(selectHomeUi);
 
+  useEffect(() => {
+    dispatch(setTrainingTeam(trainingTeam));
+  }, [dispatch, trainingTeam]);
+
   const playerName = accountDisplayName(me);
-  const loading = cacheStatus === FetchStatus.Loading;
+  const loading = profileLoading || teamLoading || dexLoading;
+  const errorMessage = profileError ?? teamError ?? dexError;
 
   const favoriteDex = useMemo(() => {
     if (!profileMe?.favoritePokemonId) return null;
@@ -40,9 +50,11 @@ function useHomeData() {
     pokedexRegisteredCount,
     favoriteDex,
     loading,
-    errorMessage: cacheError,
+    errorMessage,
     homeUi,
     playerName,
+    reloadProfile,
+    reloadTraining,
   };
 }
 

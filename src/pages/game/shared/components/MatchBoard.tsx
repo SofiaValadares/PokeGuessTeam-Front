@@ -24,6 +24,8 @@ export type MatchBoardProps = {
   onSurrender: () => void;
   busy?: boolean;
   guessLoading?: boolean;
+  /** Mensagem após o último palpite (ex.: acerto mantém a vez). */
+  turnHint?: string | null;
   finishedMessage?: string | null;
   playerAvatarDex?: number | null;
   opponentAvatarDex?: number | null;
@@ -50,6 +52,7 @@ export function MatchBoard({
   onSurrender,
   busy = false,
   guessLoading = false,
+  turnHint = null,
   finishedMessage,
   playerAvatarDex,
   opponentAvatarDex,
@@ -66,13 +69,12 @@ export function MatchBoard({
 
   const search = useCallback(
     async (q: string) => {
-      if (q.trim().length < 1) return;
       try {
         if (registeredPokedexOnly) {
           setResults(searchRegisteredPokemonList(registeredPokedexOnly, q, 50));
           return;
         }
-        setResults(await searchPokemon(q, 20));
+        setResults(await searchPokemon(q, q.trim() ? 20 : 50));
       } catch {
         setResults([]);
       }
@@ -85,10 +87,8 @@ export function MatchBoard({
       setResults(listRegisteredPokemon(registeredPokedexOnly));
       return;
     }
-    if (query.trim()) {
-      void search(query);
-    }
-  }, [query, registeredPokedexOnly, search]);
+    void search('');
+  }, [registeredPokedexOnly, search]);
 
   const handleSearchClose = useCallback(() => {
     setResults([]);
@@ -182,13 +182,9 @@ export function MatchBoard({
               fieldState={guessFieldState}
               excludedDexNumbers={excludedDex}
               label="Palpite"
-              placeholder={
-                registeredPokedexOnly
-                  ? 'Clica para ver a Pokédex ou pesquisa por nome'
-                  : undefined
-              }
+              placeholder="Clica para ver a lista ou pesquisa por nome"
               overlay
-              showResultsOnFocus={Boolean(registeredPokedexOnly?.length)}
+              showResultsOnFocus={canGuess}
               onOpen={handleSearchOpen}
               onClose={handleSearchClose}
             />
@@ -207,9 +203,11 @@ export function MatchBoard({
             >
               {guessLoading
                 ? 'A enviar palpite…'
-                : isYourTurn
-                  ? 'A tua vez — escolhe um Pokémon na pesquisa.'
-                  : `À espera de ${opponentName}.`}
+                : turnHint
+                  ? turnHint
+                  : isYourTurn
+                    ? 'A tua vez — escolhe um Pokémon na pesquisa.'
+                    : `À espera de ${opponentName}.`}
             </p>
           ) : null}
 

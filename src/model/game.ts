@@ -41,12 +41,19 @@ export type MatchGuessFeedback = {
   autoSelected?: boolean;
 };
 
+export type GameHistoryOpponentSlot = {
+  slot: number;
+  pokedexNumber: number;
+  accepted: boolean;
+};
+
 export type GameHistoryPlayer = {
   slot: number;
   profileId: string | null;
   username: string | null;
   correctGuesses: number;
   result: GameResult;
+  opponentTeam: GameHistoryOpponentSlot[];
 };
 
 export type GameHistoryEntry = {

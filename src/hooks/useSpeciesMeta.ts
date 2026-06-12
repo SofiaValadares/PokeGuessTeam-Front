@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getPokemonSpeciesBatch } from '../api/pokemonApi';
+import { fetchPokemonSpeciesBatch } from '../services/pokemonService';
 import type { PokemonDto } from '../api/types/pokemon';
 
 type SpeciesMetaState = {
@@ -21,7 +21,7 @@ function loadSpeciesBatch(uniqueKey: string, dexList: number[]): Promise<Map<num
   const existing = batchInflight.get(uniqueKey);
   if (existing) return existing;
 
-  const promise = getPokemonSpeciesBatch(dexList).finally(() => {
+  const promise = fetchPokemonSpeciesBatch(dexList).finally(() => {
     batchInflight.delete(uniqueKey);
   });
   batchInflight.set(uniqueKey, promise);

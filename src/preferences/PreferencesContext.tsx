@@ -33,38 +33,14 @@ const defaults: StoredPreferences = {
   reducedMotion: false,
 };
 
-function readStoredPreferences(): StoredPreferences {
-  try {
-    const raw = localStorage.getItem(PREFERENCES_STORAGE_KEY);
-    if (!raw) return defaults;
-    const parsed = JSON.parse(raw) as Partial<StoredPreferences>;
-    return {
-      locale: parsed.locale === 'en' ? 'en' : 'pt',
-      density: parsed.density === 'compact' ? 'compact' : 'comfortable',
-      reducedMotion: Boolean(parsed.reducedMotion),
-    };
-  } catch {
-    return defaults;
-  }
-}
-
-function persistPreferences(prefs: StoredPreferences): void {
-  try {
-    localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(prefs));
-  } catch {
-    /* ignore */
-  }
-}
-
 export function PreferencesProvider({ children }: { children: ReactNode }) {
-  const [prefs, setPrefs] = useState<StoredPreferences>(() => readStoredPreferences());
+  const [prefs, setPrefs] = useState<StoredPreferences>(defaults);
 
   useLayoutEffect(() => {
     const root = document.documentElement;
     root.lang = prefs.locale === 'pt' ? 'pt-PT' : 'en';
     root.dataset.density = prefs.density;
     root.dataset.reducedMotion = prefs.reducedMotion ? 'true' : 'false';
-    persistPreferences(prefs);
   }, [prefs]);
 
   const setLocale = useCallback((locale: AppLocale) => {

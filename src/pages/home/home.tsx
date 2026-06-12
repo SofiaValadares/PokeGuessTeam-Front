@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { PageShell } from '../../ds';
 import { useSpeciesMeta } from '../../hooks/useSpeciesMeta';
+import { RegisteredPokedexProvider } from '../../store/providers/RegisteredPokedexProvider';
 import { GameLaunchPanel } from './components/GameLaunchPanel';
 import { IntroDialogue } from './components/IntroDialogue';
 import { PokemonDetailModal } from './components/PokemonDetailModal';
@@ -23,6 +24,7 @@ function HomeContent() {
     homeUi,
     openEditor,
     closeEditor,
+    reloadTraining,
   } = useHome();
 
   const [selectedSlot, setSelectedSlot] = useState<TrainingSlotView | null>(null);
@@ -69,20 +71,27 @@ function HomeContent() {
         }}
       />
 
-      <TrainingTeamEditorModal
-        open={homeUi.teamEditorOpen}
-        currentSlots={trainingTeam?.slots ?? []}
-        onClose={closeEditor}
-        onSaved={closeEditor}
-      />
+      {homeUi.teamEditorOpen ? (
+        <TrainingTeamEditorModal
+          open
+          currentSlots={trainingTeam?.slots ?? []}
+          onClose={closeEditor}
+          onSaved={() => {
+            void reloadTraining();
+            closeEditor();
+          }}
+        />
+      ) : null}
     </PageShell>
   );
 }
 
 export default function HomePage() {
   return (
-    <HomeProvider>
-      <HomeContent />
-    </HomeProvider>
+    <RegisteredPokedexProvider>
+      <HomeProvider>
+        <HomeContent />
+      </HomeProvider>
+    </RegisteredPokedexProvider>
   );
 }

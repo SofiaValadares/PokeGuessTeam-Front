@@ -1,6 +1,8 @@
 import { Settings } from 'lucide-react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { EvolutionCelebrationGate } from '../components/EvolutionCelebration';
 import { AppHeader } from '../ds';
+import { useMatchRouteLifecycle } from '../hooks/useMatchRouteLifecycle';
 import headerStyles from '../ds/components/AppHeader/AppHeader.module.css';
 import styles from './authenticated-layout.module.css';
 
@@ -11,6 +13,7 @@ function isGameRoute(pathname: string): boolean {
 export function AuthenticatedLayout() {
   const { pathname } = useLocation();
   const gameScreen = isGameRoute(pathname);
+  useMatchRouteLifecycle();
 
   return (
     <div className={[styles.layout, gameScreen ? styles.layoutGame : ''].filter(Boolean).join(' ')}>
@@ -38,6 +41,7 @@ export function AuthenticatedLayout() {
       <div className={styles.shellGrow}>
         <Outlet />
       </div>
+      <EvolutionCelebrationGate />
     </div>
   );
 }

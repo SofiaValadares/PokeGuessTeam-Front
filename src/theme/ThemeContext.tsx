@@ -19,26 +19,11 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function readStoredTheme(): ThemeMode {
-  try {
-    const v = localStorage.getItem(THEME_STORAGE_KEY);
-    if (v === 'light' || v === 'dark') return v;
-  } catch {
-    /* ignore */
-  }
-  return 'dark';
-}
-
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>(() => readStoredTheme());
+  const [theme, setThemeState] = useState<ThemeMode>('dark');
 
   useLayoutEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, theme);
-    } catch {
-      /* ignore */
-    }
   }, [theme]);
 
   const setTheme = useCallback((next: ThemeMode) => {

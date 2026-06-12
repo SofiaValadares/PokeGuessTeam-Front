@@ -1,33 +1,39 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getProfileMe } from '../api/profileApi';
-import type { ProfileMeResponse } from '../api/types/profile';
-import { ApiError } from '../api/http';
+import { fetchProfileMe, invalidateProfileMeCache } from '../services/profileService';
+import { mapProfileMe, type ProfileMe } from '../model';
+import { ApiError } from '../services/http';
 import { FetchStatus } from '../types/fetchStatus';
 
-export function useProfileMe() {
-  const [profileMe, setProfileMe] = useState<ProfileMeResponse | null>(null);
-  const [status, setStatus] = useState(FetchStatus.Loading);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+export function useProfileMe(enabled = true) {
+  const [profileMe, setProfileMe] = useState<ProfileMe | null>(null);
+  const [status, setStatus] = useState(FetchStatus.Idle);
+  const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
+    if (!enabled && !force) return;
+    if (force) invalidateProfileMeCache();
     setStatus(FetchStatus.Loading);
-    setErrorMessage(null);
+    setError(null);
     try {
-      const p = await getProfileMe();
-      setProfileMe(p);
+      const dto = await fetchProfileMe();
+      setProfileMe(mapProfileMe(dto));
       setStatus(FetchStatus.Success);
     } catch (e) {
       setProfileMe(null);
-      const msg =
-        e instanceof ApiError ? e.message : e instanceof Error ? e.message : 'Erro ao carregar.';
-      setErrorMessage(msg);
+      setError(e instanceof ApiError ? e.message : 'Não foi possível carregar o perfil.');
       setStatus(FetchStatus.Error);
     }
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    if (!enabled) return;
+    void load();
+  }, [enabled, load]);
 
-  return { profileMe, status, errorMessage, refresh };
+  return {
+    profileMe,
+    loading: status === FetchStatus.Loading,
+    error,
+    reload: () => load(true),
+  };
 }

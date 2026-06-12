@@ -5,8 +5,11 @@ import './index.css';
 import { AppRouter } from './routes';
 import reportWebVitals from './reportWebVitals';
 import { store } from './store/store';
+import { startMatchPersistence } from './store/matchPersistence';
 import { ThemeProvider } from './theme';
 import { PreferencesProvider } from './preferences';
+
+startMatchPersistence(store);
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

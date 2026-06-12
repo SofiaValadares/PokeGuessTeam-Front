@@ -13,7 +13,10 @@ import { mapPcLine, mapPokemon } from './pokemon';
 export function mapGameHistoryEntry(dto: GameHistoryEntryDto): GameHistoryEntry {
   return {
     ...dto,
-    players: dto.players.map((p) => ({ ...p })),
+    players: dto.players.map((p) => ({
+      ...p,
+      opponentTeam: p.opponentTeam ?? [],
+    })),
   };
 }
 

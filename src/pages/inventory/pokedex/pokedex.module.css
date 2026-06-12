@@ -15,6 +15,16 @@
   margin-bottom: var(--ds-space-6);
 }
 
+.searchWrap {
+  flex: 1;
+  min-width: min(100%, 16rem);
+  max-width: 22rem;
+}
+
+.searchWrap > div {
+  margin-bottom: 0;
+}
+
 .filter {
   display: inline-flex;
   align-items: center;

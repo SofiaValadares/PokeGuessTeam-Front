@@ -1,13 +1,12 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { ApiError } from '../../services/http';
-import type { AuthErrorPayload } from '../../auth/authErrors';
 import * as authService from '../../auth/authService';
+import type { AuthErrorPayload } from '../../auth/authErrors';
 import type { EmailVerificationConfirmRequest, MeResponse } from '../../auth/types';
-import {
-  clearUserCache,
-  hydrateUserCache,
-} from './cache/cacheThunks';
-import { hasPersistedCache } from './cache/storage';
+import { clearUserCache } from './cache/cacheThunks';
+import { invalidateRegisteredPokedexCache } from '../../services/pokedexService';
+import { invalidateProfileMeCache, invalidateTrainingTeamCache } from '../../services/profileService';
+import { invalidatePcLinesCache } from '../../services/pcService';
 import { FetchStatus } from '../../types/fetchStatus';
 
 type HydrateResult =
@@ -24,7 +23,6 @@ export const hydrateAuth = createAsyncThunk<HydrateResult, void, { rejectValue: 
         return { authenticated: false, me: null };
       }
       const me = await authService.getMe();
-      await dispatch(hydrateUserCache(me.userId));
       return { authenticated: true, me };
     } catch {
       await dispatch(clearUserCache());
@@ -39,9 +37,7 @@ export const loginUser = createAsyncThunk<
   { rejectValue: AuthErrorPayload }
 >('auth/login', async ({ login, password }, { dispatch, rejectWithValue }) => {
   try {
-    if (hasPersistedCache()) {
-      await dispatch(clearUserCache());
-    }
+    await dispatch(clearUserCache());
     const session = await authService.login({ login, password });
     await dispatch(hydrateAuth());
     return session.firstLogin ?? false;
@@ -63,9 +59,7 @@ export const confirmEmailUser = createAsyncThunk<
   { rejectValue: AuthErrorPayload }
 >('auth/confirmEmail', async (body, { dispatch, rejectWithValue }) => {
   try {
-    if (hasPersistedCache()) {
-      await dispatch(clearUserCache());
-    }
+    await dispatch(clearUserCache());
     const session = await authService.confirmEmailVerification(body);
     await dispatch(hydrateAuth());
     return session.firstLogin ?? false;
@@ -83,6 +77,10 @@ export const confirmEmailUser = createAsyncThunk<
 
 export const logoutUser = createAsyncThunk('auth/logout', async (_, { dispatch }) => {
   await authService.logout();
+  invalidateRegisteredPokedexCache();
+  invalidateProfileMeCache();
+  invalidateTrainingTeamCache();
+  invalidatePcLinesCache();
   await dispatch(clearUserCache());
 });
 

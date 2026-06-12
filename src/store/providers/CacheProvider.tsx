@@ -1,15 +1,9 @@
 import { useCallback, useMemo } from 'react';
-import type { GachaDrawResult, GameHistoryEntry, TrainingTeam } from '../../model';
-import type { PcLine } from '../../model';
-import type { ProfileMe } from '../../model';
+import { store } from '../store';
+import type { TrainingTeam } from '../../model';
 import {
-  applyClaimRewards,
-  applyFavoritePokemon,
-  applyGachaDraw,
-  applyMatchHistoryEntry,
   applyTrainingTeam,
-  hydrateUserCache,
-  refreshUserCacheFromNetwork,
+  setTrainingTeam,
   clearUserCache,
   syncMatchRewardsToCache,
 } from '../slices/cache';
@@ -18,44 +12,18 @@ import { useAppDispatch } from '../hooks';
 export function useCacheActions() {
   const dispatch = useAppDispatch();
 
-  const applyGacha = useCallback(
-    (draw: GachaDrawResult) => dispatch(applyGachaDraw(draw)),
-    [dispatch],
-  );
-
   const applyTrainingTeamUpdate = useCallback(
     (team: TrainingTeam) => dispatch(applyTrainingTeam(team)),
     [dispatch],
   );
 
-  const applyMatchHistory = useCallback(
-    (entry: GameHistoryEntry) => dispatch(applyMatchHistoryEntry(entry)),
-    [dispatch],
-  );
-
-  const applyFavorite = useCallback(
-    (profile: ProfileMe) => dispatch(applyFavoritePokemon(profile)),
-    [dispatch],
-  );
-
-  const applyRewards = useCallback(
-    (line: PcLine, grantedPokeballs: Record<string, number>) =>
-      dispatch(applyClaimRewards({ line, grantedPokeballs })),
-    [dispatch],
-  );
-
-  const hydrate = useCallback(
-    (userId: string) => dispatch(hydrateUserCache(userId)),
-    [dispatch],
-  );
-
-  const refresh = useCallback(
-    (userId: string) => dispatch(refreshUserCacheFromNetwork(userId)),
+  const updateTrainingTeam = useCallback(
+    (team: TrainingTeam | null) => dispatch(setTrainingTeam(team)),
     [dispatch],
   );
 
   const syncMatchRewards = useCallback(
-    () => syncMatchRewardsToCache(dispatch),
+    () => syncMatchRewardsToCache(dispatch, () => store.getState()),
     [dispatch],
   );
 
@@ -63,16 +31,11 @@ export function useCacheActions() {
 
   return useMemo(
     () => ({
-      applyGacha,
       applyTrainingTeamUpdate,
-      applyMatchHistory,
-      applyFavorite,
-      applyRewards,
+      updateTrainingTeam,
       syncMatchRewards,
-      hydrate,
-      refresh,
       clear,
     }),
-    [applyGacha, applyTrainingTeamUpdate, applyMatchHistory, applyFavorite, applyRewards, syncMatchRewards, hydrate, refresh, clear],
+    [applyTrainingTeamUpdate, updateTrainingTeam, syncMatchRewards, clear],
   );
 }

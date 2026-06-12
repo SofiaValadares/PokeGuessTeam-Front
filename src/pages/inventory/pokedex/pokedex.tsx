@@ -5,7 +5,7 @@ import { ApiError } from '../../../services/http';
 import { PokemonBillGrid } from '../../../components/PokemonBillGrid';
 import { PokemonGridPagination } from '../../../components/PokemonGridPagination';
 import { POKEDEX_PAGE_SIZE_OPTIONS } from '../../../lib/ui/gridPageSizes';
-import { Card, InlineAlert, PageSection, PageShell } from '../../../ds';
+import { Card, InlineAlert, PageSection, PageShell, TextField } from '../../../ds';
 import { PokedexDetailPanel } from './components/PokedexDetailPanel';
 import { buildPokedexGridData } from '../../../lib/pokedex/buildGridData';
 import styles from './pokedex.module.css';
@@ -13,16 +13,23 @@ import styles from './pokedex.module.css';
 export default function PokedexPage() {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(POKEDEX_DEFAULT_PAGE_SIZE);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [data, setData] = useState<PokedexEntryPageResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
-  const load = useCallback(async (p: number, size: number) => {
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedQuery(searchQuery.trim()), 220);
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
+
+  const load = useCallback(async (p: number, size: number, query: string) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetchPokedexPage(p, size);
+      const res = await fetchPokedexPage(p, size, query);
       setData(res);
     } catch (e) {
       setData(null);
@@ -33,12 +40,12 @@ export default function PokedexPage() {
   }, []);
 
   useEffect(() => {
-    void load(page, pageSize);
-  }, [load, page, pageSize]);
+    void load(page, pageSize, debouncedQuery);
+  }, [load, page, pageSize, debouncedQuery]);
 
   useEffect(() => {
     setPage(0);
-  }, [pageSize]);
+  }, [pageSize, debouncedQuery]);
 
   const { gridItems, entriesByKey } = useMemo(
     () => buildPokedexGridData(data?.content ?? []),
@@ -46,6 +53,7 @@ export default function PokedexPage() {
   );
 
   const pageSlotCount = data?.size ?? pageSize;
+  const isSearching = debouncedQuery.length > 0;
 
   useEffect(() => {
     if (gridItems.length === 0) {
@@ -53,15 +61,22 @@ export default function PokedexPage() {
       return;
     }
     setSelectedKey((prev) => (prev && gridItems.some((i) => i.key === prev) ? prev : gridItems[0].key));
-  }, [gridItems, page]);
+  }, [gridItems, page, debouncedQuery]);
 
   const selectedEntry = selectedKey ? entriesByKey.get(selectedKey) : undefined;
   const selectedItem = selectedKey ? gridItems.find((i) => i.key === selectedKey) : undefined;
 
   const registeredOnPage = data?.content.filter((e) => e.registeredInUserPokedex).length ?? 0;
   const totalLabel = data
-    ? `${data.totalElements.toLocaleString('pt-PT')} espécies — ${registeredOnPage} registada(s) nesta página`
+    ? isSearching
+      ? `${data.totalElements.toLocaleString('pt-PT')} resultado(s) para “${debouncedQuery}” — ${registeredOnPage} registada(s) nesta página`
+      : `${data.totalElements.toLocaleString('pt-PT')} espécies — ${registeredOnPage} registada(s) nesta página`
     : '';
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    setPage(0);
+  }, []);
 
   return (
     <PageShell width="fluid" className={styles.pageShell}>
@@ -71,6 +86,17 @@ export default function PokedexPage() {
           subtitle="Consulta espécies e o teu progresso de registo."
           headingLevel="h1"
           divider
+          action={
+            <div className={styles.searchWrap}>
+              <TextField
+                label="Pesquisar"
+                name="pokedexSearch"
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Nome ou nº da Pokédex"
+              />
+            </div>
+          }
         />
 
         <PageSection grow>
@@ -83,7 +109,9 @@ export default function PokedexPage() {
           {loading && !data ? (
           <p className="ds-body-muted">A carregar…</p>
         ) : data && gridItems.length === 0 ? (
-          <p className="ds-body-muted">Sem resultados.</p>
+          <p className="ds-body-muted">
+            {isSearching ? `Nenhum Pokémon encontrado para “${debouncedQuery}”.` : 'Sem resultados.'}
+          </p>
         ) : data ? (
           <>
             <div className={styles.layout}>

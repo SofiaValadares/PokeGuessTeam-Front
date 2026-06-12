@@ -4,6 +4,11 @@ import { MatchResultModal } from '../../shared/components/MatchResultModal';
 import { useMatchFinishRedirect } from '../../../../hooks/useMatchFinishRedirect';
 import { guessedDexNumbersForSide } from '../../../../lib/game/matchGuesses';
 import { gameResultLabel } from '../../../../lib/game/labels';
+import { turnHintFromGuess } from '../../shared/lib/turnHintFromGuess';
+import { viewerOpponentTeamFromHistory } from '../../../../lib/game/historyPlayer';
+import { buildViewerOpponentTeamSnapshot } from '../../../../lib/game/historyOpponentTeam';
+import { useProfileMe } from '../../../../hooks/useProfileMe';
+import { useAuth } from '../../../../store/providers/AuthProvider';
 import { InlineAlert } from '../../../../ds';
 import { useAppDispatch } from '../../../../store/hooks';
 import { prepareNewLocalMatch } from '../slice/localMatchSlice';
@@ -12,6 +17,8 @@ import layout from '../../shared/layout/matchLayout.module.css';
 
 export function LocalMatchPlayingView() {
   const dispatch = useAppDispatch();
+  const { me } = useAuth();
+  const { profileMe } = useProfileMe();
   const {
     matchView,
     clientState,
@@ -36,6 +43,32 @@ export function LocalMatchPlayingView() {
     [guessLog, viewerSide],
   );
 
+  const finishedLines = useMemo(() => {
+    if (!matchView?.historyEntry) return ['Partida terminada.'];
+
+    const resultLines = matchView.historyEntry.players.map(
+      (p) => `${p.username ?? 'Jogador'}: ${gameResultLabel(p.result)} (${p.correctGuesses}/6)`,
+    );
+
+    return resultLines;
+  }, [matchView?.historyEntry]);
+
+  const turnHint = useMemo(
+    () => turnHintFromGuess(guessLog.at(-1), viewerSide),
+    [guessLog, viewerSide],
+  );
+
+  const opponentTeam = useMemo(() => {
+    const fromHistory = viewerOpponentTeamFromHistory(
+      matchView?.historyEntry,
+      profileMe?.profileId ?? null,
+      me?.username ?? null,
+    );
+    if (fromHistory.length > 0) return fromHistory;
+    if (!clientState) return [];
+    return buildViewerOpponentTeamSnapshot(clientState, viewerSide);
+  }, [matchView?.historyEntry, profileMe?.profileId, me?.username, clientState, viewerSide]);
+
   if (!matchView || !clientState) {
     return (
       <div className={layout.matchScreen}>
@@ -52,12 +85,6 @@ export function LocalMatchPlayingView() {
   const myTeam = viewerSide === 'HOST' ? matchView.hostTeam : matchView.opponentTeam;
   const opponentHitsOnMyTeam =
     viewerSide === 'HOST' ? matchView.opponentHits : matchView.hostHits;
-
-  const finishedLines = matchView.historyEntry
-    ? matchView.historyEntry.players.map(
-        (p) => `${p.username ?? 'Jogador'}: ${gameResultLabel(p.result)} (${p.correctGuesses}/6)`,
-      )
-    : ['Partida terminada.'];
 
   const awaitingFinalResponse =
     clientState.status === 'ACTIVE' &&
@@ -79,6 +106,7 @@ export function LocalMatchPlayingView() {
       <MatchResultModal
         open={showResultModal}
         lines={finishedLines}
+        opponentTeam={opponentTeam}
         secondsLeft={secondsLeft}
         onGoHome={goHomeNow}
       />
@@ -118,6 +146,7 @@ export function LocalMatchPlayingView() {
             onGuess={guess}
             onSurrender={() => void surrender()}
             busy={busy || pendingServerFinish}
+            turnHint={turnHint}
             excludedPokedexNumbers={excludedGuesses}
             playerTheme={isGuestView ? 'guest' : 'default'}
           />

@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
-import { finishLocalMatch } from '../../../../api/gameApi';
+import { finishLocalMatch } from '../../../../services/gameService';
+import { buildOpponentTeamSnapshot } from '../../../../lib/game/historyOpponentTeam';
 import { ApiError } from '../../../../services/http';
 import { useRegisteredPokedexPokemon } from '../../../../hooks/useRegisteredPokedexPokemon';
-import { useCacheActions } from '../../../../store/providers/CacheProvider';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import {
   resolveLocalUserResult,
@@ -15,6 +15,7 @@ import { mapGameHistoryEntry, type GameHistoryEntry, type MatchPlayerSide } from
 import type { PokemonDto } from '../../../../api/types/pokemon';
 import {
   dexMapHasAll,
+  ensureGuessDexInMap,
   mergeDexRecords,
   resolveMatchDexMap,
   resolvePokemonForMatch,
@@ -58,7 +59,6 @@ type LocalMatchPlayProviderProps = {
 
 export function LocalMatchPlayProvider({ hostName, children }: LocalMatchPlayProviderProps) {
   const dispatch = useAppDispatch();
-  const { applyMatchHistory, syncMatchRewards } = useCacheActions();
   const localMatch = useAppSelector(selectLocalMatch);
   const viewerSide = useAppSelector(selectLocalMatchViewerSide);
   const { availablePokemon: registeredPokemon } = useRegisteredPokedexPokemon();
@@ -128,14 +128,13 @@ export function LocalMatchPlayProvider({ hostName, children }: LocalMatchPlayPro
         userCorrectGuesses: state.hostHits.length,
         opponentCorrectGuesses: state.opponentHits.length,
         result,
+        opponentTeam: buildOpponentTeamSnapshot(state),
       });
       const entry = mapGameHistoryEntry(response.historyEntry);
-      applyMatchHistory(entry);
-      await syncMatchRewards();
       dispatch(setClientState(state));
       await applyDexForView(state, state.currentTurn, entry);
     },
-    [applyDexForView, applyMatchHistory, dispatch, localMatch.opponentName, syncMatchRewards],
+    [applyDexForView, dispatch, localMatch.opponentName],
   );
 
   const beginMatch = useCallback(
@@ -159,10 +158,8 @@ export function LocalMatchPlayProvider({ hostName, children }: LocalMatchPlayPro
       dispatch(setBusy(true));
       dispatch(setError(null));
       try {
-        let dexMap = await resolveMatchDexMap(pokemonByDex, clientState);
-        const pokemon = await resolvePokemonForMatch(dex, dexMap, (next) => {
-          dexMap = next;
-        });
+        let dexMap = await ensureGuessDexInMap(dex, pokemonByDex, clientState);
+        const pokemon = resolvePokemonForMatch(dex, dexMap);
         const { feedback, state } = applyGuess(clientState, viewerSide, pokemon);
         dexMap = await resolveMatchDexMap(mergeDexRecords(pokemonByDex, dexMap), state);
         dispatch(mergePokemonDex(pokemonDexMapToRecord(dexMap)));

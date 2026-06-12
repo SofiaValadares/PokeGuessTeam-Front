@@ -7,6 +7,14 @@
     {
       "source": "/auth/:path*",
       "destination": "https://poketeamguess-backend.onrender.com/auth/:path*"
+    },
+    {
+      "source": "/socket.io",
+      "destination": "https://poketeamguess-backend.onrender.com/socket.io"
+    },
+    {
+      "source": "/socket.io/(.*)",
+      "destination": "https://poketeamguess-backend.onrender.com/socket.io/$1"
     }
   ]
 }

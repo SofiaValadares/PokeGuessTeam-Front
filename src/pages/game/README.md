@@ -13,7 +13,7 @@ game/
 │   └── slice/                 # Redux matchDex (pesquisa de Pokémon nas partidas)
 ├── bot-match/                 # vs CPU — slice Redux + providers + BotMatchBoard
 ├── local-match/               # pass-and-play — slice + LocalMatchBoard
-├── friend-match/              # online REST — context + FriendMatchBoard + timer
+├── friend-match/              # online — Socket.io em tempo real (sala de espera + jogo)
 └── historico/                 # listagem de partidas
 ```
 

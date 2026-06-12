@@ -1,5 +1,14 @@
 import { ApiError, apiFetchJson } from './http';
 import type { PokedexEntryDto, PokedexEntryPageResponse } from './types/pokemon';
+import {
+  dedupeRequest,
+  getAllPokedexPagesCache,
+  getRegisteredPokedexCache,
+  invalidateAllPokedexPagesCache,
+  invalidateRegisteredPokedexCache,
+} from '../lib/pokedex/pokedexRequestCache';
+
+export { invalidateRegisteredPokedexCache, invalidateAllPokedexPagesCache };
 
 export const POKEDEX_DEFAULT_PAGE_SIZE = 25;
 export const POKEDEX_MAX_PAGE_SIZE = 100;
@@ -7,12 +16,17 @@ export const POKEDEX_MAX_PAGE_SIZE = 100;
 export async function fetchPokedexPage(
   page = 0,
   size = POKEDEX_DEFAULT_PAGE_SIZE,
+  query = '',
 ): Promise<PokedexEntryPageResponse> {
   const safeSize = Math.min(Math.max(size, 1), POKEDEX_MAX_PAGE_SIZE);
   const params = new URLSearchParams({
     page: String(page),
     size: String(safeSize),
   });
+  const trimmed = query.trim();
+  if (trimmed) {
+    params.set('q', trimmed);
+  }
   return apiFetchJson<PokedexEntryPageResponse>(`/api/pokedex?${params.toString()}`, {
     method: 'GET',
   });
@@ -47,26 +61,43 @@ async function fetchPokedexPageWithRetry(
   throw lastError;
 }
 
+/** Espécies registadas na Pokédex pessoal (uma chamada). */
+export async function fetchRegisteredPokedex(): Promise<PokedexEntryDto[]> {
+  return dedupeRequest(getRegisteredPokedexCache(), async () => {
+    try {
+      return await apiFetchJson<PokedexEntryDto[]>('/api/pokedex/registered', { method: 'GET' });
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        const all = await fetchAllPokedexPages();
+        return all.filter((entry) => entry.registeredInUserPokedex);
+      }
+      throw err;
+    }
+  });
+}
+
 /** Carrega a Pokédex nacional em páginas pequenas — evita timeout do proxy em produção. */
 export async function fetchAllPokedexPages(): Promise<PokedexEntryDto[]> {
-  const pageSize = POKEDEX_MAX_PAGE_SIZE;
-  const first = await fetchPokedexPageWithRetry(0, pageSize);
-  const all = [...first.content];
+  return dedupeRequest(getAllPokedexPagesCache(), async () => {
+    const pageSize = POKEDEX_MAX_PAGE_SIZE;
+    const first = await fetchPokedexPageWithRetry(0, pageSize);
+    const all = [...first.content];
 
-  if (first.totalPages <= 1) {
-    return all;
-  }
-
-  const remainingPages = Array.from({ length: first.totalPages - 1 }, (_, index) => index + 1);
-  for (let offset = 0; offset < remainingPages.length; offset += POKEDEX_PAGE_BATCH) {
-    const batch = remainingPages.slice(offset, offset + POKEDEX_PAGE_BATCH);
-    const pages = await Promise.all(batch.map((page) => fetchPokedexPageWithRetry(page, pageSize)));
-    for (const page of pages) {
-      all.push(...page.content);
+    if (first.totalPages <= 1) {
+      return all;
     }
-  }
 
-  return all;
+    const remainingPages = Array.from({ length: first.totalPages - 1 }, (_, index) => index + 1);
+    for (let offset = 0; offset < remainingPages.length; offset += POKEDEX_PAGE_BATCH) {
+      const batch = remainingPages.slice(offset, offset + POKEDEX_PAGE_BATCH);
+      const pages = await Promise.all(batch.map((page) => fetchPokedexPageWithRetry(page, pageSize)));
+      for (const page of pages) {
+        all.push(...page.content);
+      }
+    }
+
+    return all;
+  });
 }
 
 /** @deprecated Preferir {@link fetchAllPokedexPages} — `/all` pode dar timeout em produção. */

@@ -41,12 +41,19 @@ export type BotMatchGuessFeedbackDto = {
   autoSelected?: boolean;
 };
 
+export type GameHistoryOpponentSlotDto = {
+  slot: number;
+  pokedexNumber: number;
+  accepted: boolean;
+};
+
 export type GameHistoryPlayerDto = {
   slot: number;
   profileId: string | null;
   username: string | null;
   correctGuesses: number;
   result: GameResult;
+  opponentTeam: GameHistoryOpponentSlotDto[];
 };
 
 export type GameHistoryEntryDto = {
@@ -72,6 +79,7 @@ export type GameBotFinishRequest = {
   userCorrectGuesses: number;
   opponentCorrectGuesses: number;
   result: GameResult;
+  opponentTeam: GameHistoryOpponentSlotDto[];
 };
 
 export type GameLocalFinishRequest = GameBotFinishRequest & {
@@ -133,6 +141,23 @@ export type FriendMatchActionResponse = {
   match: FriendMatchStateDto;
   turnFeedbacks: BotMatchGuessFeedbackDto[];
   reward?: MatchRewardDto | null;
+};
+
+export type MatchRealtimeEventType =
+  | 'PLAYER_GUESS'
+  | 'MATCH_STATE'
+  | 'TURN_TIMER'
+  | 'MATCH_FINISHED';
+
+export type MatchRealtimeMessage = {
+  type: MatchRealtimeEventType;
+  matchId: string;
+  friendMatch?: FriendMatchStateDto;
+  feedback?: BotMatchGuessFeedbackDto;
+  currentTurn?: MatchPlayerSide;
+  turnDeadlineAt?: string;
+  turnTimeoutSeconds?: number;
+  message?: string;
 };
 
 export type GameHistoryPageResponse = {

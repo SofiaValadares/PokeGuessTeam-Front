@@ -10,6 +10,13 @@
   border-top: 1px solid var(--ds-color-border-default);
 }
 
+/* Secção seguinte sem segunda listra quando a anterior já tem divider. */
+.section:has(> .divider) + .section {
+  margin-top: 0;
+  padding-top: var(--ds-space-4);
+  border-top: none;
+}
+
 .header {
   display: flex;
   flex-wrap: wrap;
