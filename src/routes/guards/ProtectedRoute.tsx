@@ -9,10 +9,10 @@ type ProtectedRouteProps = {
 };
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { sessionFetchStatus, authenticated } = useAuth();
+  const { sessionFetchStatus, authenticated, authBootstrapping } = useAuth();
   const location = useLocation();
 
-  if (sessionFetchStatus === FetchStatus.Loading) {
+  if (authBootstrapping || (sessionFetchStatus === FetchStatus.Loading && !authenticated)) {
     return (
       <div className={styles.layout}>
         <AppHeader />

@@ -13,10 +13,7 @@ import BotMatchPage from '../pages/game/bot-match/bot-match';
 import LocalMatchPage from '../pages/game/local-match/local-match';
 import FriendMatchPage from '../pages/game/friend-match/friend-match';
 import HistoricoPage from '../pages/game/historico/historico';
-import ForgotPasswordPage from '../pages/auth/forgot-password/forgot-password';
 import RegisterPage from '../pages/auth/register/register';
-import ResetPasswordPage from '../pages/auth/reset-password/reset-password';
-import VerifyEmailPage from '../pages/auth/verify-email/verify-email';
 import { AuthProvider } from '../store/providers';
 import { ProtectedRoute } from './guards';
 
@@ -33,9 +30,9 @@ export function AppRouter() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/verify-email" element={<VerifyEmailPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/verify-email" element={<Navigate to="/login" replace />} />
+            <Route path="/forgot-password" element={<Navigate to="/login" replace />} />
+            <Route path="/reset-password" element={<Navigate to="/login" replace />} />
             <Route
               path="/"
               element={

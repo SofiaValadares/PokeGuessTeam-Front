@@ -1,38 +1,31 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { PcLine } from '../model';
-import { mapPcLineList } from '../model';
-import { fetchAllPcLines } from '../services/pcService';
 import { resolveCurrentMemberDex } from '../lib/pokemon/pcCurrentForm';
 import { useSpeciesMeta } from './useSpeciesMeta';
-import { ApiError } from '../services/http';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { fetchPcLinesIfNeeded } from '../store/slices/resourcesSlice';
+import {
+  selectPcLines,
+  selectPcLinesLoading,
+  selectPcLinesResource,
+} from '../store/selectors/resourcesSelectors';
 import { FetchStatus } from '../types/fetchStatus';
 
 /** Linhas evolutivas completas do PC (para montar o time de treino). */
 export function usePcTeamInventory(enabled = true) {
-  const [lines, setLines] = useState<PcLine[]>([]);
-  const [status, setStatus] = useState(FetchStatus.Idle);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setStatus(FetchStatus.Loading);
-    setErrorMessage(null);
-    try {
-      const fetched = mapPcLineList(await fetchAllPcLines());
-      setLines(fetched);
-      setStatus(FetchStatus.Success);
-    } catch (e) {
-      setLines([]);
-      setErrorMessage(
-        e instanceof ApiError ? e.message : 'Não foi possível carregar o PC.',
-      );
-      setStatus(FetchStatus.Error);
-    }
-  }, []);
+  const dispatch = useAppDispatch();
+  const lines = useAppSelector(selectPcLines);
+  const loadingLines = useAppSelector(selectPcLinesLoading);
+  const resource = useAppSelector(selectPcLinesResource);
 
   useEffect(() => {
     if (!enabled) return;
-    void load();
-  }, [enabled, load]);
+    void dispatch(fetchPcLinesIfNeeded());
+  }, [dispatch, enabled]);
+
+  const refresh = useCallback(() => {
+    void dispatch(fetchPcLinesIfNeeded({ force: true }));
+  }, [dispatch]);
 
   const allMemberDex = useMemo(
     () => lines.flatMap((line) => line.members),
@@ -41,8 +34,11 @@ export function usePcTeamInventory(enabled = true) {
 
   const { speciesByDex, evolutionLevelByDex, loading: metaLoading } = useSpeciesMeta(allMemberDex);
 
-  const loading = status === FetchStatus.Loading || metaLoading;
-  const ready = status === FetchStatus.Success && !metaLoading;
+  const statusBusy =
+    enabled &&
+    (loadingLines || resource.status === FetchStatus.Idle || resource.status === FetchStatus.Loading);
+  const loading = statusBusy || metaLoading;
+  const ready = resource.status === FetchStatus.Success && !metaLoading;
 
   return {
     lines,
@@ -51,8 +47,8 @@ export function usePcTeamInventory(enabled = true) {
     lineCount: lines.length,
     loading,
     ready,
-    errorMessage,
-    refresh: load,
+    errorMessage: resource.error,
+    refresh,
   };
 }
 

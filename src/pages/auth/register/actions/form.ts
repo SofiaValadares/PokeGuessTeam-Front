@@ -74,17 +74,25 @@ export function isRegisterFormValid(
 }
 
 /**
- * Cria a conta e envia para verificação de e-mail.
+ * Cria a conta. Se o backend já marcar o e-mail como verificado, vai ao login;
+ * caso contrário, mantém o fluxo de verificação por código.
  */
 export async function submitRegister(
   values: Pick<RegisterFormState, 'username' | 'email' | 'password'>,
   deps: { navigate: NavigateFunction },
 ): Promise<void> {
-  await registerUser({
+  const result = await registerUser({
     username: values.username.trim(),
     email: values.email.trim(),
     password: values.password,
   });
+  if (result.emailVerified) {
+    deps.navigate('/login', {
+      replace: true,
+      state: { registeredEmail: values.email.trim() },
+    });
+    return;
+  }
   deps.navigate('/verify-email', {
     replace: true,
     state: { email: values.email.trim(), fromRegister: true },

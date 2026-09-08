@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { accountDisplayName } from '../../../../auth/accountDisplay';
 import { useAuth } from '../../../../store/providers/AuthProvider';
-import { RegisteredPokedexProvider } from '../../../../store/providers/RegisteredPokedexProvider';
 import { useAppSelector } from '../../../../store/hooks';
 import { selectLocalMatch } from '../slice/localMatchSelectors';
 import { LocalMatchDexProvider } from './LocalMatchDexProvider';
@@ -26,11 +25,9 @@ function LocalMatchProvidersInner({ children }: { children: React.ReactNode }) {
 
 export function LocalMatchProvider({ children }: { children: React.ReactNode }) {
   return (
-    <RegisteredPokedexProvider>
-      <LocalMatchDexProvider>
-        <LocalMatchProvidersInner>{children}</LocalMatchProvidersInner>
-      </LocalMatchDexProvider>
-    </RegisteredPokedexProvider>
+    <LocalMatchDexProvider>
+      <LocalMatchProvidersInner>{children}</LocalMatchProvidersInner>
+    </LocalMatchDexProvider>
   );
 }
 

@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { PcLineDto } from '../../../api/types/pokemon';
 import { claimEvolutionRewards } from '../../../api/pokemonApi';
-import { getGameMeta } from '../../../api/metaApi';
 import { PokemonSprite } from '../../../components/PokemonSprite';
 import { Button } from '../../../ds';
 import { pokeballLabel } from '../../../lib/pokeball/labels';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { fetchMetaIfNeeded } from '../../../store/slices/resourcesSlice';
+import { selectGameMeta } from '../../../store/selectors/resourcesSelectors';
+import { invalidateAfterEvolutionClaim } from '../../../lib/cache/afterMutation';
 import styles from '../home.module.css';
 
 type PokemonDetailModalProps = {
@@ -47,12 +50,19 @@ export function PokemonDetailModal({
   onClose,
   onLineUpdated,
 }: PokemonDetailModalProps) {
+  const dispatch = useAppDispatch();
+  const gameMeta = useAppSelector(selectGameMeta);
   const [line, setLine] = useState<PcLineDto | null>(lineProp);
-  const [milestones, setMilestones] = useState<Milestones | null>(null);
   const [rewardsOpen, setRewardsOpen] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const [claimMessage, setClaimMessage] = useState<string | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
+
+  const milestones = useMemo((): Milestones | null => {
+    const raw = (gameMeta as { evolutionRewards?: { milestones?: Milestones } } | null)
+      ?.evolutionRewards?.milestones;
+    return raw ?? null;
+  }, [gameMeta]);
 
   useEffect(() => {
     setLine(lineProp);
@@ -65,14 +75,8 @@ export function PokemonDetailModal({
       setClaimError(null);
       return;
     }
-    void getGameMeta()
-      .then((meta) => {
-        const raw = (meta as { evolutionRewards?: { milestones?: Milestones } }).evolutionRewards
-          ?.milestones;
-        setMilestones(raw ?? null);
-      })
-      .catch(() => setMilestones(null));
-  }, [open]);
+    void dispatch(fetchMetaIfNeeded());
+  }, [open, dispatch]);
 
   const pendingMilestones = line?.pendingMilestones ?? [];
   const hasPendingRewards = pendingMilestones.length > 0;
@@ -102,6 +106,7 @@ export function PokemonDetailModal({
     setClaimMessage(null);
     try {
       const result = await claimEvolutionRewards(line.evolutionLineKey);
+      invalidateAfterEvolutionClaim(dispatch);
       setLine(result.line);
       onLineUpdated?.(result.line);
       const granted = formatRewardMap(result.grantedPokeballs);

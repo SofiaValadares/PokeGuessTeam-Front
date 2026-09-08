@@ -2,33 +2,52 @@ import { apiFetchJson } from './http';
 import { parseProfileCollection } from './profileCollectionParse';
 import type { ProfileCollectionResult, ProfileMeResponse } from './types/profile';
 import type { TrainingTeamResponse } from './types/game';
-import { dedupeRequest, invalidateCache } from '../lib/api/requestCache';
+import { createCacheEntry, dedupeRequest, invalidateCache } from '../lib/api/requestCache';
+import { CacheTtl } from '../lib/cache/cachedResource';
+import { invalidateHomeCache } from './homeService';
 
-const profileMeCache = { data: null as ProfileMeResponse | null, inflight: null as Promise<ProfileMeResponse> | null };
-const trainingTeamCache = { data: null as TrainingTeamResponse | null, inflight: null as Promise<TrainingTeamResponse> | null };
+const profileMeCache = createCacheEntry<ProfileMeResponse>();
+const trainingTeamCache = createCacheEntry<TrainingTeamResponse>();
+const collectionCache = createCacheEntry<ProfileCollectionResult>();
 
 export function invalidateProfileMeCache(): void {
   invalidateCache(profileMeCache);
+  invalidateHomeCache();
 }
 
 export function invalidateTrainingTeamCache(): void {
   invalidateCache(trainingTeamCache);
+  invalidateHomeCache();
 }
 
-export async function fetchProfileMe(): Promise<ProfileMeResponse> {
-  return dedupeRequest(profileMeCache, () =>
-    apiFetchJson<ProfileMeResponse>('/api/profile/me', { method: 'GET' }),
+export function invalidateCollectionCache(): void {
+  invalidateCache(collectionCache);
+}
+
+export async function fetchProfileMe(force = false): Promise<ProfileMeResponse> {
+  return dedupeRequest(
+    profileMeCache,
+    () => apiFetchJson<ProfileMeResponse>('/api/profile/me', { method: 'GET' }),
+    { reset: force, ttlMs: CacheTtl.profile },
   );
 }
 
-export async function fetchProfileCollection(): Promise<ProfileCollectionResult> {
-  const raw = await apiFetchJson<unknown>('/api/profile/collection', { method: 'GET' });
-  return parseProfileCollection(raw);
+export async function fetchProfileCollection(force = false): Promise<ProfileCollectionResult> {
+  return dedupeRequest(
+    collectionCache,
+    async () => {
+      const raw = await apiFetchJson<unknown>('/api/profile/collection', { method: 'GET' });
+      return parseProfileCollection(raw);
+    },
+    { reset: force, ttlMs: CacheTtl.inventory },
+  );
 }
 
-export async function fetchTrainingTeam(): Promise<TrainingTeamResponse> {
-  return dedupeRequest(trainingTeamCache, () =>
-    apiFetchJson<TrainingTeamResponse>('/api/profile/training-team', { method: 'GET' }),
+export async function fetchTrainingTeam(force = false): Promise<TrainingTeamResponse> {
+  return dedupeRequest(
+    trainingTeamCache,
+    () => apiFetchJson<TrainingTeamResponse>('/api/profile/training-team', { method: 'GET' }),
+    { reset: force, ttlMs: CacheTtl.trainingTeam },
   );
 }
 
@@ -40,6 +59,8 @@ export async function submitTrainingTeam(
     body: JSON.stringify({ slots }),
   });
   trainingTeamCache.data = team;
+  trainingTeamCache.lastFetched = Date.now();
+  invalidateHomeCache();
   return team;
 }
 
@@ -52,5 +73,7 @@ export async function updateFavoritePokemon(pokedexNumber: number): Promise<Prof
     body: JSON.stringify({ pokedexNumber }),
   });
   profileMeCache.data = profile;
+  profileMeCache.lastFetched = Date.now();
+  invalidateHomeCache();
   return profile;
 }

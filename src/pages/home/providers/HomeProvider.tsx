@@ -2,44 +2,64 @@ import { createContext, useCallback, useContext, useEffect, useMemo } from 'reac
 import { useNavigate } from 'react-router-dom';
 import { accountDisplayName } from '../../../auth/accountDisplay';
 import { useAuth } from '../../../store/providers/AuthProvider';
-import { useAppDispatch } from '../../../store/hooks';
-import { useProfileMe } from '../../../hooks/useProfileMe';
-import { useTrainingTeam } from '../../../hooks/useTrainingTeam';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { useRegisteredPokedexPokemon } from '../../../hooks/useRegisteredPokedexPokemon';
-import { setTrainingTeam } from '../../../store/slices/cache';
-import { selectTrainingTeam } from '../../../store/slices/cache/selectors';
+import { fetchHomeIfNeeded } from '../../../store/slices/resourcesSlice';
+import {
+  selectProfileMe,
+  selectProfileMeResource,
+  selectResourcesTrainingTeam,
+  selectTrainingTeamResource,
+  selectRegisteredPokedexCount,
+} from '../../../store/selectors/resourcesSelectors';
 import { closeTeamEditor, openTeamEditor, selectHomeUi } from '../slice/homeUiSlice';
-import { useAppSelector } from '../../../store/hooks';
+import { FetchStatus } from '../../../types/fetchStatus';
 
 function useHomeData() {
   const { me, authenticated, showIntroDialogue, dismissIntroDialogue } = useAuth();
-  const { profileMe, loading: profileLoading, error: profileError, reload: reloadProfile } =
-    useProfileMe(authenticated);
-  const { trainingTeam: fetchedTeam, loading: teamLoading, error: teamError, reload: reloadTraining } =
-    useTrainingTeam(authenticated);
-  const cachedTeam = useAppSelector(selectTrainingTeam);
-  const trainingTeam = cachedTeam ?? fetchedTeam;
-  const {
-    registeredCount: pokedexRegisteredCount,
-    loading: dexLoading,
-    errorMessage: dexError,
-  } = useRegisteredPokedexPokemon();
   const dispatch = useAppDispatch();
+  const profileMe = useAppSelector(selectProfileMe);
+  const profileResource = useAppSelector(selectProfileMeResource);
+  const trainingTeam = useAppSelector(selectResourcesTrainingTeam);
+  const teamResource = useAppSelector(selectTrainingTeamResource);
+  const homeRegisteredCount = useAppSelector(selectRegisteredPokedexCount);
+  const {
+    registeredCount: dexRegisteredCount,
+    errorMessage: dexError,
+  } = useRegisteredPokedexPokemon({ load: false });
   const homeUi = useAppSelector(selectHomeUi);
 
   useEffect(() => {
-    dispatch(setTrainingTeam(trainingTeam));
-  }, [dispatch, trainingTeam]);
+    if (!authenticated) return;
+    void dispatch(fetchHomeIfNeeded());
+  }, [authenticated, dispatch]);
 
   const playerName = accountDisplayName(me);
-  const loading = profileLoading || teamLoading || dexLoading;
-  const errorMessage = profileError ?? teamError ?? dexError;
+  const profileLoading =
+    authenticated &&
+    (profileResource.status === FetchStatus.Loading ||
+      profileResource.status === FetchStatus.Idle);
+  const teamLoading =
+    authenticated &&
+    (teamResource.status === FetchStatus.Loading || teamResource.status === FetchStatus.Idle);
+  // Contagem vem de GET /api/home; lista completa da dex não bloqueia a Home.
+  const loading = profileLoading || teamLoading;
+  const errorMessage = profileResource.error ?? teamResource.error ?? dexError;
+  const pokedexRegisteredCount = homeRegisteredCount ?? dexRegisteredCount;
 
   const favoriteDex = useMemo(() => {
     if (!profileMe?.favoritePokemonId) return null;
     const n = Number.parseInt(profileMe.favoritePokemonId, 10);
     return Number.isFinite(n) ? n : null;
   }, [profileMe?.favoritePokemonId]);
+
+  const reloadProfile = useCallback(() => {
+    void dispatch(fetchHomeIfNeeded({ force: true }));
+  }, [dispatch]);
+
+  const reloadTraining = useCallback(() => {
+    void dispatch(fetchHomeIfNeeded({ force: true }));
+  }, [dispatch]);
 
   return {
     me,

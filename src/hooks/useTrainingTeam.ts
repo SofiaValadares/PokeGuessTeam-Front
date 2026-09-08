@@ -1,39 +1,32 @@
-import { useCallback, useEffect, useState } from 'react';
-import { fetchTrainingTeam, invalidateTrainingTeamCache } from '../services/profileService';
-import { mapTrainingTeam, type TrainingTeam } from '../model';
-import { ApiError } from '../services/http';
+import { useCallback, useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { fetchTrainingTeamIfNeeded } from '../store/slices/resourcesSlice';
+import {
+  selectResourcesTrainingTeam,
+  selectTrainingTeamLoading,
+  selectTrainingTeamResource,
+} from '../store/selectors/resourcesSelectors';
 import { FetchStatus } from '../types/fetchStatus';
 
 export function useTrainingTeam(enabled = true) {
-  const [trainingTeam, setTrainingTeam] = useState<TrainingTeam | null>(null);
-  const [status, setStatus] = useState(FetchStatus.Idle);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async (force = false) => {
-    if (!enabled && !force) return;
-    if (force) invalidateTrainingTeamCache();
-    setStatus(FetchStatus.Loading);
-    setError(null);
-    try {
-      const dto = await fetchTrainingTeam();
-      setTrainingTeam(mapTrainingTeam(dto));
-      setStatus(FetchStatus.Success);
-    } catch (e) {
-      setTrainingTeam(null);
-      setError(e instanceof ApiError ? e.message : 'Não foi possível carregar a equipa.');
-      setStatus(FetchStatus.Error);
-    }
-  }, [enabled]);
+  const dispatch = useAppDispatch();
+  const trainingTeam = useAppSelector(selectResourcesTrainingTeam);
+  const loading = useAppSelector(selectTrainingTeamLoading);
+  const resource = useAppSelector(selectTrainingTeamResource);
 
   useEffect(() => {
     if (!enabled) return;
-    void load();
-  }, [enabled, load]);
+    void dispatch(fetchTrainingTeamIfNeeded());
+  }, [dispatch, enabled]);
+
+  const reload = useCallback(() => {
+    void dispatch(fetchTrainingTeamIfNeeded({ force: true }));
+  }, [dispatch]);
 
   return {
     trainingTeam,
-    loading: status === FetchStatus.Loading,
-    error,
-    reload: () => load(true),
+    loading: enabled && (loading || resource.status === FetchStatus.Idle),
+    error: resource.error,
+    reload,
   };
 }

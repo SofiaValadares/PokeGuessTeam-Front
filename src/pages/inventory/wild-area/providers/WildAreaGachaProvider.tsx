@@ -3,7 +3,9 @@ import { drawPokemon } from '../../../../services/pokemonService';
 import { ApiError } from '../../../../services/http';
 import type { PokeballTypeId } from '../../../../lib/pokeball/sprites';
 import { mapGachaDrawResult, type GachaDrawResult } from '../../../../model';
-import { invalidateRegisteredPokedexCache } from '../../../../services/pokedexService';
+import { useAppDispatch } from '../../../../store/hooks';
+import { invalidateAfterGacha } from '../../../../lib/cache/afterMutation';
+import { fetchRegisteredPokedexIfNeeded } from '../../../../store/slices/resourcesSlice';
 import { useWildAreaInventory } from './WildAreaInventoryProvider';
 
 export type WildAreaGachaContextValue = {
@@ -16,6 +18,7 @@ export type WildAreaGachaContextValue = {
 const WildAreaGachaContext = createContext<WildAreaGachaContextValue | null>(null);
 
 export function WildAreaGachaProvider({ children }: { children: React.ReactNode }) {
+  const dispatch = useAppDispatch();
   const { reload: reloadInventory } = useWildAreaInventory();
   const [lastDraw, setLastDraw] = useState<GachaDrawResult | null>(null);
   const [drawingType, setDrawingType] = useState<PokeballTypeId | null>(null);
@@ -31,15 +34,18 @@ export function WildAreaGachaProvider({ children }: { children: React.ReactNode 
         const res = await drawPokemon(ballType);
         const mapped = mapGachaDrawResult(res);
         setLastDraw(mapped);
-        invalidateRegisteredPokedexCache();
-        await reloadInventory();
+        invalidateAfterGacha(dispatch);
+        await Promise.all([
+          reloadInventory(),
+          dispatch(fetchRegisteredPokedexIfNeeded({ force: true })),
+        ]);
       } catch (e) {
         setError(e instanceof ApiError ? e.message : 'Não foi possível capturar um Pokémon.');
       } finally {
         setDrawingType(null);
       }
     },
-    [drawingType, reloadInventory],
+    [dispatch, drawingType, reloadInventory],
   );
 
   const value = useMemo(

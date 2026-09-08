@@ -1,8 +1,9 @@
 import type { PcLineDto } from './types/pokemon';
 import { fetchPokemonPcPage } from './pokemonService';
-import { dedupeRequest, invalidateCache } from '../lib/api/requestCache';
+import { createCacheEntry, dedupeRequest, invalidateCache } from '../lib/api/requestCache';
+import { CacheTtl } from '../lib/cache/cachedResource';
 
-const pcLinesCache = { data: null as PcLineDto[] | null, inflight: null as Promise<PcLineDto[]> | null };
+const pcLinesCache = createCacheEntry<PcLineDto[]>();
 
 const PC_FETCH_PAGE_SIZE = 100;
 
@@ -10,19 +11,23 @@ export function invalidatePcLinesCache(): void {
   invalidateCache(pcLinesCache);
 }
 
-export async function fetchAllPcLines(): Promise<PcLineDto[]> {
-  return dedupeRequest(pcLinesCache, async () => {
-    const lines: PcLineDto[] = [];
-    let page = 0;
-    let totalPages = 1;
+export async function fetchAllPcLines(force = false): Promise<PcLineDto[]> {
+  return dedupeRequest(
+    pcLinesCache,
+    async () => {
+      const lines: PcLineDto[] = [];
+      let page = 0;
+      let totalPages = 1;
 
-    while (page < totalPages) {
-      const res = await fetchPokemonPcPage(page, PC_FETCH_PAGE_SIZE);
-      lines.push(...res.content);
-      totalPages = Math.max(res.totalPages, 1);
-      page += 1;
-    }
+      while (page < totalPages) {
+        const res = await fetchPokemonPcPage(page, PC_FETCH_PAGE_SIZE);
+        lines.push(...res.content);
+        totalPages = Math.max(res.totalPages, 1);
+        page += 1;
+      }
 
-    return lines;
-  });
+      return lines;
+    },
+    { reset: force, ttlMs: CacheTtl.inventory },
+  );
 }

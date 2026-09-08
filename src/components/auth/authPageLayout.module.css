@@ -11,7 +11,10 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   min-height: 0;
+  width: 100%;
+  padding: var(--ds-space-6);
 }
 
 .loading {
@@ -25,21 +28,4 @@
   color: var(--ds-color-text-secondary);
   font-size: var(--ds-text-sm);
   min-height: 0;
-}
-
-.intro {
-  margin-bottom: 0;
-}
-
-.intro :global(.ds-body-muted) {
-  margin-top: 0;
-}
-
-.footer {
-  margin-top: var(--ds-space-6);
-  margin-bottom: 0;
-}
-
-.footer :global(.ds-body-muted) {
-  margin-bottom: 0;
 }

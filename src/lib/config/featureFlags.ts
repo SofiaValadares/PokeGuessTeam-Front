@@ -1,2 +1,2 @@
-/** Partidas amigáveis online (sincronização por polling HTTP). */
+/** Partidas amigáveis online (Socket.IO + REST). */
 export const FRIEND_MATCH_ENABLED = true;

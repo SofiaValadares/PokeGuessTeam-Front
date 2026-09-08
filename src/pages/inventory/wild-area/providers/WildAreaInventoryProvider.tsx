@@ -1,9 +1,13 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { fetchProfileCollection } from '../../../../services/profileService';
-import { mapPokeballInventory } from '../../../../model';
+import { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
 import { useAuth } from '../../../../store/providers/AuthProvider';
 import type { PokeballInventory } from '../../../../model';
-import { ApiError } from '../../../../services/http';
+import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
+import { fetchProfileCollectionIfNeeded } from '../../../../store/slices/resourcesSlice';
+import {
+  selectProfileCollection,
+  selectProfileCollectionLoading,
+  selectProfileCollectionResource,
+} from '../../../../store/selectors/resourcesSelectors';
 import { FetchStatus } from '../../../../types/fetchStatus';
 
 type WildAreaInventoryContextValue = {
@@ -16,36 +20,32 @@ const WildAreaInventoryContext = createContext<WildAreaInventoryContextValue | n
 
 export function WildAreaInventoryProvider({ children }: { children: React.ReactNode }) {
   const { authenticated } = useAuth();
-  const [collection, setCollection] = useState<PokeballInventory | null>(null);
-  const [status, setStatus] = useState(FetchStatus.Idle);
-
-  const load = useCallback(async () => {
-    setStatus(FetchStatus.Loading);
-    try {
-      const result = await fetchProfileCollection();
-      setCollection(mapPokeballInventory(result.pokeballs));
-      setStatus(FetchStatus.Success);
-    } catch (e) {
-      setCollection(null);
-      setStatus(FetchStatus.Error);
-      if (!(e instanceof ApiError)) throw e;
-    }
-  }, []);
+  const dispatch = useAppDispatch();
+  const collection = useAppSelector(selectProfileCollection);
+  const loading = useAppSelector(selectProfileCollectionLoading);
+  const resource = useAppSelector(selectProfileCollectionResource);
 
   useEffect(() => {
-    if (!authenticated) {
-      setCollection(null);
-      setStatus(FetchStatus.Idle);
-      return;
-    }
-    void load();
-  }, [authenticated, load]);
+    if (!authenticated) return;
+    void dispatch(fetchProfileCollectionIfNeeded());
+  }, [authenticated, dispatch]);
 
-  const cacheLoading = authenticated && status === FetchStatus.Loading && collection == null;
+  const reload = useCallback(async () => {
+    await dispatch(fetchProfileCollectionIfNeeded({ force: true }));
+  }, [dispatch]);
+
+  const cacheLoading =
+    authenticated &&
+    collection == null &&
+    (loading || resource.status === FetchStatus.Idle || resource.status === FetchStatus.Loading);
 
   const value = useMemo(
-    () => ({ collection, cacheLoading, reload: load }),
-    [collection, cacheLoading, load],
+    () => ({
+      collection: authenticated ? collection : null,
+      cacheLoading,
+      reload,
+    }),
+    [authenticated, collection, cacheLoading, reload],
   );
 
   return (

@@ -1,0 +1,31 @@
+.clerkWrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.clerkRoot {
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+}
+
+.clerkCard {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.errorPanel {
+  width: min(100%, 28rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-3);
+}

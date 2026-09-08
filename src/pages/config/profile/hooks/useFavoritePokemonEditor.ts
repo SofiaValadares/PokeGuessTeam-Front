@@ -5,8 +5,11 @@ import type { PokemonDto } from '../../../../api/types/pokemon';
 import type { ProfileMe } from '../../../../model';
 import { FetchStatus } from '../../../../types/fetchStatus';
 import { mapProfileSubmitError } from '../actions/form';
+import { useAppDispatch } from '../../../../store/hooks';
+import { applyProfileMeMutation } from '../../../../lib/cache/afterMutation';
 
-export function useFavoritePokemonEditor(profileMe: ProfileMe | null, onSaved: () => void) {
+export function useFavoritePokemonEditor(profileMe: ProfileMe | null, onSaved?: () => void) {
+  const dispatch = useAppDispatch();
   const [editorOpen, setEditorOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PokemonDto[]>([]);
@@ -54,17 +57,18 @@ export function useFavoritePokemonEditor(profileMe: ProfileMe | null, onSaved: (
     setSubmitError(null);
     setSubmitStatus(FetchStatus.Loading);
     try {
-      await updateFavoritePokemon(selected.number);
+      const dto = await updateFavoritePokemon(selected.number);
+      applyProfileMeMutation(dispatch, dto);
       setSuccess(true);
       setEditorOpen(false);
       resetEditor();
-      onSaved();
+      onSaved?.();
       setSubmitStatus(FetchStatus.Success);
     } catch (err) {
       setSubmitStatus(FetchStatus.Error);
       setSubmitError(mapProfileSubmitError(err));
     }
-  }, [onSaved, resetEditor, selected]);
+  }, [dispatch, onSaved, resetEditor, selected]);
 
   const currentDex = profileMe?.favoritePokemonId
     ? Number.parseInt(profileMe.favoritePokemonId, 10)

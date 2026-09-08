@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { PC_DEFAULT_PAGE_SIZE } from '../../../services/pokemonService';
-import { fetchAllPcLines } from '../../../services/pcService';
 import { PokemonBillGrid } from '../../../components/PokemonBillGrid';
 import { PokemonGridPagination } from '../../../components/PokemonGridPagination';
 import { resolveCurrentMemberDex } from '../../../lib/pokemon/pcCurrentForm';
@@ -12,44 +11,44 @@ import { FetchStatus } from '../../../types/fetchStatus';
 import type { PcLineDto } from '../../../services/types/pokemon';
 import { PcDetailPanel } from './components/PcDetailPanel';
 import { buildPcGridData } from '../../../lib/pc/buildGridData';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { fetchPcLinesIfNeeded } from '../../../store/slices/resourcesSlice';
+import {
+  selectPcLines,
+  selectPcLinesLoading,
+  selectPcLinesResource,
+} from '../../../store/selectors/resourcesSelectors';
 import styles from './pc.module.css';
 
 export default function PcPage() {
+  const dispatch = useAppDispatch();
   const [pageSize, setPageSize] = useState(PC_DEFAULT_PAGE_SIZE);
   const [searchQuery, setSearchQuery] = useState('');
   const { page, setPage, data, status, errorMessage } = usePokemonPcPage(0, pageSize);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [searchLines, setSearchLines] = useState<PcLineDto[] | null>(null);
-  const [searchStatus, setSearchStatus] = useState<FetchStatus>(FetchStatus.Idle);
+
+  const cachedLines = useAppSelector(selectPcLines);
+  const cacheLoading = useAppSelector(selectPcLinesLoading);
+  const cacheResource = useAppSelector(selectPcLinesResource);
 
   const trimmedSearch = searchQuery.trim();
   const isSearching = trimmedSearch.length > 0;
 
   useEffect(() => {
-    if (!isSearching) {
-      setSearchLines(null);
-      setSearchStatus(FetchStatus.Idle);
-      return;
-    }
+    if (!isSearching) return;
+    void dispatch(fetchPcLinesIfNeeded());
+  }, [dispatch, isSearching]);
 
-    let cancelled = false;
-    setSearchStatus(FetchStatus.Loading);
-    void fetchAllPcLines()
-      .then((lines) => {
-        if (cancelled) return;
-        setSearchLines(lines);
-        setSearchStatus(FetchStatus.Success);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setSearchLines([]);
-        setSearchStatus(FetchStatus.Error);
-      });
+  const searchStatus =
+    !isSearching
+      ? FetchStatus.Idle
+      : cacheResource.status === FetchStatus.Error
+        ? FetchStatus.Error
+        : cacheLoading || cacheResource.status === FetchStatus.Idle
+          ? FetchStatus.Loading
+          : FetchStatus.Success;
 
-    return () => {
-      cancelled = true;
-    };
-  }, [isSearching, trimmedSearch]);
+  const searchLines = isSearching ? (cachedLines as unknown as PcLineDto[]) : null;
 
   const loading = isSearching ? searchStatus === FetchStatus.Loading : status === FetchStatus.Loading;
   const lines = useMemo(

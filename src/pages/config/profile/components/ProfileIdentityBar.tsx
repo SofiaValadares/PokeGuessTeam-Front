@@ -12,8 +12,8 @@ type Settings = ReturnType<typeof useProfileSettings>;
 
 export function ProfileIdentityBar({ settings }: { settings: Settings }) {
   const { me } = useAuth();
-  const { profileMe, loading, error: profileError, reload } = useProfileMe();
-  const favorite = useFavoritePokemonEditor(profileMe, () => void reload());
+  const { profileMe, loading, error: profileError } = useProfileMe();
+  const favorite = useFavoritePokemonEditor(profileMe);
 
   const displayName = accountDisplayName(me);
 

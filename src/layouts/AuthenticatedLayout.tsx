@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { EvolutionCelebrationGate } from '../components/EvolutionCelebration';
 import { AppHeader } from '../ds';
 import { useMatchRouteLifecycle } from '../hooks/useMatchRouteLifecycle';
+import { RegisteredPokedexProvider } from '../store/providers/RegisteredPokedexProvider';
 import headerStyles from '../ds/components/AppHeader/AppHeader.module.css';
 import styles from './authenticated-layout.module.css';
 
@@ -16,32 +17,34 @@ export function AuthenticatedLayout() {
   useMatchRouteLifecycle();
 
   return (
-    <div className={[styles.layout, gameScreen ? styles.layoutGame : ''].filter(Boolean).join(' ')}>
-      {gameScreen ? null : (
-        <AppHeader
-          end={
-            <NavLink
-              to="/config"
-              className={({ isActive }) =>
-                [headerStyles.navBtn, isActive ? headerStyles.navBtnActive : ''].filter(Boolean).join(' ')
-              }
-              aria-label="Configurações"
-              title="Configurações"
-            >
-              <Settings
-                className={headerStyles.navIcon}
-                size={22}
-                strokeWidth={2}
-                aria-hidden
-              />
-            </NavLink>
-          }
-        />
-      )}
-      <div className={styles.shellGrow}>
-        <Outlet />
+    <RegisteredPokedexProvider>
+      <div className={[styles.layout, gameScreen ? styles.layoutGame : ''].filter(Boolean).join(' ')}>
+        {gameScreen ? null : (
+          <AppHeader
+            end={
+              <NavLink
+                to="/config"
+                className={({ isActive }) =>
+                  [headerStyles.navBtn, isActive ? headerStyles.navBtnActive : ''].filter(Boolean).join(' ')
+                }
+                aria-label="Configurações"
+                title="Configurações"
+              >
+                <Settings
+                  className={headerStyles.navIcon}
+                  size={22}
+                  strokeWidth={2}
+                  aria-hidden
+                />
+              </NavLink>
+            }
+          />
+        )}
+        <div className={styles.shellGrow}>
+          <Outlet />
+        </div>
+        <EvolutionCelebrationGate />
       </div>
-      <EvolutionCelebrationGate />
-    </div>
+    </RegisteredPokedexProvider>
   );
 }

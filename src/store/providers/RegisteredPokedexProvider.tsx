@@ -4,18 +4,20 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
+  type ReactNode,
 } from 'react';
+import { useAppDispatch, useAppSelector } from '../hooks';
+import { fetchRegisteredPokedexIfNeeded } from '../slices/resourcesSlice';
 import {
-  fetchRegisteredPokedex,
-  invalidateRegisteredPokedexCache,
-} from '../../services/pokedexService';
-import { mapPokedexEntryList } from '../../model';
-import { writeCachedSpeciesMap } from '../../lib/pokemon/speciesRequestCache';
-import { ApiError } from '../../services/http';
+  selectRegisteredPokedexReady,
+  selectRegisteredPokedexResource,
+  selectRegisteredPokemon,
+  selectRegisteredPokedexLoading,
+  selectRegisteredPokedexCount,
+} from '../selectors/resourcesSelectors';
 import type { PokemonDto } from '../../api/types/pokemon';
-import { FetchStatus } from '../../types/fetchStatus';
 import { useAuth } from './AuthProvider';
+import { FetchStatus } from '../../types/fetchStatus';
 
 type RegisteredPokedexContextValue = {
   availablePokemon: PokemonDto[];
@@ -28,59 +30,43 @@ type RegisteredPokedexContextValue = {
 
 const RegisteredPokedexContext = createContext<RegisteredPokedexContextValue | null>(null);
 
-export function RegisteredPokedexProvider({ children }: { children: React.ReactNode }) {
+/** Provider só expõe contexto; o fetch é lazy via {@link useRegisteredPokedexPokemon}. */
+export function RegisteredPokedexProvider({ children }: { children: ReactNode }) {
   const { authenticated } = useAuth();
-  const [entries, setEntries] = useState<PokemonDto[]>([]);
-  const [status, setStatus] = useState(FetchStatus.Idle);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const availablePokemon = useAppSelector(selectRegisteredPokemon);
+  const loading = useAppSelector(selectRegisteredPokedexLoading);
+  const ready = useAppSelector(selectRegisteredPokedexReady);
+  const resource = useAppSelector(selectRegisteredPokedexResource);
+  const registeredCountHint = useAppSelector(selectRegisteredPokedexCount);
 
-  const load = useCallback(
-    async (force = false) => {
-      if (!authenticated) {
-        setEntries([]);
-        setStatus(FetchStatus.Idle);
-        setErrorMessage(null);
-        return;
-      }
-
-      if (force) {
-        invalidateRegisteredPokedexCache();
-      }
-
-      setStatus(FetchStatus.Loading);
-      setErrorMessage(null);
-      try {
-        const registered = mapPokedexEntryList(await fetchRegisteredPokedex())
-          .map((entry) => entry.pokemon)
-          .sort((a, b) => a.number - b.number);
-        writeCachedSpeciesMap(new Map(registered.map((pokemon) => [pokemon.number, pokemon])));
-        setEntries(registered);
-        setStatus(FetchStatus.Success);
-      } catch (e) {
-        setEntries([]);
-        setErrorMessage(
-          e instanceof ApiError ? e.message : 'Não foi possível carregar a Pokédex.',
-        );
-        setStatus(FetchStatus.Error);
-      }
-    },
-    [authenticated],
-  );
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const refresh = useCallback(async () => {
+    await dispatch(fetchRegisteredPokedexIfNeeded({ force: true }));
+  }, [dispatch]);
 
   const value = useMemo(
     () => ({
-      availablePokemon: entries,
-      registeredCount: entries.length,
-      loading: status === FetchStatus.Loading,
-      ready: status === FetchStatus.Success,
-      errorMessage,
-      refresh: () => load(true),
+      availablePokemon: authenticated ? availablePokemon : [],
+      registeredCount: authenticated
+        ? (availablePokemon.length > 0 ? availablePokemon.length : registeredCountHint ?? 0)
+        : 0,
+      loading:
+        authenticated &&
+        (loading || (resource.status === FetchStatus.Idle && availablePokemon.length === 0)),
+      ready: authenticated && ready,
+      errorMessage: authenticated ? resource.error : null,
+      refresh,
     }),
-    [entries, status, errorMessage, load],
+    [
+      authenticated,
+      availablePokemon,
+      loading,
+      ready,
+      registeredCountHint,
+      resource.error,
+      resource.status,
+      refresh,
+    ],
   );
 
   return (
@@ -88,10 +74,26 @@ export function RegisteredPokedexProvider({ children }: { children: React.ReactN
   );
 }
 
-export function useRegisteredPokedexPokemon(): RegisteredPokedexContextValue {
+type UseRegisteredOptions = {
+  /** Se true (default), dispara fetch da lista registada. Home pode usar false (só precisa da contagem do /api/home). */
+  load?: boolean;
+};
+
+export function useRegisteredPokedexPokemon(
+  options?: UseRegisteredOptions,
+): RegisteredPokedexContextValue {
+  const load = options?.load !== false;
+  const { authenticated } = useAuth();
+  const dispatch = useAppDispatch();
   const ctx = useContext(RegisteredPokedexContext);
   if (!ctx) {
     throw new Error('useRegisteredPokedexPokemon deve ser usado dentro de RegisteredPokedexProvider');
   }
+
+  useEffect(() => {
+    if (!load || !authenticated) return;
+    void dispatch(fetchRegisteredPokedexIfNeeded());
+  }, [load, authenticated, dispatch]);
+
   return ctx;
 }

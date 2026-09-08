@@ -140,16 +140,11 @@ export function PokemonSearchField({
     }
   };
 
-  useEffect(() => {
-    if (!open) return;
-    const onDocMouseDown = (e: MouseEvent) => {
-      if (wrapRef.current?.contains(e.target as Node)) return;
-      close();
-      inputRef.current?.blur();
-    };
-    document.addEventListener('mousedown', onDocMouseDown);
-    return () => document.removeEventListener('mousedown', onDocMouseDown);
-  }, [open, close]);
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const next = e.relatedTarget as Node | null;
+    if (wrapRef.current?.contains(next)) return;
+    close();
+  };
 
   useEffect(() => {
     if (!isActive && open) {
@@ -188,6 +183,7 @@ export function PokemonSearchField({
         value={query}
         onChange={(e) => handleChange(e.target.value)}
         onFocus={openSearch}
+        onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         placeholder={inputPlaceholder}
         disabled={inputDisabled}

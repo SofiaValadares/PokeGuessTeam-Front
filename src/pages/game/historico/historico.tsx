@@ -5,7 +5,7 @@ import { useGameHistoryPage } from '../../../hooks/useGameHistoryPage';
 import { useAuth } from '../../../store/providers/AuthProvider';
 import { useProfileMe } from '../../../hooks/useProfileMe';
 import { PokemonGridPagination } from '../../../components/PokemonGridPagination';
-import { Card, InlineAlert, PageSection, PageShell } from '../../../ds';
+import { Card, ConfirmModal, InlineAlert, PageSection, PageShell } from '../../../ds';
 import { deleteGameHistory } from '../../../services/gameService';
 import { ApiError } from '../../../services/http';
 import { HistoryRow } from './components/HistoryRow';
@@ -16,26 +16,32 @@ export default function HistoricoPage() {
   const { profileMe } = useProfileMe();
   const { page, setPage, pageSize, setPageSize, data, loading, error, reload } = useGameHistoryPage();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const handleDelete = useCallback(
-    async (gameId: string) => {
+  const handleDeleteRequest = useCallback(
+    (gameId: string) => {
       if (deletingId != null) return;
-      if (!window.confirm('Remover esta partida do histórico?')) return;
-
-      setDeletingId(gameId);
-      setDeleteError(null);
-      try {
-        await deleteGameHistory(gameId);
-        reload();
-      } catch (e) {
-        setDeleteError(e instanceof ApiError ? e.message : 'Não foi possível remover a partida.');
-      } finally {
-        setDeletingId(null);
-      }
+      setPendingDeleteId(gameId);
     },
-    [deletingId, reload],
+    [deletingId],
   );
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (pendingDeleteId == null || deletingId != null) return;
+    const gameId = pendingDeleteId;
+    setPendingDeleteId(null);
+    setDeletingId(gameId);
+    setDeleteError(null);
+    try {
+      await deleteGameHistory(gameId);
+      reload();
+    } catch (e) {
+      setDeleteError(e instanceof ApiError ? e.message : 'Não foi possível remover a partida.');
+    } finally {
+      setDeletingId(null);
+    }
+  }, [pendingDeleteId, deletingId, reload]);
 
   return (
     <PageShell width="fluid" className={styles.pageShell}>
@@ -84,7 +90,7 @@ export default function HistoricoPage() {
                       profileId={profileMe?.profileId ?? null}
                       username={me?.username ?? null}
                       deleting={deletingId === entry.id}
-                      onDelete={handleDelete}
+                      onDelete={handleDeleteRequest}
                     />
                   ))}
                 </tbody>
@@ -109,6 +115,17 @@ export default function HistoricoPage() {
           ) : null}
         </PageSection>
       </Card>
+
+      <ConfirmModal
+        open={pendingDeleteId != null}
+        title="Remover partida"
+        description="Remover esta partida do histórico?"
+        confirmLabel="Remover"
+        cancelLabel="Cancelar"
+        onConfirm={() => void handleDeleteConfirm()}
+        onCancel={() => setPendingDeleteId(null)}
+        confirming={deletingId != null}
+      />
     </PageShell>
   );
 }

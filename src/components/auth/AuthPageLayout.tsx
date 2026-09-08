@@ -1,44 +1,32 @@
 import type { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../store/providers/AuthProvider';
-import { AppHeader, Card, PageShell } from '../../ds';
-import { FetchStatus } from '../../types/fetchStatus';
 import styles from './authPageLayout.module.css';
 
 type AuthPageLayoutProps = {
-  title: string;
-  intro?: ReactNode;
   children: ReactNode;
-  footer?: ReactNode;
+  /** Quando true, não redireciona se autenticado / não bloqueia por bootstrap (ecrã de erro). */
+  skipAuthGate?: boolean;
 };
 
-export function AuthPageLayout({ title, intro, children, footer }: AuthPageLayoutProps) {
-  const { sessionFetchStatus, authenticated } = useAuth();
+export function AuthPageLayout({ children, skipAuthGate = false }: AuthPageLayoutProps) {
+  const { authenticated, authBootstrapping } = useAuth();
 
-  if (sessionFetchStatus === FetchStatus.Loading) {
+  if (!skipAuthGate && authBootstrapping) {
     return (
       <div className={styles.layout}>
-        <AppHeader navEnabled={false} />
         <div className={styles.loading}>Verificando sessão…</div>
       </div>
     );
   }
 
-  if (authenticated) {
+  if (!skipAuthGate && authenticated) {
     return <Navigate to="/" replace />;
   }
 
   return (
     <div className={styles.layout}>
-      <AppHeader navEnabled={false} />
-      <PageShell className={styles.page}>
-        <Card padding="lg" glow>
-          <h1 className="ds-h1">{title}</h1>
-          {intro ? <div className={styles.intro}>{intro}</div> : null}
-          {children}
-          {footer ? <div className={styles.footer}>{footer}</div> : null}
-        </Card>
-      </PageShell>
+      <div className={styles.page}>{children}</div>
     </div>
   );
 }

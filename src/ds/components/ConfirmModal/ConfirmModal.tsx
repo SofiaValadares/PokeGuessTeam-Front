@@ -32,15 +32,6 @@ export function ConfirmModal({
 
   useEffect(() => {
     if (!open) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [open, onCancel]);
-
-  useEffect(() => {
-    if (!open) return;
     panelRef.current?.focus();
   }, [open]);
 
@@ -61,6 +52,12 @@ export function ConfirmModal({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            e.stopPropagation();
+            onCancel();
+          }
+        }}
       >
         <h2 id={titleId} className={styles.title}>
           {title}

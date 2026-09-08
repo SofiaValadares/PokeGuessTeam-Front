@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TrainingTeamSlotDto } from '../../../api/types/game';
 import { submitTrainingTeam } from '../../../services/profileService';
-import { invalidatePcLinesCache } from '../../../services/pcService';
 import { useCacheActions } from '../../../store/providers/CacheProvider';
 import { PokemonSprite } from '../../../components/PokemonSprite';
 import {
@@ -11,7 +10,6 @@ import {
 import { resolveCurrentMemberDex } from '../../../lib/pokemon/pcCurrentForm';
 import { Button, InlineAlert, TextField } from '../../../ds';
 import { ApiError } from '../../../services/http';
-import { mapTrainingTeam } from '../../../model';
 import grassStyles from './training/grassField.module.css';
 import styles from './training-team-editor.module.css';
 
@@ -33,7 +31,7 @@ export function TrainingTeamEditorModal({
   onClose,
   onSaved,
 }: TrainingTeamEditorModalProps) {
-  const { applyTrainingTeamUpdate } = useCacheActions();
+  const { applyTrainingTeamFromDto } = useCacheActions();
   const { lines, speciesByDex, evolutionLevelByDex, loading, ready, errorMessage, refresh } =
     usePcTeamInventory(open);
   const [draft, setDraft] = useState<(number | null)[]>(Array(6).fill(null));
@@ -49,7 +47,7 @@ export function TrainingTeamEditorModal({
       setSelectedSlot(0);
       setSearchQuery('');
       setSaveError(null);
-      invalidatePcLinesCache();
+      // PC usa TTL — sem force invalidate (Melhorias §31).
       void refresh();
     }
     wasOpenRef.current = open;
@@ -92,7 +90,7 @@ export function TrainingTeamEditorModal({
     setSaveError(null);
     try {
       const team = await submitTrainingTeam(draft);
-      applyTrainingTeamUpdate(mapTrainingTeam(team));
+      applyTrainingTeamFromDto(team);
       onSaved();
       onClose();
     } catch (e) {

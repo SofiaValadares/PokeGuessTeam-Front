@@ -4,9 +4,7 @@ import * as authService from '../../auth/authService';
 import type { AuthErrorPayload } from '../../auth/authErrors';
 import type { EmailVerificationConfirmRequest, MeResponse } from '../../auth/types';
 import { clearUserCache } from './cache/cacheThunks';
-import { invalidateRegisteredPokedexCache } from '../../services/pokedexService';
-import { invalidateProfileMeCache, invalidateTrainingTeamCache } from '../../services/profileService';
-import { invalidatePcLinesCache } from '../../services/pcService';
+import { invalidateAllUserHttpCaches } from '../../lib/cache/afterMutation';
 import { FetchStatus } from '../../types/fetchStatus';
 
 type HydrateResult =
@@ -77,10 +75,7 @@ export const confirmEmailUser = createAsyncThunk<
 
 export const logoutUser = createAsyncThunk('auth/logout', async (_, { dispatch }) => {
   await authService.logout();
-  invalidateRegisteredPokedexCache();
-  invalidateProfileMeCache();
-  invalidateTrainingTeamCache();
-  invalidatePcLinesCache();
+  invalidateAllUserHttpCaches();
   await dispatch(clearUserCache());
 });
 
