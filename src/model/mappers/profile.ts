@@ -2,7 +2,13 @@ import type { ProfileMeResponse, ProfilePokeballPayload } from '../../services/t
 import type { ProfileMe, PokeballInventory } from '../profile';
 
 export function mapProfileMe(dto: ProfileMeResponse): ProfileMe {
-  return { ...dto };
+  return {
+    profileId: dto.profileId,
+    userId: dto.userId,
+    favoritePokemonId: dto.favoritePokemonId,
+    favoritePokemonName: dto.favoritePokemonName,
+    registeredPokedexCount: dto.registeredPokedexCount ?? null,
+  };
 }
 
 export function mapPokeballInventory(dto: ProfilePokeballPayload): PokeballInventory {
