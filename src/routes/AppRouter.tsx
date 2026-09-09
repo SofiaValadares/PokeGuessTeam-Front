@@ -13,6 +13,10 @@ import BotMatchPage from '../pages/game/bot-match/bot-match';
 import LocalMatchPage from '../pages/game/local-match/local-match';
 import FriendMatchPage from '../pages/game/friend-match/friend-match';
 import HistoricoPage from '../pages/game/historico/historico';
+import AdminLayout from '../pages/admin/AdminLayout';
+import AdminUsersPage from '../pages/admin/AdminUsersPage';
+import AdminEventsPage from '../pages/admin/AdminEventsPage';
+import AdminEventFormPage from '../pages/admin/AdminEventFormPage';
 import ForgotPasswordPage from '../pages/auth/forgot-password/forgot-password';
 import RegisterPage from '../pages/auth/register/register';
 import ResetPasswordPage from '../pages/auth/reset-password/reset-password';
@@ -60,6 +64,13 @@ export function AppRouter() {
               <Route path="jogo/amigo" element={<Navigate to="/game/amigo" replace />} />
               <Route path="jogo/historico" element={<Navigate to="/game/historico" replace />} />
               <Route path="pokedex" element={<PokedexPage />} />
+              <Route path="admin" element={<AdminLayout />}>
+                <Route index element={<Navigate to="users" replace />} />
+                <Route path="users" element={<AdminUsersPage />} />
+                <Route path="events" element={<AdminEventsPage />} />
+                <Route path="events/new" element={<AdminEventFormPage />} />
+                <Route path="events/:eventId/edit" element={<AdminEventFormPage />} />
+              </Route>
               <Route path="config" element={<ConfigurationsLayout />}>
                 <Route index element={<Navigate to="profile" replace />} />
                 <Route path="profile" element={<ProfilePage />} />

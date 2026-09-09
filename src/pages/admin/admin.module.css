@@ -1,0 +1,223 @@
+.shell {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.fullBleed {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100%;
+  padding: var(--ds-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-5);
+}
+
+.pageHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-3);
+}
+
+.pageHeader h1 {
+  margin: 0;
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(14rem, 22rem) 1fr;
+  gap: var(--ds-space-4);
+  align-items: end;
+}
+
+@media (max-width: 720px) {
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+
+.searchField {
+  min-width: 0;
+  width: 100%;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+  align-items: center;
+  padding-bottom: 2px;
+}
+
+.filterChip {
+  appearance: none;
+  border: 1px solid var(--ds-color-border-default);
+  background: transparent;
+  color: var(--ds-color-text-secondary);
+  border-radius: var(--ds-radius-md);
+  padding: 0.55rem 0.85rem;
+  font-size: var(--ds-text-sm);
+  line-height: 1.2;
+  cursor: pointer;
+  height: 2.5rem;
+  box-sizing: border-box;
+}
+
+.filterChip:hover {
+  border-color: var(--ds-color-accent);
+  color: var(--ds-color-accent);
+}
+
+.filterChipActive {
+  border-color: var(--ds-color-accent);
+  background: var(--ds-color-accent-muted);
+  color: var(--ds-color-accent);
+}
+
+.formPanel {
+  width: min(100%, 40rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-5);
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ds-space-3);
+}
+
+@media (max-width: 640px) {
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.textareaLabel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-secondary);
+}
+
+.textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--ds-color-border-default);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-color-bg-base);
+  color: var(--ds-color-text-primary);
+  padding: var(--ds-space-3);
+  font: inherit;
+  resize: vertical;
+}
+
+
+.tableWrap {
+  overflow: auto;
+  flex: 1;
+  border: 1px solid var(--ds-color-border-default);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-color-bg-elevated, var(--ds-color-bg-base));
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ds-text-sm);
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: var(--ds-space-3) var(--ds-space-4);
+  border-bottom: 1px solid var(--ds-color-border-default);
+  vertical-align: top;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  background: var(--ds-color-bg-base);
+  z-index: 1;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-3);
+  align-items: center;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--ds-radius-sm);
+  font-size: var(--ds-text-xs);
+  background: var(--ds-color-accent-muted);
+  color: var(--ds-color-accent);
+}
+
+.badgeWarn {
+  background: color-mix(in srgb, #c0392b 18%, transparent);
+  color: #e57373;
+}
+
+.badgeLive {
+  background: color-mix(in srgb, #2ecc71 22%, transparent);
+  color: #6fcf97;
+}
+
+.modalFields {
+  display: grid;
+  gap: var(--ds-space-3);
+}
+
+.formGrid {
+  display: grid;
+  gap: var(--ds-space-3);
+}
+
+.eventList {
+  display: grid;
+  gap: var(--ds-space-4);
+}
+
+.eventItem {
+  border: 1px solid var(--ds-color-border-default);
+  border-radius: var(--ds-radius-md);
+  padding: var(--ds-space-4);
+  background: var(--ds-color-bg-elevated, var(--ds-color-bg-base));
+}
+
+.eventItemActive {
+  border-color: var(--ds-color-accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ds-color-accent) 35%, transparent);
+}
+
+.eventMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+  align-items: center;
+  margin-bottom: var(--ds-space-2);
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-secondary);
+}
