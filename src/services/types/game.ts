@@ -61,6 +61,8 @@ export type MatchRewardDto = {
   trainingTeamXpGranted: number;
   pokeBallsGranted: number;
   pokeballFragmentsGranted: number;
+  /** Tipo da bola concedida (ex. FRIEND_BALL); omitido se 0 bolas. */
+  pokeballTypeGranted?: string | null;
 };
 
 export type GameFinishResponse = {
