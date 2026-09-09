@@ -13,6 +13,13 @@ import BotMatchPage from '../pages/game/bot-match/bot-match';
 import LocalMatchPage from '../pages/game/local-match/local-match';
 import FriendMatchPage from '../pages/game/friend-match/friend-match';
 import HistoricoPage from '../pages/game/historico/historico';
+import AdminLayout from '../pages/admin/AdminLayout';
+import AdminUsersPage from '../pages/admin/AdminUsersPage';
+import AdminEventsPage from '../pages/admin/AdminEventsPage';
+import AdminEventFormLayout from '../pages/admin/AdminEventFormLayout';
+import AdminEventDetailsPage from '../pages/admin/AdminEventDetailsPage';
+import AdminEventPokemonPage from '../pages/admin/AdminEventPokemonPage';
+import AdminEventViewPage from '../pages/admin/AdminEventViewPage';
 import ForgotPasswordPage from '../pages/auth/forgot-password/forgot-password';
 import RegisterPage from '../pages/auth/register/register';
 import ResetPasswordPage from '../pages/auth/reset-password/reset-password';
@@ -60,6 +67,22 @@ export function AppRouter() {
               <Route path="jogo/amigo" element={<Navigate to="/game/amigo" replace />} />
               <Route path="jogo/historico" element={<Navigate to="/game/historico" replace />} />
               <Route path="pokedex" element={<PokedexPage />} />
+              <Route path="admin" element={<AdminLayout />}>
+                <Route index element={<Navigate to="users" replace />} />
+                <Route path="users" element={<AdminUsersPage />} />
+                <Route path="events">
+                  <Route index element={<AdminEventsPage />} />
+                  <Route path="new" element={<AdminEventFormLayout />}>
+                    <Route index element={<AdminEventDetailsPage />} />
+                    <Route path="pokemon" element={<AdminEventPokemonPage />} />
+                  </Route>
+                  <Route path=":eventId/edit" element={<AdminEventFormLayout />}>
+                    <Route index element={<AdminEventDetailsPage />} />
+                    <Route path="pokemon" element={<AdminEventPokemonPage />} />
+                  </Route>
+                  <Route path=":eventId" element={<AdminEventViewPage />} />
+                </Route>
+              </Route>
               <Route path="config" element={<ConfigurationsLayout />}>
                 <Route index element={<Navigate to="profile" replace />} />
                 <Route path="profile" element={<ProfilePage />} />

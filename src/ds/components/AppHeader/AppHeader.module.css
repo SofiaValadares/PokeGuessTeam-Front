@@ -90,3 +90,34 @@
   gap: var(--ds-space-3);
   flex-shrink: 0;
 }
+
+.navText {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border-radius: var(--ds-radius-md);
+  color: var(--ds-color-text-secondary);
+  text-decoration: none;
+  font-size: var(--ds-text-sm);
+  font-weight: var(--ds-weight-medium);
+  line-height: 1.2;
+  transition:
+    color var(--ds-duration-fast) var(--ds-ease-standard),
+    background-color var(--ds-duration-fast) var(--ds-ease-standard);
+}
+
+.navText:hover {
+  color: var(--ds-color-accent);
+  background: var(--ds-color-accent-muted);
+}
+
+.navText:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-focus-ring);
+}
+
+.navTextActive {
+  color: var(--ds-color-accent);
+  background: var(--ds-color-accent-muted);
+}
+

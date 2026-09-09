@@ -12,7 +12,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { sessionFetchStatus, authenticated } = useAuth();
   const location = useLocation();
 
-  if (sessionFetchStatus === FetchStatus.Loading) {
+  if (sessionFetchStatus === FetchStatus.Loading && !authenticated) {
     return (
       <div className={styles.layout}>
         <AppHeader />

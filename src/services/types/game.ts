@@ -61,6 +61,8 @@ export type MatchRewardDto = {
   trainingTeamXpGranted: number;
   pokeBallsGranted: number;
   pokeballFragmentsGranted: number;
+  /** Tipo da bola concedida (ex. FRIEND_BALL); omitido se 0 bolas. */
+  pokeballTypeGranted?: string | null;
 };
 
 export type GameFinishResponse = {
@@ -127,6 +129,8 @@ export type FriendMatchStateDto = {
   turnDeadlineAt?: string | null;
   yourTimeoutPenalties?: number;
   opponentReplacedByBot?: boolean;
+  eventMode?: boolean;
+  eventPokedexNumbers?: number[];
 };
 
 export type FriendMatchActionResponse = {

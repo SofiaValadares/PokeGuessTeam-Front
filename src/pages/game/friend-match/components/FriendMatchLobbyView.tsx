@@ -5,13 +5,15 @@ import { TeamSetupScreen } from '../../shared/components/TeamSetupScreen';
 import { Button, ConfirmModal, TextField } from '../../../../ds';
 import { useFriendMatch } from '../providers/FriendMatchProvider';
 import { useFriendMatchDex } from '../providers/FriendMatchDexProvider';
+import { useFriendMatchActiveEvent } from '../providers/FriendMatchActiveEventContext';
 import styles from './friend-match.module.css';
 
 const JOIN_CODE_MIN = 4;
 const TEAM_SIZE = 6;
 
 export function FriendMatchLobbyView() {
-  const { busy, error, createRoom, joinRoom, abandonAndGoHome } = useFriendMatch();
+  const { busy, error, createRoom, joinRoom, abandonAndGoHome, eventMode } = useFriendMatch();
+  const activeEvent = useFriendMatchActiveEvent();
   const { loadingDex } = useFriendMatchDex();
   const [team, setTeam] = useState<number[]>([]);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
@@ -75,11 +77,20 @@ export function FriendMatchLobbyView() {
     </div>
   );
 
+  const title = eventMode
+    ? activeEvent?.name
+      ? `Evento: ${activeEvent.name}`
+      : 'Partida de evento'
+    : 'Partida amigável';
+  const subtitle = eventMode
+    ? 'Escolhe 6 Pokémon do evento (que tenhas registados). Depois cria uma sala ou entra com o código do amigo.'
+    : 'Escolhe 6 Pokémon registados na Pokédex. Depois cria uma sala ou entra com o código do amigo.';
+
   return (
     <>
       <TeamSetupScreen
-        title="Partida amigável"
-        subtitle="Escolhe 6 Pokémon registados na Pokédex. Depois cria uma sala ou entra com o código do amigo."
+        title={title}
+        subtitle={subtitle}
         error={error}
         onBack={() => void abandonAndGoHome()}
       >
@@ -90,6 +101,7 @@ export function FriendMatchLobbyView() {
             value={team}
             onChange={setTeam}
             minRegistered={TEAM_SIZE}
+            allowedDexNumbers={eventMode ? activeEvent?.pokedexNumbers : undefined}
             loading={busy}
             footer={lobbyFooter}
           />
