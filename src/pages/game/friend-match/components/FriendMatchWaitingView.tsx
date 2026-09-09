@@ -3,7 +3,6 @@ import { Copy } from 'lucide-react';
 import { MatchSetupLayout } from '../../shared/layout/MatchSetupLayout';
 import { useFriendMatch } from '../providers/FriendMatchProvider';
 import { FriendMatchResumeBanner } from './FriendMatchResumeBanner';
-import { FriendMatchSyncAction } from './FriendMatchSyncAction';
 import styles from './friend-match.module.css';
 
 export function FriendMatchWaitingView() {
@@ -27,11 +26,11 @@ export function FriendMatchWaitingView() {
     if (!match.joinCode) return;
     try {
       await navigator.clipboard.writeText(match.joinCode);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
     } catch {
       /* ignore */
     }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
   };
 
   const title = waitingForGuest
@@ -43,11 +42,11 @@ export function FriendMatchWaitingView() {
         : 'Sala de espera';
 
   const subtitle = waitingForGuest
-    ? 'Partilha o código abaixo. A partida começa quando o amigo entrar com a equipe dele.'
+    ? 'Partilha o código abaixo. A partida começa automaticamente quando o amigo entrar com a equipe dele.'
     : waitingForOpponentTeam
-      ? 'A tua equipe está pronta. Aguarda o adversário entrar na sala.'
+      ? 'A tua equipe está pronta. Aguarda o adversário — atualiza sozinho.'
       : bothReady
-        ? 'Ambos na sala — carrega em Iniciar partida quando estiveres pronto.'
+        ? 'Ambos na sala — a partida vai começar.'
         : 'Aguarda o adversário entrar na sala.';
 
   return (
@@ -77,7 +76,7 @@ export function FriendMatchWaitingView() {
             : waitingForOpponentTeam
               ? `${opponentName} ainda está a montar a equipe…`
               : bothReady
-                ? 'Pronto para começar — usa o botão abaixo.'
+                ? 'A sincronizar o início da partida…'
                 : `${opponentName} ainda não confirmou a equipe…`}
         </p>
 
@@ -86,11 +85,6 @@ export function FriendMatchWaitingView() {
             {error}
           </p>
         ) : null}
-
-        <FriendMatchSyncAction
-          mode="start"
-          label={waitingForGuest ? 'Verificar convidado' : 'Iniciar partida'}
-        />
 
         <div className={styles.playersList}>
           <span

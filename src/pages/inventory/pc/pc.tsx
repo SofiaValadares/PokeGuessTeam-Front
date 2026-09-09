@@ -9,7 +9,7 @@ import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { PC_PAGE_SIZE_OPTIONS } from '../../../lib/ui/gridPageSizes';
 import { usePokemonPcPage } from '../../../hooks/usePokemonPcPage';
 import { useSpeciesMeta } from '../../../hooks/useSpeciesMeta';
-import { Card, InlineAlert, PageSection, PageShell, TextField } from '../../../ds';
+import { Card, InlineAlert, PageSection, PageShell, TextField, Spinner } from '../../../ds';
 import { FetchStatus } from '../../../types/fetchStatus';
 import type { PcLineDto } from '../../../services/types/pokemon';
 import { PcDetailPanel } from './components/PcDetailPanel';
@@ -144,8 +144,8 @@ export default function PcPage() {
           ) : null}
 
           {loading && lines.length === 0 ? (
-          <p className="ds-body-muted">A carregar inventário…</p>
-        ) : showEmpty ? (
+            <Spinner label="A carregar inventário…" />
+          ) : showEmpty ? (
           <p className={styles.empty}>
             {isSearching
               ? `Nenhum Pokémon encontrado para «${trimmedSearch}».`

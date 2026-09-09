@@ -1,12 +1,19 @@
+import { useEffect } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAdminMode } from '../../store/providers/AdminModeProvider';
 import { PageShell } from '../../ds';
 import styles from './admin.module.css';
 
 export default function AdminLayout() {
-  const { isAdminUi } = useAdminMode();
+  const { canAccessAdmin, isAdminUi, setAdminUiMode } = useAdminMode();
 
-  if (!isAdminUi) {
+  useEffect(() => {
+    if (canAccessAdmin && !isAdminUi) {
+      setAdminUiMode('admin');
+    }
+  }, [canAccessAdmin, isAdminUi, setAdminUiMode]);
+
+  if (!canAccessAdmin) {
     return <Navigate to="/" replace />;
   }
 

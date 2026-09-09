@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FRIEND_MATCH_ENABLED } from '../../../lib/config/featureFlags';
+import { COMPETITIVE_MATCH_ENABLED, FRIEND_MATCH_ENABLED } from '../../../lib/config/featureFlags';
 import { RIVAL } from '../../../lib/game/characters';
 import { Button, Card, PageSection } from '../../../ds';
 import { fetchActiveBonusEvent, type ActiveBonusEvent } from '../../../services/adminService';
@@ -49,10 +49,23 @@ export function GameLaunchPanel() {
       >
         {rulesOpen ? <GameRulesPanel /> : null}
         <div className={styles.actions}>
-          {FRIEND_MATCH_ENABLED && activeEvent ? (
+          {COMPETITIVE_MATCH_ENABLED ? (
             <Button
               type="button"
               variant="primary"
+              size="md"
+              fullWidth
+              className={styles.modeBtn}
+              onClick={() => navigate('/game/online')}
+            >
+              Online competitivo
+            </Button>
+          ) : null}
+
+          {FRIEND_MATCH_ENABLED && activeEvent ? (
+            <Button
+              type="button"
+              variant="secondary"
               size="md"
               fullWidth
               className={styles.modeBtn}
@@ -65,7 +78,7 @@ export function GameLaunchPanel() {
           {FRIEND_MATCH_ENABLED ? (
             <Button
               type="button"
-              variant={activeEvent ? 'secondary' : 'primary'}
+              variant="secondary"
               size="md"
               fullWidth
               className={styles.modeBtn}
@@ -77,7 +90,7 @@ export function GameLaunchPanel() {
 
           <Button
             type="button"
-            variant={FRIEND_MATCH_ENABLED ? 'secondary' : 'primary'}
+            variant="secondary"
             size="md"
             fullWidth
             className={styles.modeBtn}

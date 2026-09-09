@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { LogIn, Plus } from 'lucide-react';
 import { TeamPicker } from '../../shared/components/TeamPicker';
 import { TeamSetupScreen } from '../../shared/components/TeamSetupScreen';
-import { Button, ConfirmModal, TextField } from '../../../../ds';
+import { Button, ConfirmModal, LoadingOverlay, TextField } from '../../../../ds';
 import { useFriendMatch } from '../providers/FriendMatchProvider';
 import { useFriendMatchDex } from '../providers/FriendMatchDexProvider';
 import { useFriendMatchActiveEvent } from '../providers/FriendMatchActiveEventContext';
@@ -88,15 +88,16 @@ export function FriendMatchLobbyView() {
 
   return (
     <>
+      <LoadingOverlay open={loadingDex} label="A carregar Pokédex…" fullscreen />
+      <LoadingOverlay open={busy && !joinModalOpen} label="A criar sala…" fullscreen />
+      <LoadingOverlay open={joining} label="A entrar na sala…" fullscreen />
       <TeamSetupScreen
         title={title}
         subtitle={subtitle}
         error={error}
         onBack={() => void abandonAndGoHome()}
       >
-        {loadingDex ? (
-          <p className="ds-body-muted">A carregar Pokédex…</p>
-        ) : (
+        {loadingDex ? null : (
           <TeamPicker
             value={team}
             onChange={setTeam}

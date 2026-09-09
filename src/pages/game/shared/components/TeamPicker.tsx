@@ -60,15 +60,13 @@ export function TeamPicker({
   const results = useMemo(() => {
     const pool = availablePokemon.filter((p) => !value.includes(p.number));
     const q = debouncedQuery.trim().toLowerCase();
-    if (q.length < 1) return pool.slice(0, 50);
-    return pool
-      .filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          String(p.number).includes(q) ||
-          `#${p.number}`.includes(q),
-      )
-      .slice(0, 20);
+    if (q.length < 1) return pool;
+    return pool.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        String(p.number).includes(q) ||
+        `#${p.number}`.includes(q),
+    );
   }, [availablePokemon, debouncedQuery, value]);
 
   const addPokemon = (p: PokemonDto) => {
