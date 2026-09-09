@@ -53,6 +53,10 @@ function isFriendMatchGone(err: unknown): boolean {
   return err instanceof ApiError && err.status === 404;
 }
 
+function isFinishedMatchStatus(status: MatchStatus | null | undefined): boolean {
+  return status === 'FINISHED';
+}
+
 const FINISH_MODAL_SECONDS = 15;
 
 export { FINISH_MODAL_SECONDS };
@@ -165,7 +169,7 @@ export function FriendMatchProvider({
 
   const refreshMatch = useCallback(async (options?: { showErrors?: boolean; force?: boolean }) => {
     // Nunca regredir o ecrã de resultados — nem com force (polling).
-    if (showingResultsRef.current || matchStatusRef.current === 'FINISHED') {
+    if (showingResultsRef.current) {
       return null;
     }
     if (!options?.force && refreshInFlightRef.current) {
@@ -177,7 +181,11 @@ export function FriendMatchProvider({
       if (latest) {
         const parsed = parseFriendMatchState(latest);
         // Resposta atrasada de um poll não pode voltar a ACTIVE depois de terminar.
-        if (matchStatusRef.current === 'FINISHED' && parsed.status !== 'FINISHED') {
+        const statusNow = matchStatusRef.current;
+        if (
+          (showingResultsRef.current || isFinishedMatchStatus(statusNow)) &&
+          parsed.status !== 'FINISHED'
+        ) {
           return null;
         }
         setMatch(parsed);
@@ -186,7 +194,12 @@ export function FriendMatchProvider({
         }
         return parsed;
       }
-      if (matchIdRef.current && !showingResultsRef.current && matchStatusRef.current !== 'FINISHED') {
+      const statusAfterFetch = matchStatusRef.current;
+      if (
+        matchIdRef.current &&
+        !showingResultsRef.current &&
+        !isFinishedMatchStatus(statusAfterFetch)
+      ) {
         clearMatchRef.current?.();
       }
       return null;
@@ -386,7 +399,7 @@ export function FriendMatchProvider({
   }, [refreshMatch, applyFinishSideEffects, markShowingResults]);
 
   const surrender = useCallback(async () => {
-    if (showingResultsRef.current || matchStatusRef.current === 'FINISHED') {
+    if (showingResultsRef.current || isFinishedMatchStatus(matchStatusRef.current)) {
       return;
     }
     setBusy(true);
@@ -405,7 +418,7 @@ export function FriendMatchProvider({
         }
       }
     } catch (err) {
-      if (showingResultsRef.current || matchStatusRef.current === 'FINISHED') {
+      if (showingResultsRef.current || isFinishedMatchStatus(matchStatusRef.current)) {
         return;
       }
       if (
@@ -416,7 +429,7 @@ export function FriendMatchProvider({
         if (
           latest?.status === 'FINISHED' ||
           showingResultsRef.current ||
-          matchStatusRef.current === 'FINISHED'
+          isFinishedMatchStatus(matchStatusRef.current)
         ) {
           return;
         }
@@ -533,7 +546,7 @@ export function FriendMatchProvider({
   const applyRemoteMatch = useCallback(
     async (dto: FriendMatchStateDto) => {
       const parsed = parseFriendMatchState(dto);
-      if (matchStatusRef.current === 'FINISHED' && parsed.status !== 'FINISHED') {
+      if (isFinishedMatchStatus(matchStatusRef.current) && parsed.status !== 'FINISHED') {
         return;
       }
       if (parsed.status === 'FINISHED' && parsed.historyEntry) {
@@ -587,7 +600,7 @@ export function FriendMatchProvider({
         guessInFlightRef.current ||
         refreshInFlightRef.current ||
         showingResultsRef.current ||
-        matchStatusRef.current === 'FINISHED'
+        isFinishedMatchStatus(matchStatusRef.current)
       ) {
         return;
       }
