@@ -4,7 +4,8 @@ import { PokemonBillGrid } from '../../../components/PokemonBillGrid';
 import { PokemonGridPagination } from '../../../components/PokemonGridPagination';
 import { resolveCurrentMemberDex } from '../../../lib/pokemon/pcCurrentForm';
 import { selectPcLines } from '../../../store/slices/cache/selectors';
-import { useAppSelector } from '../../../store/hooks';
+import { ensurePcCache } from '../../../store/slices/cache';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { PC_PAGE_SIZE_OPTIONS } from '../../../lib/ui/gridPageSizes';
 import { usePokemonPcPage } from '../../../hooks/usePokemonPcPage';
 import { useSpeciesMeta } from '../../../hooks/useSpeciesMeta';
@@ -16,6 +17,7 @@ import { buildPcGridData } from '../../../lib/pc/buildGridData';
 import styles from './pc.module.css';
 
 export default function PcPage() {
+  const dispatch = useAppDispatch();
   const cachedPcLines = useAppSelector(selectPcLines);
   const [pageSize, setPageSize] = useState(PC_DEFAULT_PAGE_SIZE);
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,9 +36,29 @@ export default function PcPage() {
       return;
     }
 
-    setSearchLines(cachedPcLines);
-    setSearchStatus(FetchStatus.Success);
-  }, [cachedPcLines, isSearching, trimmedSearch]);
+    if (cachedPcLines.length > 0) {
+      setSearchLines(cachedPcLines);
+      setSearchStatus(FetchStatus.Success);
+      return;
+    }
+
+    let cancelled = false;
+    setSearchStatus(FetchStatus.Loading);
+    void dispatch(ensurePcCache())
+      .unwrap()
+      .then((lines) => {
+        if (!cancelled) {
+          setSearchLines(lines);
+          setSearchStatus(FetchStatus.Success);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setSearchStatus(FetchStatus.Error);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [cachedPcLines, dispatch, isSearching, trimmedSearch]);
 
   const loading = isSearching ? searchStatus === FetchStatus.Loading : status === FetchStatus.Loading;
   const lines = useMemo(

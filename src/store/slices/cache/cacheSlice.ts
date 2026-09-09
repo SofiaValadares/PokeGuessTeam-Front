@@ -19,6 +19,9 @@ import {
   hydrateUserCache,
   refreshUserCacheFromNetwork,
   reloadUserCacheOnLogin,
+  ensurePcCache,
+  ensureGameHistoryCache,
+  ensurePokedexCache,
 } from './cacheThunks';
 
 function persist(state: UserCacheState): void {
@@ -105,6 +108,18 @@ const cacheSlice = createSlice({
         Object.assign(state, action.payload);
         state.status = FetchStatus.Success;
         state.error = null;
+        persist(state);
+      })
+      .addCase(ensurePcCache.fulfilled, (state, action) => {
+        state.pcLines = action.payload;
+        persist(state);
+      })
+      .addCase(ensureGameHistoryCache.fulfilled, (state, action) => {
+        state.gameHistory = action.payload;
+        persist(state);
+      })
+      .addCase(ensurePokedexCache.fulfilled, (state, action) => {
+        state.pokedex = action.payload;
         persist(state);
       })
       .addCase(clearUserCache.fulfilled, () => {
