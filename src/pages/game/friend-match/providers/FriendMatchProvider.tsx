@@ -62,6 +62,7 @@ export { FINISH_MODAL_SECONDS };
 type FriendMatchContextValue = {
   phase: FriendMatchPhase;
   match: FriendMatchStateDto | null;
+  eventMode: boolean;
   finishReward: MatchRewardDto | null;
   guessSending: boolean;
   busy: boolean;
@@ -92,7 +93,13 @@ type FriendMatchContextValue = {
 
 const FriendMatchContext = createContext<FriendMatchContextValue | null>(null);
 
-export function FriendMatchProvider({ children }: { children: React.ReactNode }) {
+export function FriendMatchProvider({
+  children,
+  eventMode = false,
+}: {
+  children: React.ReactNode;
+  eventMode?: boolean;
+}) {
   const navigate = useNavigate();
   const { applyMatchHistory, syncMatchRewards } = useCacheActions();
   const [match, setMatch] = useState<FriendMatchStateDto | null>(null);
@@ -265,7 +272,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
 
       try {
         if (block.action === 'create') {
-          const created = await startFriendMatch(block.team);
+          const created = await startFriendMatch(block.team, { eventMode });
           setMatch(created);
         } else if (block.joinCode) {
           const joined = await joinFriendMatch({
@@ -286,7 +293,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
         return true;
       }
     },
-    [discardServerMatchSilently],
+    [discardServerMatchSilently, eventMode],
   );
 
   const createRoom = useCallback(
@@ -294,7 +301,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       setBusy(true);
       setError(null);
       try {
-        const created = await startFriendMatch(team);
+        const created = await startFriendMatch(team, { eventMode });
         setMatch(created);
         setResumeNotice(false);
         setStaleBlock(null);
@@ -306,7 +313,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
         setBusy(false);
       }
     },
-    [refreshMatch, tryHandleStaleMatchConflict],
+    [refreshMatch, tryHandleStaleMatchConflict, eventMode],
   );
 
   const joinRoom = useCallback(
@@ -500,7 +507,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       clearMatch();
       leaveIntentionalRef.current = false;
       if (block.action === 'create') {
-        const created = await startFriendMatch(block.team);
+        const created = await startFriendMatch(block.team, { eventMode });
         setMatch(created);
       } else if (block.joinCode) {
         const joined = await joinFriendMatch({ joinCode: block.joinCode, team: block.team });
@@ -513,7 +520,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
     } finally {
       setLeavingMatch(false);
     }
-  }, [staleBlock, clearMatch]);
+  }, [staleBlock, clearMatch, eventMode]);
 
   const abandonAndGoHome = useCallback(async () => {
     leaveIntentionalRef.current = true;
@@ -542,6 +549,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
     (): FriendMatchContextValue => ({
       phase,
       match,
+      eventMode,
       finishReward,
       guessSending,
       busy,
@@ -571,6 +579,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
     [
       phase,
       match,
+      eventMode,
       finishReward,
       guessSending,
       busy,

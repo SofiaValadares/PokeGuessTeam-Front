@@ -1,5 +1,10 @@
-import { Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { FRIEND_MATCH_ENABLED } from '../../../lib/config/featureFlags';
+import { InlineAlert } from '../../../ds';
+import { fetchActiveBonusEvent, type ActiveBonusEvent } from '../../../services/adminService';
+import { toFriendlyUserMessage } from '../../../services/http';
+import { FriendMatchActiveEventProvider } from './providers/FriendMatchActiveEventContext';
 import { FriendMatchDexProvider } from './providers/FriendMatchDexProvider';
 import { FriendMatchProvider, useFriendMatch } from './providers/FriendMatchProvider';
 import { FriendMatchLobbyView } from './components/FriendMatchLobbyView';
@@ -23,16 +28,59 @@ function FriendMatchContent() {
 }
 
 export default function FriendMatchPage() {
+  const [searchParams] = useSearchParams();
+  const eventMode = searchParams.get('event') === '1';
+  const [activeEvent, setActiveEvent] = useState<ActiveBonusEvent | null | undefined>(
+    eventMode ? undefined : null,
+  );
+  const [eventError, setEventError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!eventMode) {
+      setActiveEvent(null);
+      return;
+    }
+    let cancelled = false;
+    void fetchActiveBonusEvent()
+      .then((ev) => {
+        if (!cancelled) setActiveEvent(ev);
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setEventError(toFriendlyUserMessage(e, 'Não foi possível carregar o evento ativo.'));
+          setActiveEvent(null);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [eventMode]);
+
   if (!FRIEND_MATCH_ENABLED) {
     return <Navigate to="/" replace />;
   }
 
+  if (eventMode && activeEvent === undefined) {
+    return <p className="ds-body-muted">A carregar evento…</p>;
+  }
+
+  if (eventMode && !activeEvent) {
+    return (
+      <>
+        {eventError ? <InlineAlert tone="error">{eventError}</InlineAlert> : null}
+        <Navigate to="/" replace />
+      </>
+    );
+  }
+
   return (
-    <FriendMatchDexProvider>
-      <FriendMatchProvider>
-        <FriendMatchStaleBlockModal />
-        <FriendMatchContent />
-      </FriendMatchProvider>
-    </FriendMatchDexProvider>
+    <FriendMatchActiveEventProvider value={activeEvent ?? null}>
+      <FriendMatchDexProvider>
+        <FriendMatchProvider eventMode={eventMode}>
+          <FriendMatchStaleBlockModal />
+          <FriendMatchContent />
+        </FriendMatchProvider>
+      </FriendMatchDexProvider>
+    </FriendMatchActiveEventProvider>
   );
 }

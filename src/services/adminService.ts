@@ -107,6 +107,10 @@ export async function fetchAdminEvents(): Promise<BonusEvent[]> {
   return apiFetchJson<BonusEvent[]>('/api/admin/events', { method: 'GET' });
 }
 
+export async function fetchAdminEvent(eventId: string): Promise<BonusEvent> {
+  return apiFetchJson<BonusEvent>(`/api/admin/events/${encodeURIComponent(eventId)}`, { method: 'GET' });
+}
+
 export async function createAdminEvent(body: BonusEventUpsert): Promise<BonusEvent> {
   return apiFetchJson<BonusEvent>('/api/admin/events', {
     method: 'POST',
@@ -127,6 +131,12 @@ export async function deleteAdminEvent(eventId: string): Promise<void> {
 
 export async function startAdminEvent(eventId: string): Promise<BonusEvent> {
   return apiFetchJson<BonusEvent>(`/api/admin/events/${encodeURIComponent(eventId)}/start`, {
+    method: 'POST',
+  });
+}
+
+export async function endAdminEvent(eventId: string): Promise<BonusEvent> {
+  return apiFetchJson<BonusEvent>(`/api/admin/events/${encodeURIComponent(eventId)}/end`, {
     method: 'POST',
   });
 }

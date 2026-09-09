@@ -127,6 +127,8 @@ export type FriendMatchStateDto = {
   turnDeadlineAt?: string | null;
   yourTimeoutPenalties?: number;
   opponentReplacedByBot?: boolean;
+  eventMode?: boolean;
+  eventPokedexNumbers?: number[];
 };
 
 export type FriendMatchActionResponse = {

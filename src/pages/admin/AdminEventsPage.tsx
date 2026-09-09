@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button, ConfirmModal, InlineAlert } from '../../ds';
+import buttonStyles from '../../ds/components/Button/Button.module.css';
 import { toFriendlyUserMessage } from '../../services/http';
 import {
   deleteAdminEvent,
+  endAdminEvent,
   fetchAdminEvents,
   startAdminEvent,
   type BonusEvent,
@@ -11,13 +13,22 @@ import {
 import { useAdminMode } from '../../store/providers/AdminModeProvider';
 import styles from './admin.module.css';
 
+function adminButtonLinkClass(variant: 'primary' | 'secondary', size: 'sm' | 'md') {
+  return [buttonStyles.button, buttonStyles[variant], buttonStyles[size], styles.linkButton].join(' ');
+}
+
+type ConfirmAction =
+  | { type: 'start'; event: BonusEvent }
+  | { type: 'end'; event: BonusEvent }
+  | { type: 'delete'; event: BonusEvent };
+
 export default function AdminEventsPage() {
   const navigate = useNavigate();
   const { isMasterAdmin } = useAdminMode();
   const [events, setEvents] = useState<BonusEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<ConfirmAction | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -38,30 +49,30 @@ export default function AdminEventsPage() {
 
   const activeEvent = useMemo(() => events.find((e) => e.status === 'ACTIVE') ?? null, [events]);
   const otherEvents = useMemo(() => events.filter((e) => e.status !== 'ACTIVE'), [events]);
+  const hasActive = activeEvent != null;
 
-  const start = async (id: string) => {
+  const runConfirm = async () => {
+    if (!confirm) return;
     setBusy(true);
     setError(null);
     try {
-      await startAdminEvent(id);
+      if (confirm.type === 'start') {
+        await startAdminEvent(confirm.event.id);
+      } else if (confirm.type === 'end') {
+        await endAdminEvent(confirm.event.id);
+      } else {
+        await deleteAdminEvent(confirm.event.id);
+      }
+      setConfirm(null);
       await load();
     } catch (e) {
-      setError(toFriendlyUserMessage(e, 'Não foi possível iniciar o evento.'));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const confirmDelete = async () => {
-    if (!deleteId) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await deleteAdminEvent(deleteId);
-      setDeleteId(null);
-      await load();
-    } catch (e) {
-      setError(toFriendlyUserMessage(e, 'Não foi possível remover o evento.'));
+      const fallback =
+        confirm.type === 'start'
+          ? 'Não foi possível iniciar o evento.'
+          : confirm.type === 'end'
+            ? 'Não foi possível terminar o evento.'
+            : 'Não foi possível remover o evento.';
+      setError(toFriendlyUserMessage(e, fallback));
     } finally {
       setBusy(false);
     }
@@ -70,32 +81,64 @@ export default function AdminEventsPage() {
   const renderEventCard = (ev: BonusEvent, active = false) => (
     <article
       key={ev.id}
-      className={[styles.eventItem, active ? styles.eventItemActive : ''].filter(Boolean).join(' ')}
+      className={[styles.eventItem, styles.eventItemClickable, active ? styles.eventItemActive : '']
+        .filter(Boolean)
+        .join(' ')}
+      role="link"
+      tabIndex={0}
+      onClick={() => navigate(`/admin/events/${ev.id}`)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          navigate(`/admin/events/${ev.id}`);
+        }
+      }}
     >
       <div className={styles.eventMeta}>
         <strong>{ev.name}</strong>
         <span className={active ? `${styles.badge} ${styles.badgeLive}` : styles.badge}>{ev.status}</span>
-        <span className="ds-body-muted">
-          ×{ev.xpMultiplier} XP · {ev.durationHours}h
-        </span>
       </div>
-      <p className="ds-body-muted">{ev.description}</p>
-      <p className="ds-body-muted">Pokémon: {ev.pokedexNumbers.join(', ')}</p>
+      <p className={styles.eventDescription}>{ev.description}</p>
+      <p className="ds-body-muted">
+        ×{ev.xpMultiplier} XP · {ev.durationHours}h · {ev.pokedexNumbers.length} Pokémon
+      </p>
       {active && ev.endsAt ? (
         <p className="ds-body-muted">Termina: {new Date(ev.endsAt).toLocaleString('pt-PT')}</p>
       ) : null}
-      <div className={styles.actions}>
-        {ev.status === 'DRAFT' ? (
-          <Button type="button" size="sm" variant="primary" disabled={busy} onClick={() => void start(ev.id)}>
-            Iniciar
+      <div className={styles.actions} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+        {ev.status !== 'ACTIVE' && !hasActive ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="primary"
+            disabled={busy}
+            onClick={() => setConfirm({ type: 'start', event: ev })}
+          >
+            {ev.status === 'ENDED' ? 'Reiniciar' : 'Iniciar'}
+          </Button>
+        ) : null}
+        {isMasterAdmin && active ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="primary"
+            disabled={busy}
+            onClick={() => setConfirm({ type: 'end', event: ev })}
+          >
+            Terminar
           </Button>
         ) : null}
         {isMasterAdmin && ev.status !== 'ACTIVE' ? (
           <>
-            <Button type="button" size="sm" variant="secondary" onClick={() => navigate(`/admin/events/${ev.id}/edit`)}>
+            <Link to={`/admin/events/${ev.id}/edit`} className={adminButtonLinkClass('secondary', 'sm')}>
               Editar
-            </Button>
-            <Button type="button" size="sm" variant="secondary" onClick={() => setDeleteId(ev.id)}>
+            </Link>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={() => setConfirm({ type: 'delete', event: ev })}
+            >
               Remover
             </Button>
           </>
@@ -104,14 +147,35 @@ export default function AdminEventsPage() {
     </article>
   );
 
+  const confirmCopy =
+    confirm?.type === 'start'
+      ? {
+          title: confirm.event.status === 'ENDED' ? 'Reiniciar evento' : 'Iniciar evento',
+          description: `Queres ${confirm.event.status === 'ENDED' ? 'reiniciar' : 'iniciar'} “${confirm.event.name}”? Passa a ativo e desbloqueia o modo online de evento.`,
+          confirmLabel: confirm.event.status === 'ENDED' ? 'Reiniciar' : 'Iniciar',
+        }
+      : confirm?.type === 'end'
+        ? {
+            title: 'Terminar evento',
+            description: `Queres terminar “${confirm.event.name}” mais cedo? O modo online de evento deixa de estar disponível.`,
+            confirmLabel: 'Terminar',
+          }
+        : confirm?.type === 'delete'
+          ? {
+              title: 'Remover evento',
+              description: 'Esta ação não pode ser desfeita.',
+              confirmLabel: 'Remover',
+            }
+          : null;
+
   return (
     <>
       <div className={styles.pageHeader}>
         <h1 className="ds-h1">Eventos</h1>
         {isMasterAdmin ? (
-          <Button type="button" variant="primary" size="md" onClick={() => navigate('/admin/events/new')}>
+          <Link to="/admin/events/new" className={adminButtonLinkClass('primary', 'md')}>
             Criar evento
-          </Button>
+          </Link>
         ) : null}
       </div>
 
@@ -139,12 +203,12 @@ export default function AdminEventsPage() {
       </section>
 
       <ConfirmModal
-        open={deleteId != null}
-        title="Remover evento"
-        description="Esta ação não pode ser desfeita."
-        confirmLabel="Remover"
-        onCancel={() => setDeleteId(null)}
-        onConfirm={() => void confirmDelete()}
+        open={confirm != null && confirmCopy != null}
+        title={confirmCopy?.title ?? ''}
+        description={confirmCopy?.description}
+        confirmLabel={confirmCopy?.confirmLabel}
+        onCancel={() => setConfirm(null)}
+        onConfirm={() => void runConfirm()}
         confirming={busy}
       />
     </>

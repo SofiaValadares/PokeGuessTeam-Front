@@ -16,7 +16,10 @@ import HistoricoPage from '../pages/game/historico/historico';
 import AdminLayout from '../pages/admin/AdminLayout';
 import AdminUsersPage from '../pages/admin/AdminUsersPage';
 import AdminEventsPage from '../pages/admin/AdminEventsPage';
-import AdminEventFormPage from '../pages/admin/AdminEventFormPage';
+import AdminEventFormLayout from '../pages/admin/AdminEventFormLayout';
+import AdminEventDetailsPage from '../pages/admin/AdminEventDetailsPage';
+import AdminEventPokemonPage from '../pages/admin/AdminEventPokemonPage';
+import AdminEventViewPage from '../pages/admin/AdminEventViewPage';
 import ForgotPasswordPage from '../pages/auth/forgot-password/forgot-password';
 import RegisterPage from '../pages/auth/register/register';
 import ResetPasswordPage from '../pages/auth/reset-password/reset-password';
@@ -67,9 +70,18 @@ export function AppRouter() {
               <Route path="admin" element={<AdminLayout />}>
                 <Route index element={<Navigate to="users" replace />} />
                 <Route path="users" element={<AdminUsersPage />} />
-                <Route path="events" element={<AdminEventsPage />} />
-                <Route path="events/new" element={<AdminEventFormPage />} />
-                <Route path="events/:eventId/edit" element={<AdminEventFormPage />} />
+                <Route path="events">
+                  <Route index element={<AdminEventsPage />} />
+                  <Route path="new" element={<AdminEventFormLayout />}>
+                    <Route index element={<AdminEventDetailsPage />} />
+                    <Route path="pokemon" element={<AdminEventPokemonPage />} />
+                  </Route>
+                  <Route path=":eventId/edit" element={<AdminEventFormLayout />}>
+                    <Route index element={<AdminEventDetailsPage />} />
+                    <Route path="pokemon" element={<AdminEventPokemonPage />} />
+                  </Route>
+                  <Route path=":eventId" element={<AdminEventViewPage />} />
+                </Route>
               </Route>
               <Route path="config" element={<ConfigurationsLayout />}>
                 <Route index element={<Navigate to="profile" replace />} />

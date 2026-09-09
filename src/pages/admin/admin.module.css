@@ -27,6 +27,17 @@
   margin: 0;
 }
 
+.stepLabel {
+  margin: 0 0 var(--ds-space-1);
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-secondary);
+}
+
+.linkButton {
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
 .toolbar {
   display: grid;
   grid-template-columns: minmax(14rem, 22rem) 1fr;
@@ -85,6 +96,39 @@
   gap: var(--ds-space-5);
 }
 
+.eventForm {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-6);
+}
+
+.formSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  width: min(100%, 44rem);
+}
+
+.formSectionWide {
+  width: 100%;
+  max-width: none;
+}
+
+.formSection :global(.ds-h2) {
+  margin: 0;
+}
+
+.detailsFormGrid {
+  width: 100%;
+}
+
+.detailsTextarea {
+  min-height: 14rem;
+  font-size: var(--ds-text-md);
+  padding: var(--ds-space-4);
+}
+
 .formRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -95,6 +139,143 @@
   .formRow {
     grid-template-columns: 1fr;
   }
+}
+
+.pickerGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ds-space-4);
+  align-items: stretch;
+  min-height: 28rem;
+}
+
+@media (max-width: 860px) {
+  .pickerGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pickerColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  min-width: 0;
+  border: 1px solid var(--ds-color-border-default);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-color-bg-elevated, var(--ds-color-bg-base));
+  padding: var(--ds-space-4);
+}
+
+.pickerColumnTitle {
+  margin: 0;
+  font-size: var(--ds-text-md);
+  font-weight: var(--ds-weight-semibold);
+  color: var(--ds-color-text-primary);
+}
+
+.pickerFilters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ds-space-2);
+}
+
+.pickerSelectLabel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-1);
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-secondary);
+  min-width: 0;
+}
+
+.pickerSelect {
+  width: 100%;
+  box-sizing: border-box;
+  height: 2.5rem;
+  border: 1px solid var(--ds-color-border-default);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-color-bg-base);
+  color: var(--ds-color-text-primary);
+  padding: 0 var(--ds-space-3);
+  font: inherit;
+}
+
+.pickerSelect:disabled {
+  opacity: 0.55;
+}
+
+.pickerBulk {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+}
+
+.pickerList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  flex: 1;
+  min-height: 18rem;
+  max-height: min(50vh, 28rem);
+  border: 1px solid var(--ds-color-border-default);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-color-bg-base);
+}
+
+.pickerEmpty {
+  padding: var(--ds-space-4);
+  color: var(--ds-color-text-secondary);
+  font-size: var(--ds-text-sm);
+}
+
+.pickerRow {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  width: 100%;
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border: 0;
+  border-bottom: 1px solid var(--ds-color-border-default);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.pickerRow:hover:not(:disabled) {
+  background: var(--ds-color-accent-muted);
+}
+
+.pickerRow:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pickerRow:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--ds-color-accent);
+}
+
+.pickerRowMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.pickerRowName {
+  font-weight: var(--ds-weight-medium);
+  color: var(--ds-color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pickerRowDex {
+  font-size: var(--ds-text-xs);
+  color: var(--ds-color-text-secondary);
 }
 
 .textareaLabel {
@@ -204,6 +385,44 @@
 .eventItemActive {
   border-color: var(--ds-color-accent);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--ds-color-accent) 35%, transparent);
+}
+
+.eventItemClickable {
+  cursor: pointer;
+}
+
+.eventItemClickable:hover {
+  border-color: color-mix(in srgb, var(--ds-color-accent) 55%, var(--ds-color-border-default));
+}
+
+.eventItemClickable:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-focus-ring);
+}
+
+.eventDescription {
+  margin: 0 0 var(--ds-space-2);
+  color: var(--ds-color-text-secondary);
+  white-space: pre-wrap;
+}
+
+.eventPokemonGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: var(--ds-space-3);
+}
+
+.eventPokemonCard {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  padding: var(--ds-space-3);
+  border: 1px solid var(--ds-color-border-default);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-color-bg-elevated, var(--ds-color-bg-base));
 }
 
 .eventMeta {

@@ -14,6 +14,7 @@ function AdminHeaderNav() {
     <>
       <NavLink
         to="/admin/users"
+        end
         className={({ isActive }) =>
           [headerStyles.navText, isActive ? headerStyles.navTextActive : ''].filter(Boolean).join(' ')
         }
@@ -22,6 +23,7 @@ function AdminHeaderNav() {
       </NavLink>
       <NavLink
         to="/admin/events"
+        end
         className={({ isActive }) =>
           [headerStyles.navText, isActive ? headerStyles.navTextActive : ''].filter(Boolean).join(' ')
         }
