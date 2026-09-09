@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Button, ConfirmModal, InlineAlert } from '../../ds';
+import { Button, ConfirmModal, InlineAlert, Spinner } from '../../ds';
 import buttonStyles from '../../ds/components/Button/Button.module.css';
 import { toFriendlyUserMessage } from '../../services/http';
 import {
@@ -180,7 +180,12 @@ export default function AdminEventsPage() {
       </div>
 
       {error ? <InlineAlert tone="error">{error}</InlineAlert> : null}
-      {loading ? <p className="ds-body-muted">A carregar…</p> : null}
+      {!isMasterAdmin ? (
+        <InlineAlert tone="success">
+          Como admin podes iniciar eventos. Criar, editar, terminar e remover é exclusivo do master.
+        </InlineAlert>
+      ) : null}
+      {loading ? <Spinner label="A carregar eventos…" /> : null}
 
       {activeEvent ? (
         <section aria-label="Evento ativo">

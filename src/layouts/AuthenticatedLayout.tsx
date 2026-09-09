@@ -6,7 +6,12 @@ import { AdminModeProvider, useAdminMode } from '../store/providers/AdminModePro
 import styles from './authenticated-layout.module.css';
 
 function isGameRoute(pathname: string): boolean {
-  return pathname === '/game/bot' || pathname === '/game/local' || pathname === '/game/amigo';
+  return (
+    pathname === '/game/bot' ||
+    pathname === '/game/local' ||
+    pathname === '/game/amigo' ||
+    pathname === '/game/online'
+  );
 }
 
 function AdminHeaderNav() {

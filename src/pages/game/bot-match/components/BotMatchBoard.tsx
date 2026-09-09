@@ -1,10 +1,10 @@
 import { MatchBoard, type MatchBoardProps } from '../../shared/components/MatchBoard';
-import { useBotMatchPlay } from '../providers/BotMatchPlayProvider';
+import { useNationalDexPokemon } from '../../../../hooks/useNationalDexPokemon';
 
-type BotMatchBoardProps = Omit<MatchBoardProps, 'registeredPokedexOnly'>;
+type BotMatchBoardProps = Omit<MatchBoardProps, 'searchablePokemon'>;
 
 export function BotMatchBoard(props: BotMatchBoardProps) {
-  const { registeredPokemon } = useBotMatchPlay();
+  const { availablePokemon } = useNationalDexPokemon();
 
-  return <MatchBoard {...props} registeredPokedexOnly={registeredPokemon} />;
+  return <MatchBoard {...props} searchablePokemon={availablePokemon} />;
 }

@@ -12,6 +12,7 @@ import WildAreaPage from '../pages/inventory/wild-area/wild-area';
 import BotMatchPage from '../pages/game/bot-match/bot-match';
 import LocalMatchPage from '../pages/game/local-match/local-match';
 import FriendMatchPage from '../pages/game/friend-match/friend-match';
+import CompetitiveMatchPage from '../pages/game/competitive/competitive-match';
 import HistoricoPage from '../pages/game/historico/historico';
 import AdminLayout from '../pages/admin/AdminLayout';
 import AdminUsersPage from '../pages/admin/AdminUsersPage';
@@ -59,6 +60,7 @@ export function AppRouter() {
               <Route path="game/bot" element={<BotMatchPage />} />
               <Route path="game/local" element={<LocalMatchPage />} />
               <Route path="game/amigo" element={<FriendMatchPage />} />
+              <Route path="game/online" element={<CompetitiveMatchPage />} />
               <Route path="game/historico" element={<HistoricoPage />} />
               <Route path="game" element={<Navigate to="/" replace />} />
               <Route path="jogo" element={<Navigate to="/" replace />} />

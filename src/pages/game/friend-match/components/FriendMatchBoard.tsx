@@ -1,30 +1,19 @@
 import { useMemo } from 'react';
 import { MatchBoard, type MatchBoardProps } from '../../shared/components/MatchBoard';
-import { useFriendMatchDex } from '../providers/FriendMatchDexProvider';
 import { useFriendMatch } from '../providers/FriendMatchProvider';
-import { readAllPokemonFromCache } from '../../../../store/slices/cache/queries';
-import { useAppSelector } from '../../../../store/hooks';
-import { selectMatchDex } from '../../shared/slice/matchDexSelectors';
+import { useNationalDexPokemon } from '../../../../hooks/useNationalDexPokemon';
 
-type FriendMatchBoardProps = Omit<MatchBoardProps, 'registeredPokedexOnly'>;
+type FriendMatchBoardProps = Omit<MatchBoardProps, 'searchablePokemon'>;
 
 export function FriendMatchBoard(props: FriendMatchBoardProps) {
-  const { dexReady } = useFriendMatchDex();
   const { match } = useFriendMatch();
-  const { allPokemon } = useAppSelector(selectMatchDex);
+  const { availablePokemon } = useNationalDexPokemon();
 
-  const registeredPokemon = useMemo(() => {
-    const pool =
-      allPokemon.length > 0 ? allPokemon : dexReady ? readAllPokemonFromCache() : [];
-    if (!match?.eventMode || !match.eventPokedexNumbers?.length) return pool;
+  const searchablePokemon = useMemo(() => {
+    if (!match?.eventMode || !match.eventPokedexNumbers?.length) return availablePokemon;
     const allow = new Set(match.eventPokedexNumbers);
-    return pool.filter((p) => allow.has(p.number));
-  }, [allPokemon, dexReady, match?.eventMode, match?.eventPokedexNumbers]);
+    return availablePokemon.filter((p) => allow.has(p.number));
+  }, [availablePokemon, match?.eventMode, match?.eventPokedexNumbers]);
 
-  return (
-    <MatchBoard
-      {...props}
-      registeredPokedexOnly={registeredPokemon.length > 0 ? registeredPokemon : undefined}
-    />
-  );
+  return <MatchBoard {...props} searchablePokemon={searchablePokemon} />;
 }

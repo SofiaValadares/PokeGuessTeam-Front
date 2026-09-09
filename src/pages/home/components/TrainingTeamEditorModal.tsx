@@ -7,7 +7,7 @@ import { PokemonSprite } from '../../../components/PokemonSprite';
 import { usePcTeamInventory } from '../../../hooks/usePcTeamInventory';
 import { resolveCurrentMemberDex } from '../../../lib/pokemon/pcCurrentForm';
 import { useSpeciesMeta } from '../../../hooks/useSpeciesMeta';
-import { Button, InlineAlert } from '../../../ds';
+import { Button, InlineAlert, LoadingOverlay } from '../../../ds';
 import { ApiError } from '../../../services/http';
 import { mapTrainingTeam } from '../../../model';
 import grassStyles from './training/grassField.module.css';
@@ -86,6 +86,10 @@ export function TrainingTeamEditorModal({
   };
 
   if (!open) return null;
+
+  if (loading || !ready) {
+    return <LoadingOverlay open label="A carregar o teu PC…" fullscreen />;
+  }
 
   const usedKeys = new Set(draft.filter((k): k is number => k != null));
 

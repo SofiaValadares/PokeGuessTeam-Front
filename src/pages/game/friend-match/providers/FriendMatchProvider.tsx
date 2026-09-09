@@ -25,6 +25,8 @@ import {
 import { friendMatchRewardForResult } from '../../../../lib/game/matchRewardLabels';
 import { mapGameHistoryEntry } from '../../../../model';
 import { useCacheActions } from '../../../../store/providers/CacheProvider';
+import { useAuth } from '../../../../store/providers/AuthProvider';
+import { subscribeUserChannel } from '../../../../lib/pusher/client';
 import type {
   FriendMatchStateDto,
   MatchRewardDto,
@@ -32,10 +34,6 @@ import type {
 } from '../../../../services/types/game';
 
 export type FriendMatchPhase = 'lobby' | 'waiting' | 'playing';
-
-export type FriendMatchSyncMessage = {
-  text: string;
-};
 
 export type FriendMatchStaleBlock = {
   action: 'create' | 'join';
@@ -55,6 +53,10 @@ function isFriendMatchGone(err: unknown): boolean {
   return err instanceof ApiError && err.status === 404;
 }
 
+function isFinishedMatchStatus(status: MatchStatus | null | undefined): boolean {
+  return status === 'FINISHED';
+}
+
 const FINISH_MODAL_SECONDS = 15;
 
 export { FINISH_MODAL_SECONDS };
@@ -67,11 +69,7 @@ type FriendMatchContextValue = {
   guessSending: boolean;
   busy: boolean;
   error: string | null;
-  syncMessage: FriendMatchSyncMessage | null;
-  syncing: boolean;
   clearError: () => void;
-  clearSyncMessage: () => void;
-  syncMatch: () => Promise<void>;
   refreshMatch: () => Promise<FriendMatchStateDto | null>;
   createRoom: (team: number[]) => Promise<void>;
   joinRoom: (joinCode: string, team: number[]) => Promise<void>;
@@ -89,6 +87,8 @@ type FriendMatchContextValue = {
   continueStaleBlock: () => void;
   abandonStaleBlockAndRetry: () => Promise<void>;
   abandonAndGoHome: () => Promise<void>;
+  /** Injeta estado remoto (fila competitiva / Pusher). */
+  applyRemoteMatch: (dto: FriendMatchStateDto) => Promise<void>;
 };
 
 const FriendMatchContext = createContext<FriendMatchContextValue | null>(null);
@@ -101,14 +101,13 @@ export function FriendMatchProvider({
   eventMode?: boolean;
 }) {
   const navigate = useNavigate();
+  const { me } = useAuth();
   const { applyMatchHistory, syncMatchRewards } = useCacheActions();
   const [match, setMatch] = useState<FriendMatchStateDto | null>(null);
   const [finishReward, setFinishReward] = useState<MatchRewardDto | null>(null);
   const [busy, setBusy] = useState(false);
   const [guessSending, setGuessSending] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [syncMessage, setSyncMessage] = useState<FriendMatchSyncMessage | null>(null);
   const [resumeNotice, setResumeNotice] = useState(false);
   const [staleBlock, setStaleBlock] = useState<FriendMatchStaleBlock | null>(null);
   const [leavingMatch, setLeavingMatch] = useState(false);
@@ -120,6 +119,7 @@ export function FriendMatchProvider({
   const clearMatchRef = useRef<(() => void) | null>(null);
   const showingResultsRef = useRef(false);
   const postMatchSyncedRef = useRef<string | null>(null);
+  const initialHydrateRef = useRef(true);
 
   const markShowingResults = useCallback((next: FriendMatchStateDto | null) => {
     if (next?.status === 'FINISHED' && next.historyEntry) {
@@ -168,12 +168,11 @@ export function FriendMatchProvider({
   }, []);
 
   const refreshMatch = useCallback(async (options?: { showErrors?: boolean; force?: boolean }) => {
-    if (
-      !options?.force &&
-      (refreshInFlightRef.current ||
-        showingResultsRef.current ||
-        matchStatusRef.current === 'FINISHED')
-    ) {
+    // Nunca regredir o ecrã de resultados — nem com force (polling).
+    if (showingResultsRef.current) {
+      return null;
+    }
+    if (!options?.force && refreshInFlightRef.current) {
       return null;
     }
     refreshInFlightRef.current = true;
@@ -181,13 +180,26 @@ export function FriendMatchProvider({
       const latest = await fetchActiveFriendMatch();
       if (latest) {
         const parsed = parseFriendMatchState(latest);
+        // Resposta atrasada de um poll não pode voltar a ACTIVE depois de terminar.
+        const statusNow = matchStatusRef.current;
+        if (
+          (showingResultsRef.current || isFinishedMatchStatus(statusNow)) &&
+          parsed.status !== 'FINISHED'
+        ) {
+          return null;
+        }
         setMatch(parsed);
         if (parsed.status === 'FINISHED' && parsed.historyEntry) {
           await applyFinishSideEffects(parsed, parsed.yourReward ?? null);
         }
         return parsed;
       }
-      if (matchIdRef.current && !showingResultsRef.current) {
+      const statusAfterFetch = matchStatusRef.current;
+      if (
+        matchIdRef.current &&
+        !showingResultsRef.current &&
+        !isFinishedMatchStatus(statusAfterFetch)
+      ) {
         clearMatchRef.current?.();
       }
       return null;
@@ -207,60 +219,23 @@ export function FriendMatchProvider({
     showingResultsRef.current = match?.status === 'FINISHED' && Boolean(match?.historyEntry);
   }, [match]);
 
-  const phase = derivePhase(match);
-
-  const syncMatch = useCallback(async () => {
-    setSyncing(true);
-    setSyncMessage(null);
-    setError(null);
-    try {
+  // Restaura partida ativa após refresh / remount — sem sair do servidor no unmount.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
       const latest = await refreshMatch({ force: true });
-      if (!latest) {
-        setSyncMessage({ text: 'A partida não existe ou o servidor reiniciou.' });
-        return;
+      if (cancelled) return;
+      if (latest && latest.status !== 'FINISHED' && initialHydrateRef.current) {
+        setResumeNotice(true);
       }
-
-      if (latest.status === 'ACTIVE' || latest.status === 'FINISHED') {
-        return;
-      }
-
-      if (!latest.guest?.userId) {
-        setSyncMessage({
-          text: 'O teu amigo ainda não entrou na sala. Partilha o código e tenta de novo.',
-        });
-        return;
-      }
-
-      if (!latest.guest.teamReady) {
-        setSyncMessage({ text: 'O amigo entrou, mas ainda está a preparar a equipe.' });
-        return;
-      }
-
-      if (!latest.host.teamReady) {
-        setSyncMessage({ text: 'A tua equipe ainda não está confirmada no servidor.' });
-        return;
-      }
-
-      setSyncMessage({
-        text: 'Ambos estão na sala, mas a partida ainda não iniciou. Tenta novamente.',
-      });
-    } catch (err) {
-      setSyncMessage({
-        text: toFriendlyUserMessage(err, 'Não foi possível verificar a partida.'),
-      });
-    } finally {
-      setSyncing(false);
-    }
+      initialHydrateRef.current = false;
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [refreshMatch]);
 
-  useEffect(() => {
-    return () => {
-      const matchId = matchIdRef.current;
-      const status = matchStatusRef.current;
-      if (!matchId || status === 'FINISHED' || leaveIntentionalRef.current) return;
-      void leaveFriendMatch().catch(() => undefined);
-    };
-  }, []);
+  const phase = derivePhase(match);
 
   const tryHandleStaleMatchConflict = useCallback(
     async (err: unknown, block: FriendMatchStaleBlock): Promise<boolean> => {
@@ -424,6 +399,9 @@ export function FriendMatchProvider({
   }, [refreshMatch, applyFinishSideEffects, markShowingResults]);
 
   const surrender = useCallback(async () => {
+    if (showingResultsRef.current || isFinishedMatchStatus(matchStatusRef.current)) {
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -433,9 +411,29 @@ export function FriendMatchProvider({
       }
       setMatch(res.match);
       if (res.match.status === 'FINISHED' && res.match.historyEntry) {
-        await applyFinishSideEffects(res.match, res.reward);
+        try {
+          await applyFinishSideEffects(res.match, res.reward);
+        } catch {
+          /* resultado já está no ecrã; sync de cache é best-effort */
+        }
       }
     } catch (err) {
+      if (showingResultsRef.current || isFinishedMatchStatus(matchStatusRef.current)) {
+        return;
+      }
+      if (
+        err instanceof ApiError &&
+        (err.body?.code === 'GAME_MATCH_NOT_ACTIVE' || err.status === 400)
+      ) {
+        const latest = await refreshMatch({ force: true });
+        if (
+          latest?.status === 'FINISHED' ||
+          showingResultsRef.current ||
+          isFinishedMatchStatus(matchStatusRef.current)
+        ) {
+          return;
+        }
+      }
       if (isFriendMatchGone(err)) {
         clearMatchRef.current?.();
         setError('A partida já não existe (servidor reiniciado ou sala fechada).');
@@ -445,7 +443,7 @@ export function FriendMatchProvider({
     } finally {
       setBusy(false);
     }
-  }, [applyFinishSideEffects, markShowingResults]);
+  }, [applyFinishSideEffects, markShowingResults, refreshMatch]);
 
   const clearMatch = useCallback(() => {
     leaveIntentionalRef.current = true;
@@ -545,6 +543,72 @@ export function FriendMatchProvider({
     navigate('/', { replace: true });
   }, [match, navigate, clearMatch]);
 
+  const applyRemoteMatch = useCallback(
+    async (dto: FriendMatchStateDto) => {
+      const parsed = parseFriendMatchState(dto);
+      if (isFinishedMatchStatus(matchStatusRef.current) && parsed.status !== 'FINISHED') {
+        return;
+      }
+      if (parsed.status === 'FINISHED' && parsed.historyEntry) {
+        markShowingResults(parsed);
+      }
+      setMatch(parsed);
+      setError(null);
+      if (parsed.status === 'FINISHED' && parsed.historyEntry) {
+        try {
+          await applyFinishSideEffects(parsed, parsed.yourReward ?? null);
+        } catch {
+          /* sync best-effort */
+        }
+      }
+    },
+    [applyFinishSideEffects, markShowingResults],
+  );
+
+  useEffect(() => {
+    const userId = me?.userId;
+    if (!userId) return;
+    let unsubscribe: (() => void) | undefined;
+    let cancelled = false;
+    void subscribeUserChannel(userId, (eventName, data) => {
+      if (cancelled) return;
+      if (eventName !== 'match-state' && eventName !== 'queue-update') return;
+      const payload = data as { match?: FriendMatchStateDto; status?: string };
+      if (payload?.match) {
+        void applyRemoteMatch(payload.match);
+      }
+    }).then((unsub) => {
+      if (cancelled) unsub();
+      else unsubscribe = unsub;
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, [me?.userId, applyRemoteMatch]);
+
+  // Fallback silencioso: sala / turno do adversário sem botão manual.
+  useEffect(() => {
+    if (!match || match.status === 'FINISHED') return;
+    const waitingOnOpponent =
+      match.status === 'SETUP' ||
+      (match.status === 'ACTIVE' && match.currentTurn !== match.yourSide);
+    if (!waitingOnOpponent) return;
+
+    const timer = window.setInterval(() => {
+      if (
+        guessInFlightRef.current ||
+        refreshInFlightRef.current ||
+        showingResultsRef.current ||
+        isFinishedMatchStatus(matchStatusRef.current)
+      ) {
+        return;
+      }
+      void refreshMatch({ force: true });
+    }, 2000);
+    return () => window.clearInterval(timer);
+  }, [match, refreshMatch]);
+
   const value = useMemo(
     (): FriendMatchContextValue => ({
       phase,
@@ -554,11 +618,7 @@ export function FriendMatchProvider({
       guessSending,
       busy,
       error,
-      syncMessage,
-      syncing,
       clearError: () => setError(null),
-      clearSyncMessage: () => setSyncMessage(null),
-      syncMatch,
       refreshMatch: () => refreshMatch({ showErrors: true }),
       createRoom,
       joinRoom,
@@ -575,6 +635,7 @@ export function FriendMatchProvider({
       continueStaleBlock,
       abandonStaleBlockAndRetry,
       abandonAndGoHome,
+      applyRemoteMatch,
     }),
     [
       phase,
@@ -584,9 +645,6 @@ export function FriendMatchProvider({
       guessSending,
       busy,
       error,
-      syncMessage,
-      syncing,
-      syncMatch,
       refreshMatch,
       createRoom,
       joinRoom,
@@ -602,6 +660,7 @@ export function FriendMatchProvider({
       continueStaleBlock,
       abandonStaleBlockAndRetry,
       abandonAndGoHome,
+      applyRemoteMatch,
     ],
   );
 

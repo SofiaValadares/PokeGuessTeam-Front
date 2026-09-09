@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { FRIEND_MATCH_ENABLED } from '../../../lib/config/featureFlags';
-import { InlineAlert } from '../../../ds';
+import { InlineAlert, LoadingOverlay } from '../../../ds';
 import { fetchActiveBonusEvent, type ActiveBonusEvent } from '../../../services/adminService';
 import { toFriendlyUserMessage } from '../../../services/http';
 import { FriendMatchActiveEventProvider } from './providers/FriendMatchActiveEventContext';
@@ -61,7 +61,7 @@ export default function FriendMatchPage() {
   }
 
   if (eventMode && activeEvent === undefined) {
-    return <p className="ds-body-muted">A carregar evento…</p>;
+    return <LoadingOverlay open label="A carregar evento…" fullscreen />;
   }
 
   if (eventMode && !activeEvent) {
