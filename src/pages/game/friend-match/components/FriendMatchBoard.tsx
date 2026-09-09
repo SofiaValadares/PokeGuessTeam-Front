@@ -12,14 +12,14 @@ export function FriendMatchBoard(props: FriendMatchBoardProps) {
   const { dexReady } = useFriendMatchDex();
   const { match } = useFriendMatch();
   const { allPokemon } = useAppSelector(selectMatchDex);
-  const pool =
-    allPokemon.length > 0 ? allPokemon : dexReady ? readAllPokemonFromCache() : [];
 
   const registeredPokemon = useMemo(() => {
+    const pool =
+      allPokemon.length > 0 ? allPokemon : dexReady ? readAllPokemonFromCache() : [];
     if (!match?.eventMode || !match.eventPokedexNumbers?.length) return pool;
     const allow = new Set(match.eventPokedexNumbers);
     return pool.filter((p) => allow.has(p.number));
-  }, [match?.eventMode, match?.eventPokedexNumbers, pool]);
+  }, [allPokemon, dexReady, match?.eventMode, match?.eventPokedexNumbers]);
 
   return (
     <MatchBoard
