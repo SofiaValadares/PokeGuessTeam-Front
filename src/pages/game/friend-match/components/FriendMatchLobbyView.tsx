@@ -1,0 +1,137 @@
+import { useState } from 'react';
+import { LogIn, Plus } from 'lucide-react';
+import { TeamPicker } from '../../shared/components/TeamPicker';
+import { TeamSetupScreen } from '../../shared/components/TeamSetupScreen';
+import { Button, ConfirmModal, LoadingOverlay, TextField } from '../../../../ds';
+import { useFriendMatch } from '../providers/FriendMatchProvider';
+import { useFriendMatchDex } from '../providers/FriendMatchDexProvider';
+import { useFriendMatchActiveEvent } from '../providers/FriendMatchActiveEventContext';
+import styles from './friend-match.module.css';
+
+const JOIN_CODE_MIN = 4;
+const TEAM_SIZE = 6;
+
+export function FriendMatchLobbyView() {
+  const { busy, error, createRoom, joinRoom, abandonAndGoHome, eventMode } = useFriendMatch();
+  const activeEvent = useFriendMatchActiveEvent();
+  const { loadingDex } = useFriendMatchDex();
+  const [team, setTeam] = useState<number[]>([]);
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
+  const [joinCode, setJoinCode] = useState('');
+  const [joining, setJoining] = useState(false);
+  const trimmedCode = joinCode.trim().toUpperCase();
+  const teamReady = team.length === TEAM_SIZE;
+  const canCreate = teamReady && !busy;
+  const canOpenJoin = teamReady && !busy;
+
+  const closeJoinModal = () => {
+    if (joining) return;
+    setJoinModalOpen(false);
+    setJoinCode('');
+  };
+
+  const handleJoin = async () => {
+    if (trimmedCode.length < JOIN_CODE_MIN) return;
+    setJoining(true);
+    try {
+      await joinRoom(joinCode, team);
+      setJoinModalOpen(false);
+      setJoinCode('');
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  const lobbyFooter = (
+    <div className={styles.lobbyFooter}>
+      <div className={styles.lobbyActions}>
+        <Button
+          type="button"
+          variant="primary"
+          size="md"
+          fullWidth
+          className={styles.lobbyActionBtn}
+          disabled={!canCreate}
+          onClick={() => void createRoom(team)}
+        >
+          <span className={styles.lobbyActionLabel}>
+            <Plus size={16} aria-hidden />
+            {busy && !joinModalOpen ? 'A criar sala…' : 'Criar sala'}
+          </span>
+        </Button>
+        <Button
+          type="button"
+          variant="primary"
+          size="md"
+          fullWidth
+          className={styles.lobbyActionBtn}
+          disabled={!canOpenJoin}
+          onClick={() => setJoinModalOpen(true)}
+        >
+          <span className={styles.lobbyActionLabel}>
+            <LogIn size={16} aria-hidden />
+            Entrar com código
+          </span>
+        </Button>
+      </div>
+    </div>
+  );
+
+  const title = eventMode
+    ? activeEvent?.name
+      ? `Evento: ${activeEvent.name}`
+      : 'Partida de evento'
+    : 'Partida amigável';
+  const subtitle = eventMode
+    ? 'Escolhe 6 Pokémon do evento (que tenhas registados). Depois cria uma sala ou entra com o código do amigo.'
+    : 'Escolhe 6 Pokémon registados na Pokédex. Depois cria uma sala ou entra com o código do amigo.';
+
+  return (
+    <>
+      <LoadingOverlay open={loadingDex} label="A carregar Pokédex…" fullscreen />
+      <LoadingOverlay open={busy && !joinModalOpen} label="A criar sala…" fullscreen />
+      <LoadingOverlay open={joining} label="A entrar na sala…" fullscreen />
+      <TeamSetupScreen
+        title={title}
+        subtitle={subtitle}
+        error={error}
+        onBack={() => void abandonAndGoHome()}
+      >
+        {loadingDex ? null : (
+          <TeamPicker
+            value={team}
+            onChange={setTeam}
+            minRegistered={TEAM_SIZE}
+            allowedDexNumbers={eventMode ? activeEvent?.pokedexNumbers : undefined}
+            loading={busy}
+            footer={lobbyFooter}
+          />
+        )}
+      </TeamSetupScreen>
+
+      <ConfirmModal
+        open={joinModalOpen}
+        title="Entrar na sala"
+        description="Introduz o código que o anfitrião te enviou."
+        confirmLabel="Entrar na sala"
+        cancelLabel="Cancelar"
+        onCancel={closeJoinModal}
+        onConfirm={() => void handleJoin()}
+        confirmDisabled={trimmedCode.length < JOIN_CODE_MIN}
+        confirming={joining}
+      >
+        <TextField
+          label="Código da sala"
+          name="joinCode"
+          value={joinCode}
+          onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+          placeholder="Ex.: AB12CD"
+          maxLength={10}
+          autoComplete="off"
+          inputMode="text"
+          autoFocus
+        />
+      </ConfirmModal>
+    </>
+  );
+}

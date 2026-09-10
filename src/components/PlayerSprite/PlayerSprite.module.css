@@ -1,0 +1,9 @@
+.sprite {
+  image-rendering: pixelated;
+  display: block;
+  flex-shrink: 0;
+}
+
+.flip {
+  transform: scaleX(-1);
+}

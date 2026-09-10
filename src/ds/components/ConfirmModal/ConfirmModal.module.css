@@ -1,0 +1,67 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--ds-z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ds-space-4);
+  background: rgba(15, 12, 26, 0.72);
+  animation: fadeIn var(--ds-duration-normal) var(--ds-ease-standard);
+}
+
+.panel {
+  width: 100%;
+  max-width: 28rem;
+  border-radius: var(--ds-radius-lg);
+  border: 1px solid var(--ds-color-border-subtle, rgba(255, 255, 255, 0.12));
+  background: var(--ds-color-surface, var(--ds-background));
+  box-shadow: var(--ds-shadow-lg);
+  padding: var(--ds-space-6);
+  animation: slideUp var(--ds-duration-normal) var(--ds-ease-standard);
+}
+
+.title {
+  margin: 0 0 var(--ds-space-3);
+  font-size: var(--ds-text-lg);
+  font-weight: var(--ds-weight-semibold);
+  color: var(--ds-color-text-primary);
+}
+
+.description {
+  margin: 0 0 var(--ds-space-5);
+  font-size: var(--ds-text-sm);
+  line-height: var(--ds-leading-relaxed);
+  color: var(--ds-color-text-secondary);
+}
+
+.body {
+  margin-bottom: var(--ds-space-5);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ds-space-3);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

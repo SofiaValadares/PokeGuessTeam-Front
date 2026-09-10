@@ -1,0 +1,22 @@
+.sprite {
+  image-rendering: pixelated;
+  display: block;
+}
+
+.silhouette {
+  filter: brightness(0);
+}
+
+.animated {
+  animation: spriteWalk 1.4s ease-in-out infinite;
+}
+
+@keyframes spriteWalk {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}

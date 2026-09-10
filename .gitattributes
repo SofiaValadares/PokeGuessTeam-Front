@@ -1,0 +1,2 @@
+# Sprites locais (podem deixar o repositório grande — é intencional).
+public/sprits/**/*.png binary -diff

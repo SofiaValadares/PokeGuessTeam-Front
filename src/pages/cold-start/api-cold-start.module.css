@@ -1,0 +1,112 @@
+.layout {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: var(--ds-space-8);
+}
+
+.card {
+  width: min(36rem, 100%);
+}
+
+.eyebrow {
+  margin: 0 0 var(--ds-space-2);
+  font-size: var(--ds-text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ds-color-text-muted);
+}
+
+.title {
+  margin: 0 0 var(--ds-space-4);
+  font-size: var(--ds-text-2xl);
+  color: var(--ds-color-text-primary);
+}
+
+.lead {
+  margin: 0 0 var(--ds-space-5);
+  font-size: var(--ds-text-md);
+  line-height: 1.6;
+  color: var(--ds-color-text-secondary);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ds-space-3);
+  margin-bottom: var(--ds-space-4);
+}
+
+.stat {
+  padding: var(--ds-space-3);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-color-bg-raised);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-1);
+}
+
+.statLabel {
+  font-size: var(--ds-text-xs);
+  color: var(--ds-color-text-muted);
+}
+
+.statValue {
+  font-size: var(--ds-text-lg);
+  color: var(--ds-color-text-primary);
+}
+
+.progressTrack {
+  height: 0.5rem;
+  border-radius: var(--ds-radius-full);
+  background: var(--ds-color-bg-raised);
+  overflow: hidden;
+  margin-bottom: var(--ds-space-4);
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--ds-color-accent), var(--ds-color-accent-strong, var(--ds-color-accent)));
+  transition: width 1s linear;
+}
+
+.hint {
+  margin: 0 0 var(--ds-space-4);
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-secondary);
+}
+
+.retryBtn {
+  width: 100%;
+  margin-bottom: var(--ds-space-6);
+}
+
+.note {
+  padding-top: var(--ds-space-5);
+  border-top: 1px solid var(--ds-color-border-subtle);
+}
+
+.noteTitle {
+  margin: 0 0 var(--ds-space-3);
+  font-size: var(--ds-text-md);
+  color: var(--ds-color-text-primary);
+}
+
+.note p {
+  margin: 0 0 var(--ds-space-3);
+  font-size: var(--ds-text-sm);
+  line-height: 1.6;
+  color: var(--ds-color-text-secondary);
+}
+
+.note p:last-child {
+  margin-bottom: 0;
+}

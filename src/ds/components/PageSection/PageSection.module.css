@@ -1,0 +1,84 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.section + .section {
+  margin-top: var(--ds-space-6);
+  padding-top: var(--ds-space-6);
+  border-top: 1px solid var(--ds-color-border-default);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ds-space-3);
+  margin-bottom: var(--ds-space-4);
+}
+
+.headerTight {
+  margin-bottom: var(--ds-space-3);
+}
+
+.headerFlush {
+  margin-bottom: 0;
+}
+
+.headingBlock {
+  flex: 1;
+  min-width: min(100%, 12rem);
+}
+
+.title {
+  margin: 0;
+  font-weight: var(--ds-weight-semibold);
+  color: var(--ds-color-text-primary);
+  line-height: var(--ds-leading-tight);
+}
+
+.titleH1 {
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-text-3xl);
+  font-weight: var(--ds-weight-bold);
+  letter-spacing: -0.02em;
+}
+
+.titleH2 {
+  font-size: var(--ds-text-xl);
+}
+
+.titleH3 {
+  font-size: var(--ds-text-lg);
+}
+
+.subtitle {
+  margin: var(--ds-space-2) 0 0;
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-muted);
+  line-height: var(--ds-leading-relaxed);
+}
+
+.action {
+  flex-shrink: 0;
+}
+
+.divider {
+  height: 1px;
+  margin: 0 0 var(--ds-space-4);
+  background: var(--ds-color-border-default);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-4);
+  min-width: 0;
+}
+
+.bodyGrow {
+  flex: 1;
+  min-height: 0;
+}

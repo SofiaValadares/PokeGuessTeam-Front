@@ -1,0 +1,245 @@
+.grassField {
+  flex: 1;
+  min-height: 10rem;
+  display: flex;
+  flex-direction: column;
+  padding: var(--ds-space-5) var(--ds-space-3) var(--ds-space-4);
+  border-radius: var(--ds-radius-md);
+  border: 2px solid #3d8b37;
+  background-color: #5aad4a;
+  background-image:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.09) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.09) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.05) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.05) 75%);
+  background-size: 18px 18px;
+  background-position:
+    0 0,
+    0 9px,
+    9px -9px,
+    -9px 0;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.12);
+  animation: grassDrift 12s linear infinite;
+  overflow: hidden;
+  position: relative;
+}
+
+.grassField::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    transparent 35%,
+    transparent 70%,
+    rgba(0, 0, 0, 0.06) 100%
+  );
+}
+
+@keyframes grassDrift {
+  from {
+    background-position:
+      0 0,
+      0 9px,
+      9px -9px,
+      -9px 0;
+  }
+
+  to {
+    background-position:
+      18px 18px,
+      18px 27px,
+      27px 9px,
+      9px 18px;
+  }
+}
+
+.teamGrid3x2 {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: var(--ds-space-2);
+  align-items: stretch;
+  position: relative;
+  z-index: 1;
+}
+
+.teamCell {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+  animation: dsFadeUp var(--ds-duration-slow) var(--ds-ease-standard) both;
+  animation-delay: calc(var(--slot-index, 0) * 70ms);
+}
+
+.teamSlot,
+.teamSlotEmpty {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ds-space-1);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: var(--ds-space-2) var(--ds-space-1);
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  box-sizing: border-box;
+}
+
+.teamSlot {
+  transition:
+    border-color var(--ds-duration-fast) var(--ds-ease-standard),
+    transform var(--ds-duration-fast) var(--ds-ease-standard),
+    background var(--ds-duration-fast) var(--ds-ease-standard),
+    box-shadow var(--ds-duration-fast) var(--ds-ease-standard);
+}
+
+.teamSlot:hover {
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+}
+
+.teamSlotEmpty {
+  opacity: 0.72;
+}
+
+.spriteStage {
+  flex: 1;
+  width: 100%;
+  min-height: 3rem;
+  min-width: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: visible;
+}
+
+.spriteStageOccupied {
+  transform-origin: center bottom;
+  animation: teamSlotBob 1.5s ease-in-out infinite;
+  animation-delay: calc(var(--slot-index, 0) * 0.12s);
+  will-change: transform;
+}
+
+.teamSlot:hover .spriteStageOccupied {
+  animation: teamSpriteHop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.teamSlotShuffle .spriteStageOccupied {
+  animation: teamSlotShuffle 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes teamSlotBob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes teamSpriteHop {
+  0% {
+    transform: translateY(0);
+  }
+
+  40% {
+    transform: translateY(-20px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes teamSlotShuffle {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+
+  35% {
+    transform: translateY(-18px) scale(1.06);
+    opacity: 0.85;
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.spriteImg {
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.22));
+}
+
+.emptyMark {
+  font-size: var(--ds-text-xl);
+  font-weight: var(--ds-weight-bold);
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1;
+  padding-bottom: var(--ds-space-1);
+}
+
+.slotLabel {
+  width: 100%;
+  font-size: 0.7rem;
+  font-weight: var(--ds-weight-semibold);
+  color: #0f1a12;
+  text-align: center;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.removeBtn {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: 1px solid rgba(15, 26, 18, 0.25);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ds-color-danger, #e53e3e);
+  font-size: 0.875rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background var(--ds-duration-fast) var(--ds-ease-standard),
+    transform var(--ds-duration-fast) var(--ds-ease-standard);
+}
+
+.removeBtn:hover {
+  background: #fff;
+  transform: scale(1.08);
+}

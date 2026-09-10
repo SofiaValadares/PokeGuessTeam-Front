@@ -1,0 +1,189 @@
+/* Moldura estilo monitor Bill PC (Gen 2–3) */
+.monitor {
+  --bill-frame: var(--ds-palette-cyan-700);
+  --bill-frame-inner: var(--ds-palette-cyan-900);
+  --bill-screen: var(--ds-palette-gray-100);
+  --bill-screen-border: var(--ds-palette-gray-400);
+  --bill-slot-bg: var(--ds-palette-white-100);
+  --bill-slot-border: var(--ds-palette-gray-500);
+  --bill-slot-empty: var(--ds-palette-gray-200);
+
+  border: 3px solid var(--bill-frame);
+  border-radius: var(--ds-radius-md);
+  padding: var(--ds-space-3);
+  background: linear-gradient(
+    165deg,
+    var(--ds-palette-cyan-600) 0%,
+    var(--bill-frame) 45%,
+    var(--bill-frame-inner) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--ds-palette-white-100) 25%, transparent),
+    var(--ds-shadow-md);
+}
+
+:global([data-theme='dark']) .monitor {
+  --bill-screen: var(--ds-palette-dark-700);
+  --bill-screen-border: var(--ds-palette-dark-400);
+  --bill-slot-bg: var(--ds-palette-dark-600);
+  --bill-slot-border: var(--ds-palette-dark-300);
+  --bill-slot-empty: var(--ds-palette-dark-800);
+}
+
+.screen {
+  background: var(--bill-screen);
+  border: 2px solid var(--bill-screen-border);
+  border-radius: var(--ds-radius-sm);
+  padding: var(--ds-space-2);
+  box-shadow: inset 0 2px 8px color-mix(in srgb, var(--ds-palette-black-100) 12%, transparent);
+}
+
+.monitorCompact {
+  width: max-content;
+  max-width: 100%;
+}
+
+.monitorFill {
+  width: 100%;
+}
+
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--ds-space-1);
+}
+
+.gridFixedColumns {
+  grid-template-columns: repeat(5, 4.75rem);
+}
+
+.grid > li {
+  min-width: 0;
+}
+
+.slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ds-space-1);
+  width: 100%;
+  min-height: 5.5rem;
+  padding: var(--ds-space-1) var(--ds-space-1) var(--ds-space-2);
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
+  background: var(--bill-slot-bg);
+  border: 2px solid var(--bill-slot-border);
+  border-radius: 2px;
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--ds-palette-black-100) 8%, transparent);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
+}
+
+.slot:hover:not(.slotEmpty) {
+  border-color: var(--ds-color-accent);
+  box-shadow:
+    inset 0 -2px 0 color-mix(in srgb, var(--ds-palette-black-100) 8%, transparent),
+    0 0 0 1px var(--ds-color-accent-muted);
+  transform: translateY(-1px);
+  z-index: 1;
+}
+
+.slot:focus-visible {
+  outline: 2px solid var(--ds-color-accent);
+  outline-offset: 2px;
+}
+
+.slotSelected {
+  border-color: var(--ds-color-accent);
+  background: color-mix(in srgb, var(--ds-color-accent-muted) 35%, var(--bill-slot-bg));
+  box-shadow:
+    inset 0 -2px 0 color-mix(in srgb, var(--ds-palette-black-100) 8%, transparent),
+    0 0 0 2px var(--ds-color-accent-muted);
+}
+
+.slotEmpty {
+  background: var(--bill-slot-empty);
+  border-style: dashed;
+  border-color: var(--ds-palette-gray-400);
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.slotUnregistered .name {
+  color: var(--ds-color-text-muted);
+}
+
+.spriteWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3rem;
+}
+
+.sprite {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+
+.name {
+  margin: 0;
+  width: 100%;
+  font-size: 0.625rem;
+  font-weight: var(--ds-weight-semibold);
+  line-height: 1.2;
+  text-align: center;
+  color: var(--ds-color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.footer {
+  margin: 0;
+  font-size: 0.5625rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ds-color-text-muted);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.registeredDot {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ds-color-success);
+  box-shadow: 0 0 0 1px var(--bill-slot-bg);
+}
+
+@media (min-width: 40rem) {
+  .slot {
+    min-height: 6.25rem;
+  }
+
+  .sprite {
+    width: 64px;
+    height: 64px;
+  }
+
+  .name {
+    font-size: var(--ds-text-xs);
+  }
+
+  .footer {
+    font-size: 0.625rem;
+  }
+}
