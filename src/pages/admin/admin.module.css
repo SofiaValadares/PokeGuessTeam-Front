@@ -495,3 +495,122 @@
 .logOther {
   color: var(--ds-palette-gray-300);
 }
+
+.monoCell {
+  font-family: var(--ds-font-mono);
+  font-size: var(--ds-text-sm);
+  white-space: nowrap;
+}
+
+.logActionCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.logActionCell strong {
+  font-size: var(--ds-text-sm);
+}
+
+.userSuggestList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-1);
+  border: 1px solid var(--ds-color-border-default);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-color-bg-elevated);
+  max-height: 14rem;
+  overflow: auto;
+}
+
+.userSuggestBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: var(--ds-space-2) var(--ds-space-3);
+  cursor: pointer;
+  font: inherit;
+  color: var(--ds-color-text-primary);
+}
+
+.userSuggestBtn:hover {
+  background: var(--ds-color-accent-muted);
+}
+
+.userCountModal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  max-height: min(60vh, 28rem);
+}
+
+.userCountList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-2);
+}
+
+.userCountRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--ds-space-2);
+  align-items: center;
+}
+
+.userCountSelect {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ds-space-2);
+  width: 100%;
+  border: 1px solid var(--ds-color-border-default);
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-color-bg-base);
+  padding: var(--ds-space-2) var(--ds-space-3);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+.userCountSelect:hover {
+  border-color: var(--ds-color-accent);
+}
+
+.logCountBadge {
+  flex-shrink: 0;
+  font-size: var(--ds-text-xs);
+  font-weight: var(--ds-weight-semibold);
+  color: var(--ds-color-text-secondary);
+}
+
+.copyNameBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 1px solid var(--ds-color-border-default);
+  border-radius: var(--ds-radius-sm);
+  background: transparent;
+  color: var(--ds-color-text-secondary);
+  font: inherit;
+  font-size: var(--ds-text-xs);
+  padding: 0.35rem 0.5rem;
+  cursor: pointer;
+}
+
+.copyNameBtn:hover {
+  color: var(--ds-color-accent);
+  border-color: var(--ds-color-accent);
+}

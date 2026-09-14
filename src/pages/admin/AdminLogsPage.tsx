@@ -1,50 +1,39 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowDownToLine, RefreshCw } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { RefreshCw } from 'lucide-react';
 import { Button, InlineAlert, TextField } from '../../ds';
 import { toFriendlyUserMessage } from '../../services/http';
 import {
-  fetchAdminLogs,
-  type SystemLogEntry,
-  type SystemLogLevel,
+  fetchAdminSystemLogs,
+  type AuditLogEntry,
+  type AuditSystemCategoryFilter,
 } from '../../services/adminService';
+import {
+  formatAuditActionDetail,
+  formatAuditActor,
+  formatAuditTimestamp,
+} from './auditLogFormat';
 import styles from './admin.module.css';
 
-const LEVELS: { id: SystemLogLevel; label: string }[] = [
-  { id: 'ALL', label: 'ALL' },
-  { id: 'ERROR', label: 'ERROR' },
-  { id: 'WARN', label: 'WARN' },
-  { id: 'INFO', label: 'INFO' },
-  { id: 'DEBUG', label: 'DEBUG' },
+const CATEGORIES: { id: AuditSystemCategoryFilter; label: string }[] = [
+  { id: 'ALL', label: 'Todos' },
+  { id: 'ADMIN_ACTION', label: 'Ações admin' },
+  { id: 'SECURITY_CRITICAL', label: 'Segurança' },
 ];
 
-function levelClass(level: string): string {
-  switch (level) {
-    case 'ERROR':
-      return styles.logError;
-    case 'WARN':
-      return styles.logWarn;
-    case 'INFO':
-      return styles.logInfo;
-    case 'DEBUG':
-      return styles.logDebug;
-    default:
-      return styles.logOther;
-  }
-}
-
 export default function AdminLogsPage() {
-  const scrollerRef = useRef<HTMLDivElement | null>(null);
-  const [level, setLevel] = useState<SystemLogLevel>('ALL');
+  const [category, setCategory] = useState<AuditSystemCategoryFilter>('ALL');
   const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [entries, setEntries] = useState<SystemLogEntry[]>([]);
-  const [truncated, setTruncated] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rows, setRows] = useState<AuditLogEntry[]>([]);
+  const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [autoScroll, setAutoScroll] = useState(true);
 
   useEffect(() => {
     const t = window.setTimeout(() => {
+      setPage(0);
       setSearchQuery(searchInput.trim());
     }, 300);
     return () => window.clearTimeout(t);
@@ -54,50 +43,40 @@ export default function AdminLogsPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchAdminLogs({
-        level,
+      const data = await fetchAdminSystemLogs({
+        page,
+        size: 50,
         q: searchQuery,
-        limit: 500,
+        category,
       });
-      setEntries(data.entries);
-      setTruncated(data.truncated);
+      setRows(data.content);
+      setTotalPages(data.totalPages);
     } catch (e) {
-      setError(toFriendlyUserMessage(e, 'Não foi possível carregar os logs.'));
+      setError(toFriendlyUserMessage(e, 'Não foi possível carregar os logs de auditoria.'));
     } finally {
       setLoading(false);
     }
-  }, [level, searchQuery]);
+  }, [page, searchQuery, category]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  useEffect(() => {
-    if (!autoScroll) {
-      return;
-    }
-    const el = scrollerRef.current;
-    if (el) {
-      el.scrollTop = el.scrollHeight;
-    }
-  }, [entries, autoScroll, loading]);
-
   return (
     <>
       <div className={styles.pageHeader}>
-        <h1 className="ds-h1">Logs do Sistema</h1>
+        <div>
+          <h1 className="ds-h1">Logs do Sistema</h1>
+          <p className="ds-body-muted" style={{ margin: '0.35rem 0 0' }}>
+            Apenas ações de administradores e eventos críticos de segurança.
+          </p>
+        </div>
         <div className={styles.headerActions}>
-          <Button
-            type="button"
-            size="sm"
-            variant={autoScroll ? 'primary' : 'secondary'}
-            onClick={() => setAutoScroll((v) => !v)}
-            aria-pressed={autoScroll}
-            title={autoScroll ? 'Autoscroll ligado' : 'Autoscroll desligado'}
-          >
-            <ArrowDownToLine size={16} aria-hidden />
-            Autoscroll
-          </Button>
+          <Link to="/admin/logs/users" className={styles.linkButton}>
+            <Button type="button" size="sm" variant="secondary">
+              Logs por utilizador
+            </Button>
+          </Link>
           <Button type="button" size="sm" variant="secondary" onClick={() => void load()} disabled={loading}>
             <RefreshCw size={16} aria-hidden />
             Atualizar
@@ -109,21 +88,24 @@ export default function AdminLogsPage() {
         <div className={styles.searchField}>
           <TextField
             label="Pesquisar"
-            name="logSearch"
+            name="systemLogSearch"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Palavra-chave, módulo ou mensagem"
+            placeholder="Utilizador, ação, endpoint ou detalhe"
           />
         </div>
-        <div className={styles.filters} role="group" aria-label="Nível de log">
-          {LEVELS.map((f) => (
+        <div className={styles.filters} role="group" aria-label="Categoria">
+          {CATEGORIES.map((f) => (
             <button
               key={f.id}
               type="button"
-              className={[styles.filterChip, level === f.id ? styles.filterChipActive : '']
+              className={[styles.filterChip, category === f.id ? styles.filterChipActive : '']
                 .filter(Boolean)
                 .join(' ')}
-              onClick={() => setLevel(f.id)}
+              onClick={() => {
+                setPage(0);
+                setCategory(f.id);
+              }}
             >
               {f.label}
             </button>
@@ -131,25 +113,75 @@ export default function AdminLogsPage() {
         </div>
       </div>
 
-      {error ? <InlineAlert tone="error">{error}</InlineAlert> : null}
-      {truncated ? (
-        <p className="ds-body-muted">A mostrar as entradas mais recentes do ficheiro de log.</p>
+      {error ? (
+        <InlineAlert tone="error" role="alert">
+          {error}
+        </InlineAlert>
       ) : null}
-      {loading ? <p className="ds-body-muted">A carregar…</p> : null}
 
-      <div ref={scrollerRef} className={styles.logTerminal} role="log" aria-live="polite">
-        {!loading && entries.length === 0 ? (
-          <p className={styles.logEmpty}>Nenhum log encontrado.</p>
-        ) : (
-          entries.map((entry, index) => (
-            <pre
-              key={`${entry.timestamp}-${entry.origin}-${index}`}
-              className={[styles.logLine, levelClass(entry.level)].join(' ')}
-            >
-              {entry.raw}
-            </pre>
-          ))
-        )}
+      <div className={styles.tableWrap}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Utilizador</th>
+              <th>Data e hora</th>
+              <th>Categoria</th>
+              <th>Detalhes da ação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={4}>A carregar…</td>
+              </tr>
+            ) : rows.length === 0 ? (
+              <tr>
+                <td colSpan={4}>Sem eventos de auditoria nesta vista.</td>
+              </tr>
+            ) : (
+              rows.map((row) => (
+                <tr key={row.id}>
+                  <td>{formatAuditActor(row)}</td>
+                  <td className={styles.monoCell}>{formatAuditTimestamp(row.createdAt)}</td>
+                  <td>
+                    <span className={styles.badge}>{row.category}</span>
+                  </td>
+                  <td>
+                    <div className={styles.logActionCell}>
+                      <strong>{row.action}</strong>
+                      <span className="ds-body-muted">{formatAuditActionDetail(row)}</span>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className={styles.pagination}>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          disabled={page <= 0 || loading}
+          onClick={() => setPage((p) => Math.max(0, p - 1))}
+        >
+          Anterior
+        </Button>
+        <span className="ds-body-muted">
+          Página {page + 1}
+          {totalPages > 0 ? ` / ${totalPages}` : ''}
+        </span>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          disabled={loading || totalPages === 0 || page >= totalPages - 1}
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Seguinte
+        </Button>
       </div>
     </>
   );

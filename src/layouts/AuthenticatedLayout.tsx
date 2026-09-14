@@ -43,6 +43,14 @@ function AdminHeaderNav() {
       >
         Logs do Sistema
       </NavLink>
+      <NavLink
+        to="/admin/logs/users"
+        className={({ isActive }) =>
+          [headerStyles.navText, isActive ? headerStyles.navTextActive : ''].filter(Boolean).join(' ')
+        }
+      >
+        Logs por Utilizador
+      </NavLink>
     </>
   );
 }
