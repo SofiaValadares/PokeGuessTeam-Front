@@ -1,6 +1,6 @@
 import type { TrainingTeamSlotDto } from '../../../api/types/game';
 import type { PokemonDto } from '../../../api/types/pokemon';
-import { Card } from '../../../ds';
+import { Card, Spinner } from '../../../ds';
 import type { TrainingSlotView } from '../types/trainingSlot';
 import { TrainingTeamSection } from './training/TrainingTeamSection';
 import homeStyles from '../home.module.css';
@@ -27,7 +27,7 @@ export function TrainingTeamCard({
   return (
     <Card padding="md" className={homeStyles.teamCardWrap}>
       {loading ? (
-        <p className="ds-body-muted">A carregar equipe…</p>
+        <Spinner label="A carregar equipe…" />
       ) : errorMessage ? null : (
         <TrainingTeamSection
           slots={slots}

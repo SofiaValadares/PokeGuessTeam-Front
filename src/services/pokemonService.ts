@@ -27,16 +27,21 @@ export async function fetchPokemonSpeciesBatch(
   const unique = Array.from(new Set(pokedexNumbers.filter((n) => n > 0)));
   if (unique.length === 0) return new Map();
 
-  const params = new URLSearchParams({ numbers: unique.join(',') });
-  const list = await apiFetchJson<PokemonDto[]>(
-    `/api/pokemon/species?${params.toString()}`,
-    { method: 'GET' },
-  );
-
+  const CHUNK = 100;
   const result = new Map<number, PokemonDto>();
-  for (const dto of list) {
-    result.set(dto.number, dto);
+
+  for (let i = 0; i < unique.length; i += CHUNK) {
+    const chunk = unique.slice(i, i + CHUNK);
+    const params = new URLSearchParams({ numbers: chunk.join(',') });
+    const list = await apiFetchJson<PokemonDto[]>(
+      `/api/pokemon/species?${params.toString()}`,
+      { method: 'GET' },
+    );
+    for (const dto of list) {
+      result.set(dto.number, dto);
+    }
   }
+
   return result;
 }
 

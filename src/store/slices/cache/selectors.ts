@@ -16,10 +16,13 @@ export const selectGameHistory = (state: RootState) => state.cache.gameHistory;
 export const selectProfileMe = (state: RootState) => state.cache.profileMe;
 
 export const selectCacheReady = (state: RootState) =>
-  state.cache.status === 'success' && state.cache.pokedex.length > 0;
+  state.cache.status === 'success' && state.cache.profileMe != null;
 
-export const selectRegisteredPokemonCount = (state: RootState) =>
-  state.cache.pokedex.filter((e) => e.registeredInUserPokedex).length;
+export const selectRegisteredPokemonCount = (state: RootState) => {
+  const fromProfile = state.cache.profileMe?.registeredPokedexCount;
+  if (typeof fromProfile === 'number') return fromProfile;
+  return state.cache.pokedex.filter((e) => e.registeredInUserPokedex).length;
+};
 
 export function paginate<T>(
   items: T[],

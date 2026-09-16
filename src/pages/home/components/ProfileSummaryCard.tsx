@@ -1,5 +1,5 @@
 import { PokemonSprite } from '../../../components/PokemonSprite';
-import { Button, Card, InlineAlert, PageSection } from '../../../ds';
+import { Button, Card, InlineAlert, PageSection, Spinner } from '../../../ds';
 import { useHome } from '../providers/HomeProvider';
 import styles from './profile-summary.module.css';
 
@@ -17,7 +17,7 @@ export function ProfileSummaryCard() {
   if (loading) {
     return (
       <Card padding="md" className={styles.card}>
-        <p className="ds-body-muted">A carregar perfil…</p>
+        <Spinner label="A carregar perfil…" />
       </Card>
     );
   }

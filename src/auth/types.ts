@@ -94,4 +94,7 @@ export type MeResponse = {
   emailVerified?: boolean;
   /** ISO-8601 (LocalDateTime serializado pelo Jackson). */
   registerDate?: string;
+  role?: 'USER' | 'ADMIN' | 'MASTER_ADMIN' | string;
+  siteBanned?: boolean;
+  onlineBanned?: boolean;
 };

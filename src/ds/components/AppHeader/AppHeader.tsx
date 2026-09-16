@@ -14,10 +14,14 @@ export type AppHeaderProps = {
   end?: ReactNode;
   /** Quando `false`, os atalhos do nav principal não são mostrados (visitante). Por omissão `true`. */
   navEnabled?: boolean;
+  /** Substitui o nav padrão (ex.: navegação do painel admin). */
+  nav?: ReactNode;
 };
 
-export function AppHeader({ end, navEnabled = true }: AppHeaderProps) {
-  const showTrailing = navEnabled || Boolean(end);
+export function AppHeader({ end, navEnabled = true, nav }: AppHeaderProps) {
+  const showDefaultNav = navEnabled && nav == null;
+  const showCustomNav = nav != null;
+  const showTrailing = showDefaultNav || showCustomNav || Boolean(end);
 
   return (
     <header className={styles.header}>
@@ -27,7 +31,8 @@ export function AppHeader({ end, navEnabled = true }: AppHeaderProps) {
         </Link>
         {showTrailing ? (
           <div className={styles.trailing}>
-            {navEnabled ? (
+            {showCustomNav ? <nav className={styles.nav} aria-label="Admin">{nav}</nav> : null}
+            {showDefaultNav ? (
               <nav className={styles.nav} aria-label="Atalhos principais">
                 <NavLink
                   to="/"

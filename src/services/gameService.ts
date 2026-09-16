@@ -103,10 +103,16 @@ export async function fetchActiveFriendMatch(): Promise<FriendMatchStateDto | nu
   return parseFriendMatchState(raw);
 }
 
-export async function startFriendMatch(team: number[]): Promise<FriendMatchStateDto> {
+export async function startFriendMatch(
+  team: number[],
+  options?: { eventMode?: boolean },
+): Promise<FriendMatchStateDto> {
   const raw = await apiFetchJson<FriendMatchStateDto>(`${FRIEND}`, {
     method: 'POST',
-    body: JSON.stringify({ team }),
+    body: JSON.stringify({
+      team,
+      ...(options?.eventMode ? { eventMode: true } : {}),
+    }),
   });
   return parseFriendMatchState(raw);
 }
