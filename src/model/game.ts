@@ -47,6 +47,7 @@ export type GameHistoryPlayer = {
   username: string | null;
   correctGuesses: number;
   result: GameResult;
+  selectedTeam?: number[] | null;
 };
 
 export type GameHistoryEntry = {

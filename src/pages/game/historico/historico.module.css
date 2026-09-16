@@ -137,6 +137,29 @@
   cursor: not-allowed;
 }
 
+.assistantSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+  margin-bottom: var(--ds-space-5);
+  padding: var(--ds-space-4);
+  border: 1px solid var(--ds-color-border-default);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-color-bg-elevated);
+}
+
+.assistantHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.assistantHeader h2 {
+  margin: 0;
+  font-size: var(--ds-text-md);
+  color: var(--ds-color-text-primary);
+}
+
 .pagination {
   flex-shrink: 0;
 }
