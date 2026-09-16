@@ -145,3 +145,122 @@ export async function fetchActiveBonusEvent(): Promise<ActiveBonusEvent | null> 
   const data = await apiFetchJson<ActiveBonusEvent | undefined>('/api/events/active', { method: 'GET' });
   return data ?? null;
 }
+
+export type AuditLogCategory = 'USER_REQUEST' | 'ADMIN_ACTION' | 'SECURITY_CRITICAL';
+
+export type AuditLogEntry = {
+  id: string;
+  category: AuditLogCategory | string;
+  actorUserId?: string | null;
+  actorUsername?: string | null;
+  actorEmail?: string | null;
+  httpMethod?: string | null;
+  path?: string | null;
+  statusCode?: number | null;
+  durationMs?: number | null;
+  action: string;
+  detail?: string | null;
+  createdAt: string;
+};
+
+export type AuditLogPage = {
+  content: AuditLogEntry[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+};
+
+export type AuditLogUserCount = {
+  userId: string;
+  username: string;
+  email: string;
+  logCount: number;
+};
+
+export type AuditSystemCategoryFilter = 'ALL' | 'ADMIN_ACTION' | 'SECURITY_CRITICAL';
+
+/** Logs de sistema (ADMIN_ACTION + SECURITY_CRITICAL). */
+export async function fetchAdminSystemLogs(params: {
+  page?: number;
+  size?: number;
+  q?: string;
+  category?: AuditSystemCategoryFilter;
+}): Promise<AuditLogPage> {
+  const q = new URLSearchParams();
+  q.set('page', String(params.page ?? 0));
+  q.set('size', String(params.size ?? 50));
+  q.set('category', params.category ?? 'ALL');
+  if (params.q?.trim()) {
+    q.set('q', params.q.trim());
+  }
+  return apiFetchJson<AuditLogPage>(`/api/admin/logs?${q.toString()}`, { method: 'GET' });
+}
+
+/** Logs atrelados a um utilizador. */
+export async function fetchAdminUserLogs(
+  userId: string,
+  params: { page?: number; size?: number; q?: string } = {},
+): Promise<AuditLogPage> {
+  const q = new URLSearchParams();
+  q.set('page', String(params.page ?? 0));
+  q.set('size', String(params.size ?? 50));
+  if (params.q?.trim()) {
+    q.set('q', params.q.trim());
+  }
+  return apiFetchJson<AuditLogPage>(
+    `/api/admin/logs/by-user/${encodeURIComponent(userId)}?${q.toString()}`,
+    { method: 'GET' },
+  );
+}
+
+/** Utilizadores com contagem de logs (modal de seleção). */
+export async function fetchAdminLogUserCounts(q?: string): Promise<AuditLogUserCount[]> {
+  const params = new URLSearchParams();
+  if (q?.trim()) {
+    params.set('q', q.trim());
+  }
+  const suffix = params.toString() ? `?${params.toString()}` : '';
+  return apiFetchJson<AuditLogUserCount[]>(`/api/admin/logs/user-counts${suffix}`, {
+    method: 'GET',
+  });
+}
+
+/** @deprecated Usar fetchAdminSystemLogs */
+export type SystemLogLevel = 'ALL' | 'ERROR' | 'WARN' | 'INFO' | 'DEBUG';
+export type SystemLogEntry = {
+  timestamp: string;
+  level: string;
+  origin: string;
+  message: string;
+  raw: string;
+};
+export type SystemLogList = {
+  entries: SystemLogEntry[];
+  returned: number;
+  truncated: boolean;
+};
+export async function fetchAdminLogs(_params: {
+  level?: SystemLogLevel;
+  q?: string;
+  limit?: number;
+}): Promise<SystemLogList> {
+  const page = await fetchAdminSystemLogs({
+    page: 0,
+    size: 50,
+    q: _params.q,
+  });
+  return {
+    entries: page.content.map((e) => ({
+      timestamp: e.createdAt,
+      level: String(e.category),
+      origin: e.actorUsername ?? e.actorUserId ?? '—',
+      message: e.detail ?? e.action,
+      raw: e.detail ?? e.action,
+    })),
+    returned: page.content.length,
+    truncated: !page.last,
+  };
+}

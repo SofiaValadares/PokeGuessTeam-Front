@@ -28,12 +28,28 @@ function AdminHeaderNav() {
       </NavLink>
       <NavLink
         to="/admin/events"
-        end
         className={({ isActive }) =>
           [headerStyles.navText, isActive ? headerStyles.navTextActive : ''].filter(Boolean).join(' ')
         }
       >
         Eventos
+      </NavLink>
+      <NavLink
+        to="/admin/logs"
+        end
+        className={({ isActive }) =>
+          [headerStyles.navText, isActive ? headerStyles.navTextActive : ''].filter(Boolean).join(' ')
+        }
+      >
+        Logs do Sistema
+      </NavLink>
+      <NavLink
+        to="/admin/logs/users"
+        className={({ isActive }) =>
+          [headerStyles.navText, isActive ? headerStyles.navTextActive : ''].filter(Boolean).join(' ')
+        }
+      >
+        Logs por Utilizador
       </NavLink>
     </>
   );

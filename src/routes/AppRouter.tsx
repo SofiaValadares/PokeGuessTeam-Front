@@ -17,6 +17,8 @@ import HistoricoPage from '../pages/game/historico/historico';
 import AdminLayout from '../pages/admin/AdminLayout';
 import AdminUsersPage from '../pages/admin/AdminUsersPage';
 import AdminEventsPage from '../pages/admin/AdminEventsPage';
+import AdminLogsPage from '../pages/admin/AdminLogsPage';
+import AdminUserLogsPage from '../pages/admin/AdminUserLogsPage';
 import AdminEventFormLayout from '../pages/admin/AdminEventFormLayout';
 import AdminEventDetailsPage from '../pages/admin/AdminEventDetailsPage';
 import AdminEventPokemonPage from '../pages/admin/AdminEventPokemonPage';
@@ -72,6 +74,8 @@ export function AppRouter() {
               <Route path="admin" element={<AdminLayout />}>
                 <Route index element={<Navigate to="users" replace />} />
                 <Route path="users" element={<AdminUsersPage />} />
+                <Route path="logs" element={<AdminLogsPage />} />
+                <Route path="logs/users" element={<AdminUserLogsPage />} />
                 <Route path="events">
                   <Route index element={<AdminEventsPage />} />
                   <Route path="new" element={<AdminEventFormLayout />}>
