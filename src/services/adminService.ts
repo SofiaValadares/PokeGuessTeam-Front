@@ -95,12 +95,15 @@ export async function unbanAdminUser(userId: string, scope: BanScope): Promise<A
 
 export async function setAdminUserRole(
   userId: string,
-  role: 'USER' | 'ADMIN',
+  role: UserRole,
 ): Promise<AdminUserListItem> {
-  return apiFetchJson<AdminUserListItem>(`/api/admin/users/${encodeURIComponent(userId)}/role`, {
-    method: 'POST',
-    body: JSON.stringify({ role }),
-  });
+  return apiFetchJson<AdminUserListItem>(
+    `/api/admin/users/${encodeURIComponent(userId)}/role`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ role }),
+    },
+  );
 }
 
 export async function fetchAdminEvents(): Promise<BonusEvent[]> {
