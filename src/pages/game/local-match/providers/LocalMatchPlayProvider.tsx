@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
 import { finishLocalMatch } from '../../../../api/gameApi';
+import { verifyOpenedCommitments } from '../../../../lib/game/teamCommitment';
 import { ApiError } from '../../../../services/http';
 import { useRegisteredPokedexPokemon } from '../../../../hooks/useRegisteredPokedexPokemon';
 import { useCacheActions } from '../../../../store/providers/CacheProvider';
@@ -29,6 +30,7 @@ import {
   mergePokemonDex,
   setBusy,
   setClientState,
+  setCommitmentVerified,
   setError,
   setMatchView,
   setPhase,
@@ -124,18 +126,30 @@ export function LocalMatchPlayProvider({ hostName, children }: LocalMatchPlayPro
           ? resolveLocalUserResult(state, surrenderSide)
           : resolveUserResult(state, false);
       const response = await finishLocalMatch({
+        matchId: state.matchId,
+        hostTeam: state.hostTeam,
+        opponentTeam: state.opponentTeam,
         opponentName: state.localOpponentName ?? localMatch.opponentName.trim(),
         userCorrectGuesses: state.hostHits.length,
         opponentCorrectGuesses: state.opponentHits.length,
         result,
       });
+      const verified = await verifyOpenedCommitments({
+        hostTeam: response.hostOpening?.team ?? state.hostTeam,
+        opponentTeam: response.opponentOpening?.team ?? state.opponentTeam,
+        hostNonce: response.hostOpening?.nonce,
+        opponentNonce: response.opponentOpening?.nonce,
+        hostCommitment: localMatch.hostCommitment ?? response.hostCommitment,
+        opponentCommitment: localMatch.opponentCommitment ?? response.opponentCommitment,
+      });
+      dispatch(setCommitmentVerified(verified));
       const entry = mapGameHistoryEntry(response.historyEntry);
       applyMatchHistory(entry);
       await syncMatchRewards();
       dispatch(setClientState(state));
       await applyDexForView(state, state.currentTurn, entry);
     },
-    [applyDexForView, applyMatchHistory, dispatch, localMatch.opponentName, syncMatchRewards],
+    [applyDexForView, applyMatchHistory, dispatch, localMatch.hostCommitment, localMatch.opponentCommitment, localMatch.opponentName, syncMatchRewards],
   );
 
   const beginMatch = useCallback(

@@ -3,6 +3,7 @@ import { accountDisplayName } from '../../../../auth/accountDisplay';
 import { useAuth } from '../../../../store/providers/AuthProvider';
 import { FriendMatchBoard } from './FriendMatchBoard';
 import { MatchResultModal } from '../../shared/components/MatchResultModal';
+import { TeamCommitmentStrip } from '../../shared/components/TeamCommitmentStrip';
 import { useMatchFinishRedirect } from '../../../../hooks/useMatchFinishRedirect';
 import { guessedDexNumbersForSide } from '../../../../lib/game/matchGuesses';
 import { gameResultLabel } from '../../../../lib/game/labels';
@@ -22,7 +23,7 @@ import layout from '../../shared/layout/matchLayout.module.css';
 
 export function FriendMatchPlayingView() {
   const { me } = useAuth();
-  const { match, finishReward, guessSending, busy, error, guess, surrender, dismissFinishedMatch } =
+  const { match, finishReward, commitmentVerified, guessSending, busy, error, guess, surrender, dismissFinishedMatch } =
     useFriendMatch();
   const playerName = accountDisplayName(me);
 
@@ -107,6 +108,16 @@ export function FriendMatchPlayingView() {
         .filter(Boolean)
         .join(' ')}
     >
+      <TeamCommitmentStrip
+        hostCommitment={
+          match.yourSide === 'HOST' ? match.yourTeamCommitment : match.opponentTeamCommitment
+        }
+        opponentCommitment={
+          match.yourSide === 'HOST' ? match.opponentTeamCommitment : match.yourTeamCommitment
+        }
+        verified={commitmentVerified}
+      />
+
       <MatchResultModal
         open={showResultModal}
         lines={finishedLines}

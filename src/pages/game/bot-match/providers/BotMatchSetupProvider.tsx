@@ -4,7 +4,7 @@ import { validateBotTeam } from '../../../../api/gameApi';
 import { ApiError } from '../../../../services/http';
 import { createClientMatch } from '../../../../lib/game/matchEngine';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
-import { setBusy, setError, setTeam } from '../slice/botMatchSlice';
+import { setBusy, setError, setPublishedCommitments, setTeam } from '../slice/botMatchSlice';
 import { selectBotMatch } from '../slice/botMatchSelectors';
 import { useBotMatchDex } from './BotMatchDexProvider';
 import { useBotMatchPlay } from './BotMatchPlayProvider';
@@ -39,8 +39,15 @@ export function BotMatchSetupProvider({ hostName, children }: BotMatchSetupProvi
     dispatch(setError(null));
     try {
       const setup = await validateBotTeam(team);
+      dispatch(
+        setPublishedCommitments({
+          hostCommitment: setup.hostCommitment,
+          opponentCommitment: setup.opponentCommitment,
+        }),
+      );
       beginMatch(
         createClientMatch(setup.hostTeam, setup.opponentTeam, {
+          matchId: setup.matchId,
           hostDisplayName: hostName,
         }),
       );

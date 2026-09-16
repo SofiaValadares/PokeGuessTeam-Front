@@ -5,7 +5,14 @@ const STORAGE_KEY = 'pokeguessteam:bot-match';
 
 type PersistedBotMatch = Pick<
   BotMatchSliceState,
-  'phase' | 'team' | 'clientState' | 'matchView' | 'guessLog'
+  | 'phase'
+  | 'team'
+  | 'hostCommitment'
+  | 'opponentCommitment'
+  | 'commitmentVerified'
+  | 'clientState'
+  | 'matchView'
+  | 'guessLog'
 >;
 
 export function readPersistedBotMatch(): BotMatchSliceState | null {
@@ -17,6 +24,9 @@ export function readPersistedBotMatch(): BotMatchSliceState | null {
       return {
         ...initialBotMatchState,
         team: data.team ?? [],
+        hostCommitment: data.hostCommitment ?? null,
+        opponentCommitment: data.opponentCommitment ?? null,
+        commitmentVerified: data.commitmentVerified ?? null,
       };
     }
     if (!data.clientState) return null;
@@ -24,6 +34,9 @@ export function readPersistedBotMatch(): BotMatchSliceState | null {
       ...initialBotMatchState,
       phase: data.phase,
       team: data.team,
+      hostCommitment: data.hostCommitment ?? null,
+      opponentCommitment: data.opponentCommitment ?? null,
+      commitmentVerified: data.commitmentVerified ?? null,
       clientState: data.clientState,
       matchView: data.matchView,
       guessLog: data.guessLog ?? [],
@@ -44,6 +57,9 @@ export function writePersistedBotMatch(state: BotMatchSliceState): void {
   const payload: PersistedBotMatch = {
     phase: state.phase,
     team: state.team,
+    hostCommitment: state.hostCommitment,
+    opponentCommitment: state.opponentCommitment,
+    commitmentVerified: state.commitmentVerified,
     clientState: state.clientState,
     matchView: state.matchView,
     guessLog: state.guessLog,

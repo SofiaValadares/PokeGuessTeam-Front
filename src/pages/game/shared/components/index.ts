@@ -4,3 +4,4 @@ export { TeamPicker } from './TeamPicker';
 export { TeamSetupScreen } from './TeamSetupScreen';
 export { OpponentClueCard } from './OpponentClueCard';
 export { MatchResultModal } from './MatchResultModal';
+export { TeamCommitmentStrip } from './TeamCommitmentStrip';

@@ -13,6 +13,7 @@ import type {
   GameHistoryPageResponse,
   GameLocalFinishRequest,
   LocalMatchSetupRequest,
+  LocalMatchSetupResponse,
 } from './types/game';
 
 const BOT = '/api/game/bot/match';
@@ -33,21 +34,13 @@ export async function finishBotMatch(payload: GameBotFinishRequest): Promise<Gam
   });
 }
 
-export async function validateLocalSetup(payload: LocalMatchSetupRequest): Promise<void> {
-  const res = await apiFetch(`${LOCAL}/setup`, {
+export async function validateLocalSetup(
+  payload: LocalMatchSetupRequest,
+): Promise<LocalMatchSetupResponse> {
+  return apiFetchJson(`${LOCAL}/setup`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   });
-  if (!res.ok) {
-    const text = await res.text();
-    let body: { message?: string } | null = null;
-    try {
-      body = text ? (JSON.parse(text) as { message?: string }) : null;
-    } catch {
-      body = text ? { message: text } : null;
-    }
-    throw new ApiError(res.status, body?.message ?? res.statusText, body);
-  }
 }
 
 export async function finishLocalMatch(payload: GameLocalFinishRequest): Promise<GameFinishResponse> {

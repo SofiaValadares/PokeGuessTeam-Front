@@ -19,6 +19,20 @@ const localMatchSlice = createSlice({
       state.guessLog = [];
       state.busy = false;
       state.error = null;
+      state.hostCommitment = null;
+      state.opponentCommitment = null;
+      state.commitmentVerified = null;
+    },
+    setPublishedCommitments(
+      state,
+      action: PayloadAction<{ hostCommitment: string; opponentCommitment: string }>,
+    ) {
+      state.hostCommitment = action.payload.hostCommitment;
+      state.opponentCommitment = action.payload.opponentCommitment;
+      state.commitmentVerified = null;
+    },
+    setCommitmentVerified(state, action: PayloadAction<boolean>) {
+      state.commitmentVerified = action.payload;
     },
     hydrateLocalMatch(state, action: PayloadAction<Partial<typeof initialLocalMatchState>>) {
       Object.assign(state, action.payload);
@@ -69,6 +83,8 @@ export const {
   prepareNewLocalMatch,
   hydrateLocalMatch,
   setPhase,
+  setPublishedCommitments,
+  setCommitmentVerified,
   setOpponentName,
   setPlayer1Team,
   setPlayer2Team,

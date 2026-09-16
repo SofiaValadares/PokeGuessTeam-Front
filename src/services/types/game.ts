@@ -63,12 +63,24 @@ export type MatchRewardDto = {
   pokeballFragmentsGranted: number;
 };
 
+export type TeamOpening = {
+  team: number[];
+  nonce: string;
+};
+
 export type GameFinishResponse = {
   historyEntry: GameHistoryEntryDto;
   reward: MatchRewardDto;
+  hostCommitment?: string | null;
+  opponentCommitment?: string | null;
+  hostOpening?: TeamOpening | null;
+  opponentOpening?: TeamOpening | null;
 };
 
 export type GameBotFinishRequest = {
+  matchId: string;
+  hostTeam: number[];
+  opponentTeam: number[];
   userCorrectGuesses: number;
   opponentCorrectGuesses: number;
   result: GameResult;
@@ -79,14 +91,23 @@ export type GameLocalFinishRequest = GameBotFinishRequest & {
 };
 
 export type BotMatchSetupResponse = {
+  matchId: string;
   hostTeam: number[];
   opponentTeam: number[];
+  hostCommitment: string;
+  opponentCommitment: string;
 };
 
 export type LocalMatchSetupRequest = {
   opponentName: string;
   hostTeam: number[];
   opponentTeam: number[];
+};
+
+export type LocalMatchSetupResponse = {
+  matchId: string;
+  hostCommitment: string;
+  opponentCommitment: string;
 };
 
 export type FriendMatchJoinRequest = {
@@ -115,6 +136,11 @@ export type FriendMatchStateDto = {
   opponentHitsOnYourTeam: number[];
   yourCorrectGuesses: number;
   opponentCorrectGuesses: number;
+  yourTeamCommitment?: string | null;
+  opponentTeamCommitment?: string | null;
+  yourTeamNonce?: string | null;
+  opponentTeam?: number[] | null;
+  opponentTeamNonce?: string | null;
   host: FriendMatchParticipantDto;
   guest: FriendMatchParticipantDto | null;
   opponentKnowledge: OpponentKnowledgeSlotDto[];

@@ -23,6 +23,7 @@ import {
   withOptimisticTurnHandoff,
 } from '../../../../lib/game/parseFriendMatchState';
 import { friendMatchRewardForResult } from '../../../../lib/game/matchRewardLabels';
+import { verifyOpenedCommitments } from '../../../../lib/game/teamCommitment';
 import { mapGameHistoryEntry } from '../../../../model';
 import { useCacheActions } from '../../../../store/providers/CacheProvider';
 import type {
@@ -63,6 +64,7 @@ type FriendMatchContextValue = {
   phase: FriendMatchPhase;
   match: FriendMatchStateDto | null;
   finishReward: MatchRewardDto | null;
+  commitmentVerified: boolean | null;
   guessSending: boolean;
   busy: boolean;
   error: string | null;
@@ -105,6 +107,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
   const [resumeNotice, setResumeNotice] = useState(false);
   const [staleBlock, setStaleBlock] = useState<FriendMatchStaleBlock | null>(null);
   const [leavingMatch, setLeavingMatch] = useState(false);
+  const [commitmentVerified, setCommitmentVerified] = useState<boolean | null>(null);
   const matchIdRef = useRef<string | null>(null);
   const matchStatusRef = useRef<MatchStatus | null>(null);
   const leaveIntentionalRef = useRef(false);
@@ -126,6 +129,21 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       if (finishedMatch.status !== 'FINISHED' || !finishedMatch.historyEntry) return;
 
       markShowingResults(finishedMatch);
+
+      const hostIsYou = finishedMatch.yourSide === 'HOST';
+      const verified = await verifyOpenedCommitments({
+        hostTeam: hostIsYou ? finishedMatch.yourTeam : finishedMatch.opponentTeam,
+        opponentTeam: hostIsYou ? finishedMatch.opponentTeam : finishedMatch.yourTeam,
+        hostNonce: hostIsYou ? finishedMatch.yourTeamNonce : finishedMatch.opponentTeamNonce,
+        opponentNonce: hostIsYou ? finishedMatch.opponentTeamNonce : finishedMatch.yourTeamNonce,
+        hostCommitment: hostIsYou
+          ? finishedMatch.yourTeamCommitment
+          : finishedMatch.opponentTeamCommitment,
+        opponentCommitment: hostIsYou
+          ? finishedMatch.opponentTeamCommitment
+          : finishedMatch.yourTeamCommitment,
+      });
+      setCommitmentVerified(verified);
 
       const syncKey = finishedMatch.historyEntry.id;
       if (postMatchSyncedRef.current === syncKey) return;
@@ -445,6 +463,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
     showingResultsRef.current = false;
     setMatch(null);
     setFinishReward(null);
+    setCommitmentVerified(null);
     postMatchSyncedRef.current = null;
     matchIdRef.current = null;
     matchStatusRef.current = null;
@@ -543,6 +562,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       phase,
       match,
       finishReward,
+      commitmentVerified,
       guessSending,
       busy,
       error,
@@ -572,6 +592,7 @@ export function FriendMatchProvider({ children }: { children: React.ReactNode })
       phase,
       match,
       finishReward,
+      commitmentVerified,
       guessSending,
       busy,
       error,

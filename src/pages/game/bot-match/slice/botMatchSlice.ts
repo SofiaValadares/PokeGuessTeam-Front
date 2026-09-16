@@ -29,12 +29,26 @@ const botMatchSlice = createSlice({
       state.botBusy = false;
       state.busy = false;
       state.error = null;
+      state.hostCommitment = null;
+      state.opponentCommitment = null;
+      state.commitmentVerified = null;
     },
     setPhase(state, action: PayloadAction<BotMatchPhase>) {
       state.phase = action.payload;
     },
     setTeam(state, action: PayloadAction<number[]>) {
       state.team = action.payload;
+    },
+    setPublishedCommitments(
+      state,
+      action: PayloadAction<{ hostCommitment: string; opponentCommitment: string }>,
+    ) {
+      state.hostCommitment = action.payload.hostCommitment;
+      state.opponentCommitment = action.payload.opponentCommitment;
+      state.commitmentVerified = null;
+    },
+    setCommitmentVerified(state, action: PayloadAction<boolean>) {
+      state.commitmentVerified = action.payload;
     },
     setClientState(state, action: PayloadAction<ClientMatchState | null>) {
       state.clientState = action.payload;
@@ -69,6 +83,8 @@ export const {
   prepareNewBotMatch,
   setPhase,
   setTeam,
+  setPublishedCommitments,
+  setCommitmentVerified,
   setClientState,
   setMatchView,
   appendGuessLog,

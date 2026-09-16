@@ -1,17 +1,20 @@
 import { useMemo } from 'react';
 import { LocalMatchBoard } from './LocalMatchBoard';
 import { MatchResultModal } from '../../shared/components/MatchResultModal';
+import { TeamCommitmentStrip } from '../../shared/components/TeamCommitmentStrip';
 import { useMatchFinishRedirect } from '../../../../hooks/useMatchFinishRedirect';
 import { guessedDexNumbersForSide } from '../../../../lib/game/matchGuesses';
 import { gameResultLabel } from '../../../../lib/game/labels';
 import { InlineAlert } from '../../../../ds';
-import { useAppDispatch } from '../../../../store/hooks';
+import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import { prepareNewLocalMatch } from '../slice/localMatchSlice';
+import { selectLocalMatch } from '../slice/localMatchSelectors';
 import { useLocalMatchPlay } from '../providers/LocalMatchPlayProvider';
 import layout from '../../shared/layout/matchLayout.module.css';
 
 export function LocalMatchPlayingView() {
   const dispatch = useAppDispatch();
+  const { hostCommitment, opponentCommitment, commitmentVerified } = useAppSelector(selectLocalMatch);
   const {
     matchView,
     clientState,
@@ -76,6 +79,12 @@ export function LocalMatchPlayingView() {
         .filter(Boolean)
         .join(' ')}
     >
+      <TeamCommitmentStrip
+        hostCommitment={hostCommitment}
+        opponentCommitment={opponentCommitment}
+        verified={commitmentVerified}
+      />
+
       <MatchResultModal
         open={showResultModal}
         lines={finishedLines}
