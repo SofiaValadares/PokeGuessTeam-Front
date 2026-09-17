@@ -13,12 +13,11 @@ import type {
   MessageResponse,
   PasswordResetConfirmRequest,
   RegisterRequest,
-  RegisterResponse,
   SessionResponse,
 } from './types';
 
-export async function register(body: RegisterRequest): Promise<RegisterResponse> {
-  return apiFetchJson<RegisterResponse>('/auth/register', {
+export async function register(body: RegisterRequest): Promise<MessageResponse> {
+  return apiFetchJson<MessageResponse>('/auth/register', {
     method: 'POST',
     body: JSON.stringify(body),
   });
