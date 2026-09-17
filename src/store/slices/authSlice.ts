@@ -14,6 +14,11 @@ type HydrateResult =
   | { authenticated: true; me: MeResponse }
   | { authenticated: false; me: null };
 
+type LoginResult = {
+  firstLogin: boolean;
+  me: MeResponse;
+};
+
 export const hydrateAuth = createAsyncThunk<HydrateResult, void, { rejectValue: void }>(
   'auth/hydrate',
   async (_, { dispatch }) => {
@@ -24,7 +29,8 @@ export const hydrateAuth = createAsyncThunk<HydrateResult, void, { rejectValue: 
         return { authenticated: false, me: null };
       }
       const me = await authService.getMe();
-      await dispatch(hydrateUserCache(me.userId));
+      // Não bloquear a UI de sessão no cache completo — home carrega o essencial em paralelo.
+      void dispatch(hydrateUserCache(me.userId));
       return { authenticated: true, me };
     } catch {
       await dispatch(clearUserCache());
@@ -34,7 +40,7 @@ export const hydrateAuth = createAsyncThunk<HydrateResult, void, { rejectValue: 
 );
 
 export const loginUser = createAsyncThunk<
-  boolean,
+  LoginResult,
   { login: string; password: string },
   { rejectValue: AuthErrorPayload }
 >('auth/login', async ({ login, password }, { dispatch, rejectWithValue }) => {
@@ -43,8 +49,10 @@ export const loginUser = createAsyncThunk<
       await dispatch(clearUserCache());
     }
     const session = await authService.login({ login, password });
-    await dispatch(hydrateAuth());
-    return session.firstLogin ?? false;
+    // Evita GET /auth/session extra — o cookie já está definido.
+    const me = await authService.getMe();
+    void dispatch(hydrateUserCache(me.userId));
+    return { firstLogin: session.firstLogin ?? false, me };
   } catch (err) {
     if (err instanceof ApiError) {
       return rejectWithValue({
@@ -58,7 +66,7 @@ export const loginUser = createAsyncThunk<
 });
 
 export const confirmEmailUser = createAsyncThunk<
-  boolean,
+  LoginResult,
   EmailVerificationConfirmRequest,
   { rejectValue: AuthErrorPayload }
 >('auth/confirmEmail', async (body, { dispatch, rejectWithValue }) => {
@@ -67,8 +75,9 @@ export const confirmEmailUser = createAsyncThunk<
       await dispatch(clearUserCache());
     }
     const session = await authService.confirmEmailVerification(body);
-    await dispatch(hydrateAuth());
-    return session.firstLogin ?? false;
+    const me = await authService.getMe();
+    void dispatch(hydrateUserCache(me.userId));
+    return { firstLogin: session.firstLogin ?? false, me };
   } catch (err) {
     if (err instanceof ApiError) {
       return rejectWithValue({
@@ -124,10 +133,16 @@ const authSlice = createSlice({
         state.me = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        state.showIntroDialogue = action.payload;
+        state.sessionFetchStatus = FetchStatus.Success;
+        state.authenticated = true;
+        state.me = action.payload.me;
+        state.showIntroDialogue = action.payload.firstLogin;
       })
       .addCase(confirmEmailUser.fulfilled, (state, action) => {
-        state.showIntroDialogue = action.payload;
+        state.sessionFetchStatus = FetchStatus.Success;
+        state.authenticated = true;
+        state.me = action.payload.me;
+        state.showIntroDialogue = action.payload.firstLogin;
       })
       .addCase(logoutUser.fulfilled, (state) => {
         state.authenticated = false;

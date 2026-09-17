@@ -53,8 +53,8 @@ export async function checkApiHealth(timeoutMs = DEFAULT_TIMEOUT_MS): Promise<bo
 }
 
 export function isApiHealthCheckEnabled(): boolean {
-  if (process.env.REACT_APP_ENABLE_API_HEALTH_CHECK === 'true') return true;
-  return process.env.NODE_ENV === 'production';
+  // Opt-in: cold start só se REACT_APP_ENABLE_API_HEALTH_CHECK=true
+  return process.env.REACT_APP_ENABLE_API_HEALTH_CHECK === 'true';
 }
 
 export function getColdStartAverageSeconds(): number {

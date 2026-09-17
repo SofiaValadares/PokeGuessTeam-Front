@@ -17,7 +17,6 @@ import {
   useFriendMatch,
 } from '../providers/FriendMatchProvider';
 import { FriendMatchResumeBanner } from './FriendMatchResumeBanner';
-import { FriendMatchSyncAction } from './FriendMatchSyncAction';
 import styles from './friend-match.module.css';
 import layout from '../../shared/layout/matchLayout.module.css';
 
@@ -181,16 +180,6 @@ export function FriendMatchPlayingView() {
             guessLoading={guessSending}
             excludedPokedexNumbers={excludedGuesses}
             playerTheme={opponentTurnActive ? 'waiting' : 'default'}
-            actionsBelowSurrender={
-              !showResultModal ? (
-                <FriendMatchSyncAction
-                  mode="refresh"
-                  className={styles.matchBoardSyncAction}
-                  label={opponentTurnActive ? 'Verificar se é a minha vez' : 'Atualizar partida'}
-                  disabled={!opponentTurnActive}
-                />
-              ) : null
-            }
           />
         </div>
       ) : null}

@@ -23,3 +23,15 @@
   min-height: 0;
   overflow: hidden;
 }
+
+.headerEnd {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+}
+
+.layoutAdmin .shellGrow {
+  min-height: 0;
+  overflow: auto;
+}
+

@@ -6,6 +6,9 @@ export {
   refreshUserCacheFromNetwork,
   reloadUserCacheOnLogin,
   clearUserCache,
+  ensurePcCache,
+  ensureGameHistoryCache,
+  ensurePokedexCache,
 } from './cacheThunks';
 export {
   applyGachaDraw,

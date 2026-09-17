@@ -11,6 +11,7 @@ import { deleteGameHistory } from '../../../services/gameService';
 import { ApiError } from '../../../services/http';
 import { useAppDispatch } from '../../../store/hooks';
 import { removeGameHistoryEntry } from '../../../store/slices/cache';
+import { HistoryAssistant } from './components/HistoryAssistant';
 import { HistoryRow } from './components/HistoryRow';
 import styles from './historico.module.css';
 
@@ -68,6 +69,13 @@ export default function HistoricoPage() {
           <p className="ds-body-muted">Ainda não jogaste partidas registadas no servidor.</p>
         ) : data ? (
           <>
+            <div className={styles.assistantSection}>
+              <div className={styles.assistantHeader}>
+                <h2>Assistente do histórico</h2>
+              </div>
+              <HistoryAssistant />
+            </div>
+
             <div className={styles.tableWrap}>
               <table className={`${styles.table} ds-motion-row-stagger`}>
                 <thead>
