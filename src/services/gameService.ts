@@ -1,9 +1,11 @@
+import { notifyAuthFailure } from '../auth/sessionGuard';
 import {
   parseFriendMatchActionResponse,
   parseFriendMatchState,
 } from '../lib/game/parseFriendMatchState';
 import { ApiError, apiFetch, apiFetchJson } from './http';
 import type {
+  BotMatchGuessCheckResponse,
   BotMatchSetupResponse,
   FriendMatchActionResponse,
   FriendMatchJoinRequest,
@@ -24,6 +26,16 @@ export async function validateBotTeam(team: number[]): Promise<BotMatchSetupResp
   return apiFetchJson(`${BOT}/team`, {
     method: 'PUT',
     body: JSON.stringify({ team }),
+  });
+}
+
+export async function checkBotGuess(
+  matchId: string,
+  pokedexNumber: number,
+): Promise<BotMatchGuessCheckResponse> {
+  return apiFetchJson(`${BOT}/guess`, {
+    method: 'POST',
+    body: JSON.stringify({ matchId, pokedexNumber }),
   });
 }
 
@@ -84,12 +96,13 @@ export async function fetchActiveFriendMatch(): Promise<FriendMatchStateDto | nu
   if (res.status === 204 || res.status === 404) return null;
   if (!res.ok) {
     const text = await res.text();
-    let body: { message?: string } | null = null;
+    let body: { message?: string; code?: string } | null = null;
     try {
-      body = text ? (JSON.parse(text) as { message?: string }) : null;
+      body = text ? (JSON.parse(text) as { message?: string; code?: string }) : null;
     } catch {
       body = text ? { message: text } : null;
     }
+    notifyAuthFailure(FRIEND, res.status, body?.code, body?.message);
     throw new ApiError(res.status, body?.message ?? res.statusText, body);
   }
   const raw = (await res.json()) as FriendMatchStateDto;

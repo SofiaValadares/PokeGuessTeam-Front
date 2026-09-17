@@ -46,9 +46,10 @@ export function BotMatchSetupProvider({ hostName, children }: BotMatchSetupProvi
         }),
       );
       beginMatch(
-        createClientMatch(setup.hostTeam, setup.opponentTeam, {
+        createClientMatch(setup.hostTeam, [], {
           matchId: setup.matchId,
           hostDisplayName: hostName,
+          opponentTeamHidden: true,
         }),
       );
     } catch (e) {

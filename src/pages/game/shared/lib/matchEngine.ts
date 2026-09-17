@@ -32,8 +32,11 @@ function setPlayerSkipTurns(state: ClientMatchState, side: MatchPlayerSide, skip
 }
 
 function hasPlayerCompleted(state: ClientMatchState, side: MatchPlayerSide): boolean {
-  const team = playerTeam(state, opponentSide(side));
   const hits = playerHits(state, side);
+  if (state.opponentTeamHidden && side === 'HOST') {
+    return hits.length >= TEAM_SIZE;
+  }
+  const team = playerTeam(state, opponentSide(side));
   return team.length > 0 && hits.length >= team.length;
 }
 
@@ -64,7 +67,12 @@ function finishDraw(state: ClientMatchState): ClientMatchState {
 export function createClientMatch(
   hostTeam: number[],
   opponentTeam: number[],
-  options?: { matchId?: string; localOpponentName?: string; hostDisplayName?: string },
+  options?: {
+    matchId?: string;
+    localOpponentName?: string;
+    hostDisplayName?: string;
+    opponentTeamHidden?: boolean;
+  },
 ): ClientMatchState {
   const starter: MatchPlayerSide = Math.random() > 0.5 ? 'HOST' : 'OPPONENT';
   return {
@@ -86,6 +94,7 @@ export function createClientMatch(
     finishedAt: null,
     localOpponentName: options?.localOpponentName,
     hostDisplayName: options?.hostDisplayName ?? 'Jogador',
+    opponentTeamHidden: options?.opponentTeamHidden,
   };
 }
 
@@ -93,6 +102,7 @@ export function applyGuess(
   state: ClientMatchState,
   playerSide: MatchPlayerSide,
   pokemon: PokemonDto,
+  options?: { exactMatch?: boolean },
 ): ApplyGuessResult {
   if (state.status !== 'ACTIVE') {
     throw new Error('A partida não está ativa.');
@@ -102,8 +112,11 @@ export function applyGuess(
   }
 
   const opponentTeamDex = playerTeam(state, opponentSide(playerSide));
-  const matchedDexNumbers = opponentTeamDex.filter((dex) => dex === pokemon.number);
-  const exactMatch = matchedDexNumbers.length > 0;
+  const exactMatch =
+    typeof options?.exactMatch === 'boolean'
+      ? options.exactMatch
+      : opponentTeamDex.filter((dex) => dex === pokemon.number).length > 0;
+  const matchedDexNumbers = exactMatch ? [pokemon.number] : [];
 
   let next: ClientMatchState = { ...state };
   let outcome: ClientGuessRecord['outcome'];
@@ -115,6 +128,13 @@ export function applyGuess(
       if (!hits.includes(dex)) hits.push(dex);
     }
     next = setPlayerHits(next, playerSide, hits);
+    if (
+      next.opponentTeamHidden &&
+      playerSide === 'HOST' &&
+      !next.opponentTeam.includes(pokemon.number)
+    ) {
+      next = { ...next, opponentTeam: [...next.opponentTeam, pokemon.number] };
+    }
 
     if (next.finalResponseFor === playerSide) {
       if (hasPlayerCompleted(next, playerSide)) {

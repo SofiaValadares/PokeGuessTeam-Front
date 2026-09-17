@@ -14,10 +14,11 @@ export default function LoginPage() {
     emailVerified,
     passwordResetSuccess,
     accountDeleted,
-    loginFieldError,
+    sessionEndedMessage,
+    emailFieldError,
     passwordFieldError,
     canSubmit,
-    onLoginBlur,
+    onEmailBlur,
     onPasswordBlur,
   } = useLoginForm();
 
@@ -29,11 +30,12 @@ export default function LoginPage() {
       intro={
         <>
           {accountDeleted ? <InlineAlert tone="success">Conta excluída com sucesso.</InlineAlert> : null}
+          {sessionEndedMessage ? <InlineAlert tone="error">{sessionEndedMessage}</InlineAlert> : null}
           {passwordResetSuccess ? <InlineAlert tone="success">{passwordResetSuccess}</InlineAlert> : null}
           {emailVerified ? (
             <InlineAlert tone="success">E-mail verificado. Já podes entrar.</InlineAlert>
           ) : null}
-          <p className="ds-body-muted">Use seu e-mail ou nome de usuário.</p>
+          <p className="ds-body-muted">Entre com o e-mail da sua conta.</p>
         </>
       }
       footer={
@@ -44,13 +46,14 @@ export default function LoginPage() {
     >
       <form noValidate onSubmit={handleSubmit}>
         <TextField
-          label="E-mail ou usuário"
-          name="login"
-          autoComplete="username"
-          value={form.login}
-          onChange={(e) => setForm((prev) => ({ ...prev, login: e.target.value }))}
-          onBlur={onLoginBlur}
-          error={loginFieldError}
+          label="E-mail"
+          name="email"
+          type="email"
+          autoComplete="email"
+          value={form.email}
+          onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+          onBlur={onEmailBlur}
+          error={emailFieldError}
         />
         <TextField
           label="Senha"

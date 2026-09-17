@@ -31,6 +31,7 @@ export type ClientMatchState = {
   finishedAt: string | null;
   localOpponentName?: string;
   hostDisplayName?: string;
+  opponentTeamHidden?: boolean;
 };
 
 export type ApplyGuessResult = {

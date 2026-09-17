@@ -1,4 +1,4 @@
-import Pusher, { type Channel } from 'pusher-js';
+import Pusher, { type Channel, type ChannelAuthorizationCallback } from 'pusher-js';
 import { getApiBaseUrl } from '../../services/apiConfig';
 import { fetchPusherConfig, authorizePusherChannel } from '../../services/pusherService';
 
@@ -17,8 +17,8 @@ export async function getPusherClient(): Promise<Pusher | null> {
     const base = getApiBaseUrl();
     client = new Pusher(config.key, {
       cluster: config.cluster,
-      authorizer: (channel) => ({
-        authorize: (socketId, callback) => {
+      authorizer: (channel: Channel) => ({
+        authorize: (socketId: string, callback: ChannelAuthorizationCallback) => {
           void authorizePusherChannel(socketId, channel.name)
             .then((auth) => callback(null, auth))
             .catch((err: Error) => callback(err, null));

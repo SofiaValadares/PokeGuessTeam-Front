@@ -83,22 +83,31 @@ export type GameFinishResponse = {
 export type GameBotFinishRequest = {
   matchId: string;
   hostTeam: number[];
-  opponentTeam: number[];
   userCorrectGuesses: number;
   opponentCorrectGuesses: number;
   result: GameResult;
 };
 
-export type GameLocalFinishRequest = GameBotFinishRequest & {
+export type GameLocalFinishRequest = {
+  matchId: string;
+  hostTeam: number[];
+  opponentTeam: number[];
+  userCorrectGuesses: number;
+  opponentCorrectGuesses: number;
+  result: GameResult;
   opponentName: string;
 };
 
 export type BotMatchSetupResponse = {
   matchId: string;
   hostTeam: number[];
-  opponentTeam: number[];
   hostCommitment: string;
   opponentCommitment: string;
+};
+
+export type BotMatchGuessCheckResponse = {
+  exactMatch: boolean;
+  pokedexNumber: number;
 };
 
 export type LocalMatchSetupRequest = {
