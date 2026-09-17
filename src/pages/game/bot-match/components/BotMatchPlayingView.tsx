@@ -3,17 +3,20 @@ import { RIVAL } from '../../../../lib/game/characters';
 import { BotMatchBoard } from './BotMatchBoard';
 import { BotGuessOverlay } from './BotGuessOverlay';
 import { MatchResultModal } from '../../shared/components/MatchResultModal';
+import { TeamCommitmentStrip } from '../../shared/components/TeamCommitmentStrip';
 import { useMatchFinishRedirect } from '../../../../hooks/useMatchFinishRedirect';
 import { guessedDexNumbersForSide } from '../../../../lib/game/matchGuesses';
 import { gameResultLabel } from '../../../../lib/game/labels';
 import { InlineAlert } from '../../../../ds';
-import { useAppDispatch } from '../../../../store/hooks';
+import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import { prepareNewBotMatch } from '../slice/botMatchSlice';
+import { selectBotMatch } from '../slice/botMatchSelectors';
 import { useBotMatchPlay } from '../providers/BotMatchPlayProvider';
 import layout from '../../shared/layout/matchLayout.module.css';
 
 export function BotMatchPlayingView() {
   const dispatch = useAppDispatch();
+  const { hostCommitment, opponentCommitment, commitmentVerified } = useAppSelector(selectBotMatch);
   const {
     hostName,
     matchView,
@@ -80,6 +83,12 @@ export function BotMatchPlayingView() {
           opponentName={RIVAL.shortName}
         />
       ) : null}
+
+      <TeamCommitmentStrip
+        hostCommitment={hostCommitment}
+        opponentCommitment={opponentCommitment}
+        verified={commitmentVerified}
+      />
 
       <MatchResultModal
         open={showResultModal}

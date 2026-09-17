@@ -1045,3 +1045,12 @@
   background: rgb(248 113 113 / 0.15);
   color: rgb(252 165 165);
 }
+
+.commitmentStrip {
+  margin: 0 0 var(--ds-space-2);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--ds-text-xs, 0.75rem);
+  color: var(--ds-color-text-muted);
+  line-height: 1.4;
+  word-break: break-word;
+}

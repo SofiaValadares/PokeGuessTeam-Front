@@ -8,6 +8,19 @@ import {
 } from 'react';
 import { RIVAL } from '../../../../lib/game/characters';
 import { finishBotMatch } from '../../../../api/gameApi';
+import { verifyOpenedCommitments } from '../../../../lib/game/teamCommitment';
+import {
+  appendGuessLog,
+  clearGuessLog,
+  setActiveBotGuess,
+  setBotBusy,
+  setBusy,
+  setClientState,
+  setCommitmentVerified,
+  setError,
+  setMatchView,
+  setPhase,
+} from '../slice/botMatchSlice';
 import { ApiError } from '../../../../services/http';
 import { useCacheActions } from '../../../../store/providers/CacheProvider';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
@@ -25,17 +38,6 @@ import { BOT_GUESS_DELAY_MS } from '../../../../lib/game/constants';
 import { applyGuess, applySurrender, isGuessAlreadyUsed } from '../../../../lib/game/matchEngine';
 import { mapGameHistoryEntry, type GameHistoryEntry, type Pokemon } from '../../../../model';
 import type { PokemonDto } from '../../../../api/types/pokemon';
-import {
-  appendGuessLog,
-  clearGuessLog,
-  setActiveBotGuess,
-  setBotBusy,
-  setBusy,
-  setClientState,
-  setError,
-  setMatchView,
-  setPhase,
-} from '../slice/botMatchSlice';
 import { mergePokemonDex } from '../../shared/slice/matchDexSlice';
 import { selectMatchDex } from '../../shared/slice/matchDexSelectors';
 import { selectBotMatch } from '../slice/botMatchSelectors';
@@ -109,17 +111,29 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
     async (state: ClientMatchState, surrendered: boolean) => {
       const result = resolveUserResult(state, surrendered);
       const response = await finishBotMatch({
+        matchId: state.matchId,
+        hostTeam: state.hostTeam,
+        opponentTeam: state.opponentTeam,
         userCorrectGuesses: state.hostHits.length,
         opponentCorrectGuesses: state.opponentHits.length,
         result,
       });
+      const verified = await verifyOpenedCommitments({
+        hostTeam: response.hostOpening?.team ?? state.hostTeam,
+        opponentTeam: response.opponentOpening?.team ?? state.opponentTeam,
+        hostNonce: response.hostOpening?.nonce,
+        opponentNonce: response.opponentOpening?.nonce,
+        hostCommitment: botMatch.hostCommitment ?? response.hostCommitment,
+        opponentCommitment: botMatch.opponentCommitment ?? response.opponentCommitment,
+      });
+      dispatch(setCommitmentVerified(verified));
       const entry = mapGameHistoryEntry(response.historyEntry);
       applyMatchHistory(entry);
       await syncMatchRewards();
       dispatch(setClientState(state));
       await applyDexForView(state, entry);
     },
-    [applyMatchHistory, applyDexForView, dispatch, syncMatchRewards],
+    [applyMatchHistory, applyDexForView, botMatch.hostCommitment, botMatch.opponentCommitment, dispatch, syncMatchRewards],
   );
 
   const pickBotGuess = useCallback(

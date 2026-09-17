@@ -64,11 +64,11 @@ function finishDraw(state: ClientMatchState): ClientMatchState {
 export function createClientMatch(
   hostTeam: number[],
   opponentTeam: number[],
-  options?: { localOpponentName?: string; hostDisplayName?: string },
+  options?: { matchId?: string; localOpponentName?: string; hostDisplayName?: string },
 ): ClientMatchState {
   const starter: MatchPlayerSide = Math.random() > 0.5 ? 'HOST' : 'OPPONENT';
   return {
-    matchId: crypto.randomUUID(),
+    matchId: options?.matchId ?? crypto.randomUUID(),
     status: 'ACTIVE',
     currentTurn: starter,
     startingPlayer: starter,
