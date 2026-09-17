@@ -21,14 +21,13 @@ import {
   reloadUserCacheOnLogin,
   ensurePcCache,
   ensureGameHistoryCache,
-  ensurePokedexCache,
 } from './cacheThunks';
 
 function persist(state: UserCacheState): void {
   if (!state.userId) return;
   writePersistedCache({
     userId: state.userId,
-    pokedex: state.pokedex,
+    registeredPokedexNumbers: state.registeredPokedexNumbers,
     pcLines: state.pcLines,
     inventory: state.inventory,
     trainingTeam: state.trainingTeam,
@@ -116,10 +115,6 @@ const cacheSlice = createSlice({
       })
       .addCase(ensureGameHistoryCache.fulfilled, (state, action) => {
         state.gameHistory = action.payload;
-        persist(state);
-      })
-      .addCase(ensurePokedexCache.fulfilled, (state, action) => {
-        state.pokedex = action.payload;
         persist(state);
       })
       .addCase(clearUserCache.fulfilled, () => {

@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { getPokedexAll } from '../api/pokedexApi';
 import { ApiError } from '../api/http';
 import type { PokemonDto } from '../api/types/pokemon';
+import { ensureNationalCatalog } from '../lib/pokedex/nationalCatalog';
+import { useAppSelector } from '../store/hooks';
+import { selectRegisteredPokedexNumbers } from '../store/slices/cache';
 import { FetchStatus } from '../types/fetchStatus';
 
 export function useRegisteredPokedexPokemon() {
+  const registeredNumbers = useAppSelector(selectRegisteredPokedexNumbers);
   const [entries, setEntries] = useState<PokemonDto[]>([]);
   const [status, setStatus] = useState(FetchStatus.Loading);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -13,12 +16,12 @@ export function useRegisteredPokedexPokemon() {
     setStatus(FetchStatus.Loading);
     setErrorMessage(null);
     try {
-      const all = await getPokedexAll();
-      const registered = all
-        .filter((e) => e.registeredInUserPokedex)
-        .map((e) => e.pokemon)
+      const catalog = await ensureNationalCatalog();
+      const registered = new Set(registeredNumbers);
+      const filtered = catalog.species
+        .filter((p) => registered.has(p.number))
         .sort((a, b) => a.number - b.number);
-      setEntries(registered);
+      setEntries(filtered);
       setStatus(FetchStatus.Success);
     } catch (e) {
       setEntries([]);
@@ -27,7 +30,7 @@ export function useRegisteredPokedexPokemon() {
       setErrorMessage(msg);
       setStatus(FetchStatus.Error);
     }
-  }, []);
+  }, [registeredNumbers]);
 
   useEffect(() => {
     void load();

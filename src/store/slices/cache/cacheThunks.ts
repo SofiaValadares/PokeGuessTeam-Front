@@ -1,6 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
+import { ensureNationalCatalog } from '../../../lib/pokedex/nationalCatalog';
 import { fetchAllGameHistory } from '../../../services/gameService';
-import { fetchAllPokedexPages } from '../../../services/pokedexService';
+import { fetchRegisteredPokedexNumbers } from '../../../services/pokedexService';
 import { fetchAllPcLines } from '../../../services/pcService';
 import {
   fetchProfileCollection,
@@ -9,7 +10,6 @@ import {
 } from '../../../services/profileService';
 import {
   mapGameHistoryList,
-  mapPokedexEntryList,
   mapPcLineList,
   mapPokeballInventory,
   mapProfileMe,
@@ -19,20 +19,24 @@ import type { RootState } from '../../state';
 import { readPersistedCache } from './storage';
 import { emptyUserCacheState, type UserCacheState } from './types';
 
-/** Dados necessários para a home (e inventário básico). PC / histórico / Pokédex nacional vão sob demanda. */
+/** Inventário, time, perfil, PC e set registado — catálogo nacional via localStorage. */
 async function loadEssentialFromNetwork(userId: string): Promise<UserCacheState> {
-  const [collection, trainingTeamDto, profileMeDto] = await Promise.all([
+  const [collection, trainingTeamDto, profileMeDto, pcLinesDto, registered] = await Promise.all([
     fetchProfileCollection(),
     fetchTrainingTeam(),
     fetchProfileMe(),
+    fetchAllPcLines(),
+    fetchRegisteredPokedexNumbers(),
   ]);
+
+  await ensureNationalCatalog();
 
   return {
     userId,
     status: emptyUserCacheState().status,
     error: null,
-    pokedex: [],
-    pcLines: [],
+    registeredPokedexNumbers: [...registered].sort((a, b) => a - b),
+    pcLines: mapPcLineList(pcLinesDto),
     inventory: mapPokeballInventory(collection.pokeballs),
     trainingTeam: mapTrainingTeam(trainingTeamDto),
     gameHistory: [],
@@ -44,12 +48,18 @@ function canUsePersisted(userId: string): UserCacheState | null {
   const persisted = readPersistedCache();
   if (!persisted || persisted.userId !== userId) return null;
   if (!persisted.profileMe) return null;
-  // Cache antigo sem contagem leve — força um hydrate essencial uma vez.
   if (persisted.profileMe.registeredPokedexCount == null) return null;
+  if (!Array.isArray(persisted.registeredPokedexNumbers)) return null;
+  if (
+    (persisted.profileMe.registeredPokedexCount ?? 0) > 0 &&
+    persisted.registeredPokedexNumbers.length === 0
+  ) {
+    return null;
+  }
   return {
     ...emptyUserCacheState(),
     userId: persisted.userId,
-    pokedex: persisted.pokedex,
+    registeredPokedexNumbers: persisted.registeredPokedexNumbers,
     pcLines: persisted.pcLines,
     inventory: persisted.inventory,
     trainingTeam: persisted.trainingTeam,
@@ -62,7 +72,10 @@ export const hydrateUserCache = createAsyncThunk<UserCacheState, string>(
   'cache/hydrate',
   async (userId) => {
     const fromStorage = canUsePersisted(userId);
-    if (fromStorage) return fromStorage;
+    if (fromStorage) {
+      void ensureNationalCatalog();
+      return fromStorage;
+    }
     return loadEssentialFromNetwork(userId);
   },
 );
@@ -74,7 +87,7 @@ export const refreshUserCacheFromNetwork = createAsyncThunk<UserCacheState, stri
 
 export const clearUserCache = createAsyncThunk('cache/clear', async () => undefined);
 
-/** Carrega PC completo só quando a UI precisa (editor de time / pesquisa no PC). */
+/** Fallback se o PC não veio no hydrate (não deve ser chamado em loops de mount). */
 export const ensurePcCache = createAsyncThunk<
   UserCacheState['pcLines'],
   void,
@@ -96,18 +109,6 @@ export const ensureGameHistoryCache = createAsyncThunk<
   if (!userId) return gameHistory;
   if (gameHistory.length > 0) return gameHistory;
   return mapGameHistoryList(await fetchAllGameHistory());
-});
-
-/** Pokédex nacional em cache — opcional; partidas já carregam dex próprio. */
-export const ensurePokedexCache = createAsyncThunk<
-  UserCacheState['pokedex'],
-  void,
-  { state: RootState }
->('cache/ensurePokedex', async (_, { getState }) => {
-  const { pokedex, userId } = getState().cache;
-  if (!userId) return pokedex;
-  if (pokedex.length > 0) return pokedex;
-  return mapPokedexEntryList(await fetchAllPokedexPages());
 });
 
 export const reloadUserCacheOnLogin = createAsyncThunk<UserCacheState, string>(

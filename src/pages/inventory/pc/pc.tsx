@@ -4,66 +4,30 @@ import { PokemonBillGrid } from '../../../components/PokemonBillGrid';
 import { PokemonGridPagination } from '../../../components/PokemonGridPagination';
 import { resolveCurrentMemberDex } from '../../../lib/pokemon/pcCurrentForm';
 import { selectPcLines } from '../../../store/slices/cache/selectors';
-import { ensurePcCache } from '../../../store/slices/cache';
-import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { useAppSelector } from '../../../store/hooks';
 import { PC_PAGE_SIZE_OPTIONS } from '../../../lib/ui/gridPageSizes';
 import { usePokemonPcPage } from '../../../hooks/usePokemonPcPage';
 import { useSpeciesMeta } from '../../../hooks/useSpeciesMeta';
 import { Card, InlineAlert, PageSection, PageShell, TextField, Spinner } from '../../../ds';
 import { FetchStatus } from '../../../types/fetchStatus';
-import type { PcLineDto } from '../../../services/types/pokemon';
 import { PcDetailPanel } from './components/PcDetailPanel';
 import { buildPcGridData } from '../../../lib/pc/buildGridData';
 import styles from './pc.module.css';
 
 export default function PcPage() {
-  const dispatch = useAppDispatch();
   const cachedPcLines = useAppSelector(selectPcLines);
   const [pageSize, setPageSize] = useState(PC_DEFAULT_PAGE_SIZE);
   const [searchQuery, setSearchQuery] = useState('');
   const { page, setPage, data, status, errorMessage } = usePokemonPcPage(0, pageSize);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [searchLines, setSearchLines] = useState<PcLineDto[] | null>(null);
-  const [searchStatus, setSearchStatus] = useState<FetchStatus>(FetchStatus.Idle);
 
   const trimmedSearch = searchQuery.trim();
   const isSearching = trimmedSearch.length > 0;
 
-  useEffect(() => {
-    if (!isSearching) {
-      setSearchLines(null);
-      setSearchStatus(FetchStatus.Idle);
-      return;
-    }
-
-    if (cachedPcLines.length > 0) {
-      setSearchLines(cachedPcLines);
-      setSearchStatus(FetchStatus.Success);
-      return;
-    }
-
-    let cancelled = false;
-    setSearchStatus(FetchStatus.Loading);
-    void dispatch(ensurePcCache())
-      .unwrap()
-      .then((lines) => {
-        if (!cancelled) {
-          setSearchLines(lines);
-          setSearchStatus(FetchStatus.Success);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setSearchStatus(FetchStatus.Error);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [cachedPcLines, dispatch, isSearching, trimmedSearch]);
-
-  const loading = isSearching ? searchStatus === FetchStatus.Loading : status === FetchStatus.Loading;
+  const loading = status === FetchStatus.Loading;
   const lines = useMemo(
-    () => (isSearching ? (searchLines ?? []) : (data?.content ?? [])),
-    [isSearching, searchLines, data?.content],
+    () => (isSearching ? cachedPcLines : (data?.content ?? [])),
+    [isSearching, cachedPcLines, data?.content],
   );
 
   const allMemberDex = useMemo(() => lines.flatMap((line) => line.members), [lines]);
@@ -134,12 +98,6 @@ export default function PcPage() {
           {errorMessage && !isSearching ? (
             <InlineAlert tone="error" role="alert">
               {errorMessage}
-            </InlineAlert>
-          ) : null}
-
-          {isSearching && searchStatus === FetchStatus.Error ? (
-            <InlineAlert tone="error" role="alert">
-              Não foi possível pesquisar no PC.
             </InlineAlert>
           ) : null}
 

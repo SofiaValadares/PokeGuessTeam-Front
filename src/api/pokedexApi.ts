@@ -4,6 +4,9 @@ export {
   fetchAllPokedexPages,
   fetchPokedexAll,
   fetchPokedexPage,
+  fetchPokedexVersion,
+  fetchPokedexCatalog,
+  fetchRegisteredPokedexNumbers,
 } from '../services/pokedexService';
 export { getPokedexAll, getPokedexPage } from '../store/slices/cache/queries';
 

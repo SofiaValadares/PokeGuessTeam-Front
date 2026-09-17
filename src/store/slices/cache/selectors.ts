@@ -1,9 +1,17 @@
 import type { RootState } from '../../state';
 import type { Page, GameHistoryEntry, Pokemon, PcLine, PokedexEntry } from '../../../model';
+import { mapPokemon } from '../../../model';
+import {
+  getAllPokemon,
+  getPokemonByDex,
+  getSpecies,
+  paginateSpecies,
+} from '../../../lib/pokedex/nationalCatalog';
 
 export const selectUserCache = (state: RootState) => state.cache;
 
-export const selectPokedex = (state: RootState) => state.cache.pokedex;
+export const selectRegisteredPokedexNumbers = (state: RootState) =>
+  state.cache.registeredPokedexNumbers;
 
 export const selectPcLines = (state: RootState) => state.cache.pcLines;
 
@@ -21,33 +29,23 @@ export const selectCacheReady = (state: RootState) =>
 export const selectRegisteredPokemonCount = (state: RootState) => {
   const fromProfile = state.cache.profileMe?.registeredPokedexCount;
   if (typeof fromProfile === 'number') return fromProfile;
-  return state.cache.pokedex.filter((e) => e.registeredInUserPokedex).length;
+  return state.cache.registeredPokedexNumbers.length;
 };
 
-export function paginate<T>(
-  items: T[],
-  page = 0,
-  size = 20,
-): Page<T> {
-  const safeSize = Math.min(Math.max(size, 1), 100);
-  const totalElements = items.length;
-  const totalPages = Math.max(Math.ceil(totalElements / safeSize), 1);
-  const safePage = Math.min(Math.max(page, 0), totalPages - 1);
-  const start = safePage * safeSize;
-  const content = items.slice(start, start + safeSize);
-  return {
-    content,
-    page: safePage,
-    size: safeSize,
-    totalElements,
-    totalPages,
-    first: safePage === 0,
-    last: safePage >= totalPages - 1,
-  };
+export function paginate<T>(items: T[], page = 0, size = 20): Page<T> {
+  return paginateSpecies(items, page, size);
+}
+
+export function selectPokedexEntries(state: RootState): PokedexEntry[] {
+  const registered = new Set(state.cache.registeredPokedexNumbers);
+  return getSpecies().map((dto) => ({
+    pokemon: mapPokemon(dto),
+    registeredInUserPokedex: registered.has(dto.number),
+  }));
 }
 
 export function selectPokedexPage(state: RootState, page = 0, size = 25): Page<PokedexEntry> {
-  return paginate(state.cache.pokedex, page, size);
+  return paginate(selectPokedexEntries(state), page, size);
 }
 
 export function selectPcPage(state: RootState, page = 0, size = 20): Page<PcLine> {
@@ -62,19 +60,19 @@ export function selectGameHistoryPage(
   return paginate(state.cache.gameHistory, page, size);
 }
 
-export function selectAllPokemon(state: RootState): Pokemon[] {
-  return state.cache.pokedex.map((e) => e.pokemon);
+export function selectAllPokemon(_state?: RootState): Pokemon[] {
+  return getAllPokemon();
 }
 
 export function selectRegisteredPokemon(state: RootState): Pokemon[] {
-  return state.cache.pokedex
-    .filter((e) => e.registeredInUserPokedex)
-    .map((e) => e.pokemon)
+  const registered = new Set(state.cache.registeredPokedexNumbers);
+  return getAllPokemon()
+    .filter((p) => registered.has(p.number))
     .sort((a, b) => a.number - b.number);
 }
 
-export function selectPokemonByDex(state: RootState, dex: number): Pokemon | null {
-  return state.cache.pokedex.find((e) => e.pokemon.number === dex)?.pokemon ?? null;
+export function selectPokemonByDex(_state: RootState, dex: number): Pokemon | null {
+  return getPokemonByDex(dex);
 }
 
 export function searchPokemonInCache(state: RootState, query: string, limit = 30): Pokemon[] {

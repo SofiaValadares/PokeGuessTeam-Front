@@ -1,24 +1,18 @@
 import type { GachaDrawResult, GameHistoryEntry, TrainingTeam } from '../../../model';
-import type { PcLine, PokedexEntry } from '../../../model';
+import type { PcLine } from '../../../model';
 import type { PokeballInventory, ProfileMe } from '../../../model';
 import { normalizePokeballType } from '../../../lib/pokeball/sprites';
 import type { UserCacheState } from './types';
 
-function markPokedexRegistered(
-  pokedex: PokedexEntry[],
-  pokemon: PokedexEntry['pokemon'],
-): PokedexEntry[] {
-  const dex = pokemon.number;
-  let found = false;
-  const next = pokedex.map((entry) => {
-    if (entry.pokemon.number !== dex) return entry;
-    found = true;
-    return { ...entry, registeredInUserPokedex: true };
-  });
-  if (found) return next;
-  return [...next, { pokemon, registeredInUserPokedex: true }].sort(
-    (a, b) => a.pokemon.number - b.pokemon.number,
-  );
+function markRegistered(
+  numbers: number[],
+  dex: number,
+): { numbers: number[]; added: boolean } {
+  if (numbers.includes(dex)) return { numbers, added: false };
+  return {
+    numbers: [...numbers, dex].sort((a, b) => a - b),
+    added: true,
+  };
 }
 
 function upsertPcLine(lines: PcLine[], line: PcLine): PcLine[] {
@@ -70,9 +64,22 @@ export function patchAfterGachaDraw(state: UserCacheState, draw: GachaDrawResult
     pcLines = upsertPcLine(state.pcLines, patchedLine);
   }
 
-  const pokedex = markPokedexRegistered(state.pokedex, draw.pokemon);
+  const { numbers, added } = markRegistered(state.registeredPokedexNumbers, draw.pokemon.number);
+  const profileMe =
+    added && state.profileMe
+      ? {
+          ...state.profileMe,
+          registeredPokedexCount: (state.profileMe.registeredPokedexCount ?? numbers.length - 1) + 1,
+        }
+      : state.profileMe;
 
-  return { ...state, inventory, pcLines, pokedex };
+  return {
+    ...state,
+    inventory,
+    pcLines,
+    registeredPokedexNumbers: numbers,
+    profileMe,
+  };
 }
 
 export function patchAfterTrainingTeamUpdate(
