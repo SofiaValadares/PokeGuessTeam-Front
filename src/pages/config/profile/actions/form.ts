@@ -1,4 +1,9 @@
 import { toFriendlyUserMessage } from '../../../../api/http';
+import { getPasswordPolicyError, PASSWORD_POLICY_HINT } from '../../../../lib/auth/passwordPolicy';
+import {
+  USERNAME_FROM_EMAIL_MESSAGE,
+  usernameConflictsWithEmail,
+} from '../../../../lib/auth/usernameEmail';
 
 export function mapProfileSubmitError(err: unknown): string {
   return toFriendlyUserMessage(err, 'Não foi possível concluir a operação.');
@@ -9,15 +14,18 @@ export type UsernameChangeFields = {
   password: string;
 };
 
-export function getUsernameFieldErrors(v: UsernameChangeFields): Partial<
-  Record<'newUsername' | 'password', string>
-> {
+export function getUsernameFieldErrors(
+  v: UsernameChangeFields,
+  currentEmail?: string,
+): Partial<Record<'newUsername' | 'password', string>> {
   const errors: Partial<Record<'newUsername' | 'password', string>> = {};
   const u = v.newUsername.trim();
   if (!u) {
     errors.newUsername = 'Informe o novo nome de usuário.';
   } else if (u.length > 100) {
     errors.newUsername = 'Máximo de 100 caracteres.';
+  } else if (currentEmail && usernameConflictsWithEmail(u, currentEmail)) {
+    errors.newUsername = USERNAME_FROM_EMAIL_MESSAGE;
   }
   if (!v.password) {
     errors.password = 'Informe a senha atual para confirmar.';
@@ -25,8 +33,8 @@ export function getUsernameFieldErrors(v: UsernameChangeFields): Partial<
   return errors;
 }
 
-export function isUsernameFormValid(v: UsernameChangeFields): boolean {
-  return Object.keys(getUsernameFieldErrors(v)).length === 0;
+export function isUsernameFormValid(v: UsernameChangeFields, currentEmail?: string): boolean {
+  return Object.keys(getUsernameFieldErrors(v, currentEmail)).length === 0;
 }
 
 export type PasswordChangeFields = {
@@ -44,10 +52,9 @@ export function getPasswordFieldErrors(v: PasswordChangeFields): Partial<
   }
   if (!v.newPassword) {
     errors.newPassword = 'Informe a nova senha.';
-  } else if (v.newPassword.length < 6) {
-    errors.newPassword = 'A nova senha deve ter pelo menos 6 caracteres.';
-  } else if (v.newPassword.length > 72) {
-    errors.newPassword = 'Máximo de 72 caracteres.';
+  } else {
+    const policy = getPasswordPolicyError(v.newPassword);
+    if (policy) errors.newPassword = policy;
   }
   if (!v.confirmPassword) {
     errors.confirmPassword = 'Confirme a nova senha.';
@@ -128,3 +135,5 @@ export function getDeleteAccountErrors(v: DeleteAccountFields): Partial<Record<'
 export function isDeleteAccountValid(v: DeleteAccountFields): boolean {
   return Object.keys(getDeleteAccountErrors(v)).length === 0;
 }
+
+export { PASSWORD_POLICY_HINT };

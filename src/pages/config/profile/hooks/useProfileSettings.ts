@@ -95,14 +95,17 @@ export function useProfileSettings() {
   }, [resetPasswordFormState]);
 
   const usernameFieldErrors = useMemo(
-    () => getUsernameFieldErrors(usernameForm),
-    [usernameForm],
+    () => getUsernameFieldErrors(usernameForm, me?.email),
+    [usernameForm, me?.email],
   );
   const usernameDisplayErrors = {
     newUsername: usernameTouched.newUsername ? usernameFieldErrors.newUsername : undefined,
     password: usernameTouched.password ? usernameFieldErrors.password : undefined,
   };
-  const canSubmitUsername = useMemo(() => isUsernameFormValid(usernameForm), [usernameForm]);
+  const canSubmitUsername = useMemo(
+    () => isUsernameFormValid(usernameForm, me?.email),
+    [usernameForm, me?.email],
+  );
 
   const passwordFieldErrors = useMemo(() => getPasswordFieldErrors(passwordForm), [passwordForm]);
   const passwordDisplayErrors = {
@@ -122,7 +125,7 @@ export function useProfileSettings() {
         newUsername: String(fd.get('newUsername') ?? ''),
         password: String(fd.get('password') ?? ''),
       };
-      if (!isUsernameFormValid(values)) {
+      if (!isUsernameFormValid(values, me?.email)) {
         setUsernameTouched({ newUsername: true, password: true });
         setUsernameForm(values);
         return;
@@ -146,7 +149,7 @@ export function useProfileSettings() {
         setUsernameSubmitError(mapProfileSubmitError(err));
       }
     },
-    [refresh],
+    [refresh, me?.email],
   );
 
   const handlePasswordSubmit = useCallback(

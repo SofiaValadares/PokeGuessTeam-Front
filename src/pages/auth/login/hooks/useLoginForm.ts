@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { consumeSessionEndedMessage } from '../../../../auth/sessionGuard';
 import { useAuth } from '../../../../auth/AuthContext';
 import { FetchStatus } from '../../../../types/fetchStatus';
 import {
@@ -29,49 +30,44 @@ export function useLoginForm() {
   const emailVerified = state?.emailVerified;
   const passwordResetSuccess = state?.passwordResetSuccess;
   const accountDeleted = state?.accountDeleted;
+  const [sessionEndedMessage] = useState(() => consumeSessionEndedMessage());
 
-  const [form, setForm] = useState(() =>
-    createInitialLoginFormState(registeredEmail),
-  );
+  const [form, setForm] = useState(() => createInitialLoginFormState(registeredEmail));
 
-  const [touched, setTouched] = useState({ login: false, password: false });
+  const [touched, setTouched] = useState({ email: false, password: false });
 
   const fieldErrors = useMemo(
-    () => getLoginFieldErrors(form.login, form.password),
-    [form.login, form.password],
+    () => getLoginFieldErrors(form.email, form.password),
+    [form.email, form.password],
   );
 
-  const loginFieldError = touched.login ? fieldErrors.login : undefined;
+  const emailFieldError = touched.email ? fieldErrors.email : undefined;
   const passwordFieldError = touched.password ? fieldErrors.password : undefined;
 
   const canSubmit = useMemo(
-    () => isLoginFormValid(form.login, form.password),
-    [form.login, form.password],
+    () => isLoginFormValid(form.email, form.password),
+    [form.email, form.password],
   );
 
   const handleSubmit = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       const fd = new FormData(e.currentTarget);
-      const login = String(fd.get('login') ?? '').trim();
+      const email = String(fd.get('email') ?? '').trim();
       const password = String(fd.get('password') ?? '');
-      if (!isLoginFormValid(login, password)) {
-        setTouched({ login: true, password: true });
+      if (!isLoginFormValid(email, password)) {
+        setTouched({ email: true, password: true });
         return;
       }
       setForm((prev) => ({ ...prev, error: null, submitStatus: FetchStatus.Loading }));
       try {
-        await submitLogin(
-          { login, password },
-          { loginFn, navigate, redirectTo },
-        );
+        await submitLogin({ email, password }, { loginFn, navigate, redirectTo });
         setForm((prev) => ({ ...prev, submitStatus: FetchStatus.Success }));
       } catch (err) {
         if (isEmailNotVerifiedError(err)) {
-          const email = login.includes('@') ? login : undefined;
           navigate('/verify-email', {
             replace: true,
-            state: { email, loginAttempt: login, storedPassword: password, fromLogin: true },
+            state: { email, loginAttempt: email, storedPassword: password, fromLogin: true },
           });
           return;
         }
@@ -93,10 +89,11 @@ export function useLoginForm() {
     emailVerified,
     passwordResetSuccess,
     accountDeleted,
-    loginFieldError,
+    sessionEndedMessage,
+    emailFieldError,
     passwordFieldError,
     canSubmit,
-    onLoginBlur: () => setTouched((t) => ({ ...t, login: true })),
+    onEmailBlur: () => setTouched((t) => ({ ...t, email: true })),
     onPasswordBlur: () => setTouched((t) => ({ ...t, password: true })),
   };
 }

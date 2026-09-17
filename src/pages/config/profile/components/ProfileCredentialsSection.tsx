@@ -1,4 +1,5 @@
 import { Button, ConfirmModal, InlineAlert, TextField } from '../../../../ds';
+import { PASSWORD_POLICY_HINT } from '../../../../lib/auth/passwordPolicy';
 import { useDeleteAccount } from '../hooks';
 import type { useProfileSettings } from '../hooks/useProfileSettings';
 import styles from '../profile.module.css';
@@ -14,7 +15,7 @@ export function ProfileCredentialsSection({ settings }: { settings: Settings }) 
           <h2 id="password-section-title" className={styles.sectionTitle}>
             Senha
           </h2>
-          <p className={styles.sectionHint}>A nova senha deve ter entre 6 e 72 caracteres.</p>
+          <p className={styles.sectionHint}>{PASSWORD_POLICY_HINT}</p>
         </div>
         {!settings.passwordEditorOpen ? (
           <Button type="button" variant="secondary" size="md" onClick={settings.openPasswordEditor}>

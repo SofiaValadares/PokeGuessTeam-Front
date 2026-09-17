@@ -7,7 +7,7 @@ import {
   useRef,
 } from 'react';
 import { RIVAL } from '../../../../lib/game/characters';
-import { finishBotMatch } from '../../../../api/gameApi';
+import { checkBotGuess, finishBotMatch } from '../../../../api/gameApi';
 import { verifyOpenedCommitments } from '../../../../lib/game/teamCommitment';
 import {
   appendGuessLog,
@@ -113,14 +113,19 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
       const response = await finishBotMatch({
         matchId: state.matchId,
         hostTeam: state.hostTeam,
-        opponentTeam: state.opponentTeam,
         userCorrectGuesses: state.hostHits.length,
         opponentCorrectGuesses: state.opponentHits.length,
         result,
       });
+      const revealedOpponent = response.opponentOpening?.team ?? state.opponentTeam;
+      const revealedState: ClientMatchState = {
+        ...state,
+        opponentTeam: revealedOpponent,
+        opponentTeamHidden: false,
+      };
       const verified = await verifyOpenedCommitments({
         hostTeam: response.hostOpening?.team ?? state.hostTeam,
-        opponentTeam: response.opponentOpening?.team ?? state.opponentTeam,
+        opponentTeam: response.opponentOpening?.team ?? revealedOpponent,
         hostNonce: response.hostOpening?.nonce,
         opponentNonce: response.opponentOpening?.nonce,
         hostCommitment: botMatch.hostCommitment ?? response.hostCommitment,
@@ -130,8 +135,8 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
       const entry = mapGameHistoryEntry(response.historyEntry);
       applyMatchHistory(entry);
       await syncMatchRewards();
-      dispatch(setClientState(state));
-      await applyDexForView(state, entry);
+      dispatch(setClientState(revealedState));
+      await applyDexForView(revealedState, entry);
     },
     [applyMatchHistory, applyDexForView, botMatch.hostCommitment, botMatch.opponentCommitment, dispatch, syncMatchRewards],
   );
@@ -257,7 +262,10 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
         const pokemon = await resolvePokemonForMatch(dex, dexMap, (next) => {
           dexMap = next;
         });
-        const { feedback, state } = applyGuess(clientState, 'HOST', pokemon);
+        const check = await checkBotGuess(clientState.matchId, dex);
+        const { feedback, state } = applyGuess(clientState, 'HOST', pokemon, {
+          exactMatch: check.exactMatch,
+        });
         dexMap = await resolveMatchDexMap(mergeDexRecords(pokemonByDex, dexMap), state);
         dispatch(mergePokemonDex(mergeDexRecords(pokemonByDex, dexMap)));
         dispatch(setClientState(state));

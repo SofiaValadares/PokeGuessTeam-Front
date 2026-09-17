@@ -41,14 +41,14 @@ export const hydrateAuth = createAsyncThunk<HydrateResult, void, { rejectValue: 
 
 export const loginUser = createAsyncThunk<
   LoginResult,
-  { login: string; password: string },
+  { email: string; password: string },
   { rejectValue: AuthErrorPayload }
->('auth/login', async ({ login, password }, { dispatch, rejectWithValue }) => {
+>('auth/login', async ({ email, password }, { dispatch, rejectWithValue }) => {
   try {
     if (hasPersistedCache()) {
       await dispatch(clearUserCache());
     }
-    const session = await authService.login({ login, password });
+    const session = await authService.login({ email, password });
     // Evita GET /auth/session extra — o cookie já está definido.
     const me = await authService.getMe();
     void dispatch(hydrateUserCache(me.userId));
@@ -92,6 +92,11 @@ export const confirmEmailUser = createAsyncThunk<
 
 export const logoutUser = createAsyncThunk('auth/logout', async (_, { dispatch }) => {
   await authService.logout();
+  await dispatch(clearUserCache());
+});
+
+/** Limpa estado local sem chamar /auth/logout (banimento ou sessão já inválida). */
+export const forceLocalLogout = createAsyncThunk('auth/forceLocalLogout', async (_, { dispatch }) => {
   await dispatch(clearUserCache());
 });
 
@@ -145,6 +150,12 @@ const authSlice = createSlice({
         state.showIntroDialogue = action.payload.firstLogin;
       })
       .addCase(logoutUser.fulfilled, (state) => {
+        state.authenticated = false;
+        state.me = null;
+        state.sessionFetchStatus = FetchStatus.Success;
+        state.showIntroDialogue = false;
+      })
+      .addCase(forceLocalLogout.fulfilled, (state) => {
         state.authenticated = false;
         state.me = null;
         state.sessionFetchStatus = FetchStatus.Success;

@@ -24,7 +24,7 @@ export async function register(body: RegisterRequest): Promise<RegisterResponse>
   });
 }
 
-/** Login stateful: define JSESSIONID (HttpOnly). Corpo: { login, password }. */
+/** Login stateful: define JSESSIONID (HttpOnly). Corpo: { email, password }. */
 export async function login(body: LoginRequest): Promise<AuthSessionResponse> {
   return apiFetchJson<AuthSessionResponse>('/auth/login', {
     method: 'POST',
