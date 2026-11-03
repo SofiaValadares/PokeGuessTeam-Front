@@ -624,6 +624,10 @@ describe('home, área selvagem e partidas', () => {
           guessedPokemonName: 'Pikachu',
           exactMatch: true,
           playerSide: 'OPPONENT',
+          matchedPokedexNumbers: [25],
+          outcome: 'KEEP_TURN',
+          message: 'acerto',
+          createdAt: '2026-01-01T00:00:00Z',
         }}
         opponentName="Gary"
       />,

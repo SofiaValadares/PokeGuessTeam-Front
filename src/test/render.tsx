@@ -18,7 +18,7 @@ export const mockMe: MeResponse = {
 
 export function makeTestStore(preloaded?: Partial<RootState>) {
   return configureStore({
-    reducer: rootReducers,
+    reducer: { ...rootReducers } as never,
     preloadedState: {
       auth: {
         sessionFetchStatus: FetchStatus.Success,

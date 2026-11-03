@@ -18,7 +18,6 @@ export default function PokedexPage() {
   const registeredSet = useMemo(() => new Set(registeredNumbers), [registeredNumbers]);
 
   const { catalog, loading, error } = useNationalCatalog();
-  const species = catalog?.species ?? [];
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(POKEDEX_DEFAULT_PAGE_SIZE);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -27,14 +26,13 @@ export default function PokedexPage() {
     setPage(0);
   }, [pageSize]);
 
-  const entries = useMemo(
-    (): PokedexEntryDto[] =>
-      species.map((pokemon) => ({
-        pokemon,
-        registeredInUserPokedex: registeredSet.has(pokemon.number),
-      })),
-    [species, registeredSet],
-  );
+  const entries = useMemo((): PokedexEntryDto[] => {
+    const species = catalog?.species ?? [];
+    return species.map((pokemon) => ({
+      pokemon,
+      registeredInUserPokedex: registeredSet.has(pokemon.number),
+    }));
+  }, [catalog?.species, registeredSet]);
 
   const data = useMemo(() => {
     if (entries.length === 0) return null;

@@ -1,5 +1,4 @@
 import { act, renderHook } from '@testing-library/react';
-import { FetchStatus } from '../../../../types/fetchStatus';
 import { useProfileSettings } from './useProfileSettings';
 import * as authService from '../../../../auth/authService';
 
@@ -58,9 +57,7 @@ describe('useProfileSettings', () => {
       );
     });
     expect(authService.changeUsername).toHaveBeenCalled();
-    expect(result.current.usernameSubmitStatus === FetchStatus.Success || result.current.usernameSuccess).toBe(
-      true,
-    );
+    expect(result.current.usernameSuccess).toBe(true);
 
     act(() => result.current.openPasswordEditor());
     await act(async () => {

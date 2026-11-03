@@ -4,7 +4,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
 } from 'react';
 import { finishBotMatch, submitBotGuess } from '../../../../api/gameApi';
 import { verifyOpenedCommitments } from '../../../../lib/game/teamCommitment';

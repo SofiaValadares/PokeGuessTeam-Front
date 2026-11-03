@@ -312,7 +312,7 @@ describe('regras do cliente de partida', () => {
             guessedPokemonName: 'Pikachu',
             exactMatch: false,
             matchedPokedexNumbers: [],
-            outcome: 'MISS' as const,
+            outcome: 'SWITCH_TURN' as const,
             message: '',
             createdAt: 't',
           },

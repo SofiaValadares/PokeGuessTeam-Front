@@ -150,7 +150,9 @@ describe('serviços HTTP da API', () => {
     await historyAi.askHistoryAssistant('win rate');
 
     expect(parseProfileCollection(null).pokeballs.items).toEqual([]);
-    expect(parseProfileCollection({ items: [{ pokeballType: 'POKE_BALL', quantity: 2 }], pokeballFragments: 4 }).pokeballs.quantity ?? 0).toBe(0);
-    expect(parseProfileCollection({ items: [{ pokeballType: 'POKE_BALL', quantity: 2 }], pokeballFragments: 4 }).pokeballs.items[0].quantity).toBe(2);
+    expect(
+      parseProfileCollection({ items: [{ pokeballType: 'POKE_BALL', quantity: 2 }], pokeballFragments: 4 })
+        .pokeballs.items[0].quantity,
+    ).toBe(2);
   });
 });

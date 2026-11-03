@@ -152,17 +152,22 @@ describe('cache thunks', () => {
     await s.dispatch(reloadUserCacheOnLogin('u1'));
 
     s = store({ pcHydrated: true, pcLines: [{ evolutionLineKey: 9 }] });
-    const pc = await s.dispatch(ensurePcCache());
+    // Store de teste só tem o slice cache; cast evita conflito com RootState completo.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pc = await (s.dispatch as any)(ensurePcCache());
     expect(pc.payload).toEqual([{ evolutionLineKey: 9 }]);
 
     s = store({ pcHydrated: false });
-    await s.dispatch(ensurePcCache());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (s.dispatch as any)(ensurePcCache());
     expect(s.getState().cache.pcHydrated).toBe(true);
 
     s = store({ historyHydrated: true, gameHistory: [{ id: 'old' }] });
-    await s.dispatch(ensureGameHistoryCache());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (s.dispatch as any)(ensureGameHistoryCache());
     s = store({ userId: 'u1', historyHydrated: false, gameHistory: [] });
-    await s.dispatch(ensureGameHistoryCache()).unwrap();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (s.dispatch as any)(ensureGameHistoryCache()).unwrap();
     expect(s.getState().cache.historyHydrated).toBe(true);
 
     await s.dispatch(clearUserCache());

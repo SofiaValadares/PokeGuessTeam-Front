@@ -90,7 +90,7 @@ jest.mock('./selectors', () => ({
 
 describe('queries do cache', () => {
   it('lê Pokédex, PC, histórico e espécies da cache hidratada', async () => {
-    expect(getPokedexAllFromCache()[0].number).toBe(25);
+    expect(getPokedexAllFromCache()[0].pokemon.number).toBe(25);
     await expect(getPokedexPage()).resolves.toMatchObject({ totalElements: 1 });
     await expect(getPokedexAll()).resolves.toHaveLength(1);
     await expect(getPokemonPcPage()).resolves.toMatchObject({ content: [] });
