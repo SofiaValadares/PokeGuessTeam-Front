@@ -1,11 +1,13 @@
 import type { RootState } from '../../state';
 import type { Page, Pokemon, PcLine, PokedexEntry, GameHistoryEntry } from '../../../model';
-import { mapGameHistoryList, mapPcLineList, mapPokedexEntryList, mapPokemon } from '../../../model';
+import { mapGameHistoryList, mapPcLineList, mapPokemon } from '../../../model';
+import { ensureNationalCatalog } from '../../../lib/pokedex/nationalCatalog';
 import {
   searchPokemonInCache,
   selectAllPokemon,
   selectGameHistoryPage,
   selectPcPage,
+  selectPokedexEntries,
   selectPokedexPage,
   selectPokemonByDex,
   selectRegisteredPokemon,
@@ -22,27 +24,21 @@ function state() {
 }
 
 export function getPokedexAllFromCache() {
-  return state().cache.pokedex;
+  return selectPokedexEntries(state());
 }
 
 export async function getPokedexPage(page = 0, size = 25): Promise<Page<PokedexEntry>> {
-  if (state().cache.pokedex.length === 0) {
-    const { fetchPokedexPage } = await import('../../../services/pokedexService');
-    const res = await fetchPokedexPage(page, size);
-    return { ...res, content: mapPokedexEntryList(res.content) };
-  }
+  await ensureNationalCatalog();
   return selectPokedexPage(state(), page, size);
 }
 
 export async function getPokedexAll(): Promise<PokedexEntry[]> {
-  const entries = getPokedexAllFromCache();
-  if (entries.length > 0) return entries;
-  const { fetchAllPokedexPages } = await import('../../../services/pokedexService');
-  return mapPokedexEntryList(await fetchAllPokedexPages());
+  await ensureNationalCatalog();
+  return selectPokedexEntries(state());
 }
 
 export async function getPokemonPcPage(page = 0, size = 20): Promise<Page<PcLine>> {
-  if (state().cache.pcLines.length === 0) {
+  if (!state().cache.pcHydrated) {
     const { fetchPokemonPcPage } = await import('../../../services/pokemonService');
     const res = await fetchPokemonPcPage(page, size);
     return { ...res, content: mapPcLineList(res.content) };
@@ -51,7 +47,7 @@ export async function getPokemonPcPage(page = 0, size = 20): Promise<Page<PcLine
 }
 
 export async function getGameHistoryPage(page = 0, size = 20): Promise<Page<GameHistoryEntry>> {
-  if (state().cache.gameHistory.length === 0) {
+  if (!state().cache.historyHydrated) {
     const { fetchGameHistory } = await import('../../../services/gameService');
     const res = await fetchGameHistory(page, size);
     return { ...res, content: mapGameHistoryList(res.content) };
@@ -60,6 +56,7 @@ export async function getGameHistoryPage(page = 0, size = 20): Promise<Page<Game
 }
 
 export async function searchPokemon(query: string, limit = 30): Promise<Pokemon[]> {
+  await ensureNationalCatalog();
   if (selectAllPokemon(state()).length > 0) {
     return searchPokemonInCache(state(), query, limit);
   }
@@ -69,6 +66,7 @@ export async function searchPokemon(query: string, limit = 30): Promise<Pokemon[
 }
 
 export async function getPokemonSpecies(pokedexNumber: number): Promise<Pokemon> {
+  await ensureNationalCatalog();
   const cached = selectPokemonByDex(state(), pokedexNumber);
   if (cached) return cached;
   const { fetchPokemonSpecies } = await import('../../../services/pokemonService');
@@ -78,6 +76,7 @@ export async function getPokemonSpecies(pokedexNumber: number): Promise<Pokemon>
 export async function getPokemonSpeciesBatch(
   pokedexNumbers: number[],
 ): Promise<Map<number, Pokemon>> {
+  await ensureNationalCatalog();
   const unique = Array.from(new Set(pokedexNumbers.filter((n) => n > 0)));
   const result = new Map<number, Pokemon>();
   const missing: number[] = [];
@@ -92,6 +91,9 @@ export async function getPokemonSpeciesBatch(
   }
 
   if (missing.length === 0) return result;
+
+  const catalogReady = selectAllPokemon(state()).length > 0;
+  if (catalogReady) return result;
 
   const { fetchPokemonSpeciesBatch } = await import('../../../services/pokemonService');
   const fromNetwork = await fetchPokemonSpeciesBatch(missing);

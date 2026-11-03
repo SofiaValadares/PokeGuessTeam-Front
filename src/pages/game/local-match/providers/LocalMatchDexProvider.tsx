@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect } from 'react';
-import { loadMatchPokemonDex } from '../../../../lib/game/clientMatchView';
+import { dexMapFromPokemonList, loadMatchPokemonDex } from '../../../../lib/game/clientMatchView';
+import { readAllPokemonFromCache } from '../../../../store/slices/cache/queries';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import { pokemonDexMapToRecord } from '../../../../lib/game/matchSessionUtils';
 import { setError, setPokemonDex } from '../slice/localMatchSlice';
@@ -22,6 +23,11 @@ export function LocalMatchDexProvider({ children }: { children: React.ReactNode 
       return () => {
         cancelled = true;
       };
+    }
+    const cachedPool = readAllPokemonFromCache();
+    if (cachedPool.length > 0) {
+      dispatch(setPokemonDex(pokemonDexMapToRecord(dexMapFromPokemonList(cachedPool))));
+      return;
     }
     void loadMatchPokemonDex()
       .then((dex) => {

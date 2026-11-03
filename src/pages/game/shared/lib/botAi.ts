@@ -3,13 +3,31 @@ import type { OpponentKnowledgeSlotDto } from '../../../../api/types/game';
 import type { MatchPlayerSide } from '../../../../api/types/game';
 import {
   buildTeamKnowledge,
-  countKnownFields,
   scoreCandidateForSlot,
 } from './opponentKnowledge';
 import type { ClientMatchState } from './clientMatchTypes';
 
+/** Bot não usa cor / altura / peso nas dicas (fica mais “humano” / menos preciso). */
+function stripPhysicalHints(slot: OpponentKnowledgeSlotDto): OpponentKnowledgeSlotDto {
+  return {
+    ...slot,
+    color: null,
+    heightM: null,
+    weightKg: null,
+  };
+}
+
 function openSlots(slots: OpponentKnowledgeSlotDto[]): OpponentKnowledgeSlotDto[] {
-  return slots.filter((slot) => !slot.revealed);
+  return slots.filter((slot) => !slot.revealed).map(stripPhysicalHints);
+}
+
+function countBotKnownFields(slot: OpponentKnowledgeSlotDto): number {
+  let count = 0;
+  if (slot.primaryType) count += 1;
+  if (slot.secondaryType) count += 1;
+  if (slot.generation) count += 1;
+  if (slot.evolutionStage) count += 1;
+  return count;
 }
 
 function scoreCandidateForTeam(
@@ -82,7 +100,7 @@ export function chooseBotGuess(
 
   const knownSlots = buildTeamKnowledge(state, botSide, pokemonByDex);
   const slots = openSlots(knownSlots);
-  const hasHints = slots.some((slot) => countKnownFields(slot) > 0);
+  const hasHints = slots.some((slot) => countBotKnownFields(slot) > 0);
 
   if (!hasHints) {
     return pickExploratoryGuess(available, state, botSide, pokemonByDex);

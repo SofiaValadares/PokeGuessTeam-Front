@@ -2,9 +2,8 @@ import { Trash2 } from 'lucide-react';
 import type { GameHistoryEntry } from '../../../../model';
 import { findHistoryPlayerForUser } from '../../../../lib/game/historyPlayer';
 import { gameModeLabel, gameResultLabel } from '../../../../lib/game/labels';
+import { getAllPokemon } from '../../../../lib/pokedex/nationalCatalog';
 import styles from '../historico.module.css';
-import { useAppSelector } from '../../../../store/hooks';
-import { selectPokedex } from '../../../../store/slices/cache/selectors';
 
 type Props = {
   entry: GameHistoryEntry;
@@ -24,10 +23,9 @@ export function HistoryRow({ entry, profileId, username, deleting, onDelete }: P
   const me = findHistoryPlayerForUser(entry, profileId, username);
   const myScore = me ? `${me.correctGuesses}/6` : '—';
   const myResult = me ? gameResultLabel(me.result) : '—';
-  const pokedex = useAppSelector(selectPokedex);
   const dexToName = new Map<number, string>();
-  for (const entry of pokedex) {
-    if (entry && entry.pokemon) dexToName.set(entry.pokemon.number, entry.pokemon.name);
+  for (const pokemon of getAllPokemon()) {
+    dexToName.set(pokemon.number, pokemon.name);
   }
 
   const mySelectedNames = me && me.selectedTeam && me.selectedTeam.length > 0

@@ -165,11 +165,7 @@ export function FriendMatchProvider({
       setFinishReward(resolvedReward ?? null);
 
       applyMatchHistory(mapGameHistoryEntry(finishedMatch.historyEntry));
-      try {
-        await syncMatchRewards();
-      } catch {
-        /* perfil pode falhar; modal de resultados mantém-se */
-      }
+      syncMatchRewards(resolvedReward);
     },
     [applyMatchHistory, markShowingResults, syncMatchRewards],
   );

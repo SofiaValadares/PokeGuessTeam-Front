@@ -1,5 +1,5 @@
 import type { NavigateFunction } from 'react-router-dom';
-import { isEmailNotVerifiedError, authErrorMessage } from '../../../../auth/authErrors';
+import { isEmailNotVerifiedError, isLoginLockedError, authErrorMessage } from '../../../../auth/authErrors';
 import { FetchStatus } from '../../../../types/fetchStatus';
 
 export type LoginFormState = {
@@ -63,6 +63,9 @@ export { isEmailNotVerifiedError } from '../../../../auth/authErrors';
 export function mapLoginSubmitError(err: unknown): string {
   if (isEmailNotVerifiedError(err)) {
     return 'E-mail não verificado. Confirma o código enviado para o teu e-mail.';
+  }
+  if (isLoginLockedError(err)) {
+    return authErrorMessage(err, 'Muitas tentativas de login. Aguarde alguns minutos e tente novamente.');
   }
   return authErrorMessage(err, 'Não foi possível entrar. Tenta novamente.');
 }

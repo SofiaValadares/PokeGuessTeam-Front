@@ -103,11 +103,8 @@ export type BotMatchSetupResponse = {
   hostTeam: number[];
   hostCommitment: string;
   opponentCommitment: string;
-};
-
-export type BotMatchGuessCheckResponse = {
-  exactMatch: boolean;
-  pokedexNumber: number;
+  startingPlayer: MatchPlayerSide;
+  currentTurn: MatchPlayerSide;
 };
 
 export type LocalMatchSetupRequest = {

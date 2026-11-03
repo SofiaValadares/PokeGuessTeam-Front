@@ -1,44 +1,43 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { fetchPokedexPage, POKEDEX_DEFAULT_PAGE_SIZE } from '../../../services/pokedexService';
-import type { PokedexEntryPageResponse } from '../../../services/types/pokemon';
-import { ApiError } from '../../../services/http';
+import { useEffect, useMemo, useState } from 'react';
+import { POKEDEX_DEFAULT_PAGE_SIZE } from '../../../services/pokedexService';
+import type { PokedexEntryDto } from '../../../services/types/pokemon';
 import { PokemonBillGrid } from '../../../components/PokemonBillGrid';
 import { PokemonGridPagination } from '../../../components/PokemonGridPagination';
 import { POKEDEX_PAGE_SIZE_OPTIONS } from '../../../lib/ui/gridPageSizes';
+import { paginateSpecies } from '../../../lib/pokedex/nationalCatalog';
 import { Card, InlineAlert, PageSection, PageShell } from '../../../ds';
 import { PokedexDetailPanel } from './components/PokedexDetailPanel';
 import { buildPokedexGridData } from '../../../lib/pokedex/buildGridData';
+import { useNationalCatalog } from '../../../hooks/useNationalCatalog';
+import { useAppSelector } from '../../../store/hooks';
+import { selectRegisteredPokedexNumbers } from '../../../store/slices/cache';
 import styles from './pokedex.module.css';
 
 export default function PokedexPage() {
+  const registeredNumbers = useAppSelector(selectRegisteredPokedexNumbers);
+  const registeredSet = useMemo(() => new Set(registeredNumbers), [registeredNumbers]);
+
+  const { catalog, loading, error } = useNationalCatalog();
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(POKEDEX_DEFAULT_PAGE_SIZE);
-  const [data, setData] = useState<PokedexEntryPageResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-
-  const load = useCallback(async (p: number, size: number) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetchPokedexPage(p, size);
-      setData(res);
-    } catch (e) {
-      setData(null);
-      setError(e instanceof ApiError ? e.message : 'Não foi possível carregar a Pokédex.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void load(page, pageSize);
-  }, [load, page, pageSize]);
 
   useEffect(() => {
     setPage(0);
   }, [pageSize]);
+
+  const entries = useMemo((): PokedexEntryDto[] => {
+    const species = catalog?.species ?? [];
+    return species.map((pokemon) => ({
+      pokemon,
+      registeredInUserPokedex: registeredSet.has(pokemon.number),
+    }));
+  }, [catalog?.species, registeredSet]);
+
+  const data = useMemo(() => {
+    if (entries.length === 0) return null;
+    return paginateSpecies(entries, page, pageSize);
+  }, [entries, page, pageSize]);
 
   const { gridItems, entriesByKey } = useMemo(
     () => buildPokedexGridData(data?.content ?? []),
@@ -81,38 +80,38 @@ export default function PokedexPage() {
           ) : null}
 
           {loading && !data ? (
-          <p className="ds-body-muted">A carregar…</p>
-        ) : data && gridItems.length === 0 ? (
-          <p className="ds-body-muted">Sem resultados.</p>
-        ) : data ? (
-          <>
-            <div className={styles.layout}>
-              <div className={styles.gridColumn}>
-                <PokemonBillGrid
-                  items={gridItems}
-                  slotCount={pageSlotCount}
-                  className={styles.pokedexGrid}
-                  selectedKey={selectedKey}
-                  onSelect={(item) => setSelectedKey(item.key)}
-                  aria-label="Pokédex nacional"
-                />
+            <p className="ds-body-muted">A carregar…</p>
+          ) : data && gridItems.length === 0 ? (
+            <p className="ds-body-muted">Sem resultados.</p>
+          ) : data ? (
+            <>
+              <div className={styles.layout}>
+                <div className={styles.gridColumn}>
+                  <PokemonBillGrid
+                    items={gridItems}
+                    slotCount={pageSlotCount}
+                    className={styles.pokedexGrid}
+                    selectedKey={selectedKey}
+                    onSelect={(item) => setSelectedKey(item.key)}
+                    aria-label="Pokédex nacional"
+                  />
+                </div>
+                <PokedexDetailPanel entry={selectedEntry} item={selectedItem} />
               </div>
-              <PokedexDetailPanel entry={selectedEntry} item={selectedItem} />
-            </div>
-            <PokemonGridPagination
-              loading={loading}
-              page={page}
-              totalPages={data.totalPages}
-              totalLabel={totalLabel}
-              isFirst={data.first}
-              isLast={data.last}
-              pageSize={pageSize}
-              pageSizeOptions={POKEDEX_PAGE_SIZE_OPTIONS}
-              onPageSizeChange={setPageSize}
-              onPrev={() => setPage((x) => Math.max(0, x - 1))}
-              onNext={() => setPage((x) => x + 1)}
-            />
-          </>
+              <PokemonGridPagination
+                loading={loading}
+                page={page}
+                totalPages={data.totalPages}
+                totalLabel={totalLabel}
+                isFirst={data.first}
+                isLast={data.last}
+                pageSize={pageSize}
+                pageSizeOptions={POKEDEX_PAGE_SIZE_OPTIONS}
+                onPageSizeChange={setPageSize}
+                onPrev={() => setPage((x) => Math.max(0, x - 1))}
+                onNext={() => setPage((x) => x + 1)}
+              />
+            </>
           ) : null}
         </PageSection>
       </Card>
