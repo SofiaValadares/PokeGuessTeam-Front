@@ -50,6 +50,8 @@ export function BotMatchSetupProvider({ hostName, children }: BotMatchSetupProvi
           matchId: setup.matchId,
           hostDisplayName: hostName,
           opponentTeamHidden: true,
+          startingPlayer: setup.startingPlayer ?? 'HOST',
+          currentTurn: setup.currentTurn ?? 'HOST',
         }),
       );
     } catch (e) {

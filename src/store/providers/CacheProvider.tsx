@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import type { GachaDrawResult, GameHistoryEntry, TrainingTeam } from '../../model';
 import type { PcLine } from '../../model';
 import type { ProfileMe } from '../../model';
+import type { MatchRewardDto } from '../../services/types/game';
 import {
   applyClaimRewards,
   applyFavoritePokemon,
@@ -11,7 +12,7 @@ import {
   hydrateUserCache,
   refreshUserCacheFromNetwork,
   clearUserCache,
-  syncMatchRewardsToCache,
+  applyMatchRewardsToCache,
 } from '../slices/cache';
 import { useAppDispatch } from '../hooks';
 
@@ -55,7 +56,7 @@ export function useCacheActions() {
   );
 
   const syncMatchRewards = useCallback(
-    () => syncMatchRewardsToCache(dispatch),
+    (reward?: MatchRewardDto | null) => applyMatchRewardsToCache(dispatch, reward),
     [dispatch],
   );
 

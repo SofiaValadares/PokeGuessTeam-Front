@@ -5,7 +5,6 @@ import {
 } from '../lib/game/parseFriendMatchState';
 import { ApiError, apiFetch, apiFetchJson } from './http';
 import type {
-  BotMatchGuessCheckResponse,
   BotMatchSetupResponse,
   FriendMatchActionResponse,
   FriendMatchJoinRequest,
@@ -29,14 +28,15 @@ export async function validateBotTeam(team: number[]): Promise<BotMatchSetupResp
   });
 }
 
-export async function checkBotGuess(
+export async function submitBotGuess(
   matchId: string,
   pokedexNumber: number,
-): Promise<BotMatchGuessCheckResponse> {
-  return apiFetchJson(`${BOT}/guess`, {
+): Promise<FriendMatchActionResponse> {
+  const raw = await apiFetchJson<FriendMatchActionResponse>(`${BOT}/guess`, {
     method: 'POST',
     body: JSON.stringify({ matchId, pokedexNumber }),
   });
+  return parseFriendMatchActionResponse(raw);
 }
 
 export async function finishBotMatch(payload: GameBotFinishRequest): Promise<GameFinishResponse> {

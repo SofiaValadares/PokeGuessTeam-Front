@@ -21,6 +21,7 @@ export type NationalCatalog = {
 
 let memory: NationalCatalog | null = null;
 let inflight: Promise<NationalCatalog> | null = null;
+let versionCheckStarted = false;
 
 function readLocalCatalog(): NationalCatalog | null {
   try {
@@ -48,20 +49,15 @@ function setMemory(catalog: NationalCatalog): NationalCatalog {
   return catalog;
 }
 
-/**
- * Garante catálogo nacional em memória/localStorage.
- * Só descarrega o payload completo quando a versão do servidor difere.
- */
-export async function ensureNationalCatalog(): Promise<NationalCatalog> {
-  if (memory) return memory;
-  if (inflight) return inflight;
-
-  inflight = (async () => {
-    const local = readLocalCatalog();
+function refreshCatalogVersionInBackground(): void {
+  if (versionCheckStarted) return;
+  versionCheckStarted = true;
+  void (async () => {
     try {
       const { pokedexVersion } = await fetchPokedexVersion();
-      if (local && local.pokedexVersion === pokedexVersion && local.species.length > 0) {
-        return setMemory(local);
+      const current = memory ?? readLocalCatalog();
+      if (current && current.pokedexVersion === pokedexVersion && current.species.length > 0) {
+        return;
       }
       const remote = await fetchPokedexCatalog();
       const catalog: NationalCatalog = {
@@ -70,10 +66,50 @@ export async function ensureNationalCatalog(): Promise<NationalCatalog> {
         evolutionLines: remote.evolutionLines,
       };
       writeLocalCatalog(catalog);
-      return setMemory(catalog);
+      setMemory(catalog);
+    } catch {
+      /* catálogo local continua válido */
+    }
+  })();
+}
+
+async function fetchAndStoreRemoteCatalog(): Promise<NationalCatalog> {
+  const remote = await fetchPokedexCatalog();
+  const catalog: NationalCatalog = {
+    pokedexVersion: remote.pokedexVersion,
+    species: remote.species,
+    evolutionLines: remote.evolutionLines,
+  };
+  writeLocalCatalog(catalog);
+  return setMemory(catalog);
+}
+
+/**
+ * Garante catálogo nacional em memória/localStorage.
+ * Se já existir localmente, devolve já e valida a versão em background.
+ */
+export async function ensureNationalCatalog(): Promise<NationalCatalog> {
+  if (memory) {
+    refreshCatalogVersionInBackground();
+    return memory;
+  }
+
+  const local = readLocalCatalog();
+  if (local && local.species.length > 0) {
+    setMemory(local);
+    refreshCatalogVersionInBackground();
+    return local;
+  }
+
+  if (inflight) return inflight;
+
+  inflight = (async () => {
+    try {
+      return await fetchAndStoreRemoteCatalog();
     } catch (err) {
-      if (local && local.species.length > 0) {
-        return setMemory(local);
+      const fallback = readLocalCatalog();
+      if (fallback && fallback.species.length > 0) {
+        return setMemory(fallback);
       }
       throw err;
     } finally {
@@ -129,4 +165,5 @@ export function paginateSpecies<T>(
 
 export function clearNationalCatalogMemory(): void {
   memory = null;
+  versionCheckStarted = false;
 }

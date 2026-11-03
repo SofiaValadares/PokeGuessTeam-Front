@@ -38,7 +38,7 @@ export async function getPokedexAll(): Promise<PokedexEntry[]> {
 }
 
 export async function getPokemonPcPage(page = 0, size = 20): Promise<Page<PcLine>> {
-  if (state().cache.pcLines.length === 0) {
+  if (!state().cache.pcHydrated) {
     const { fetchPokemonPcPage } = await import('../../../services/pokemonService');
     const res = await fetchPokemonPcPage(page, size);
     return { ...res, content: mapPcLineList(res.content) };
@@ -47,7 +47,7 @@ export async function getPokemonPcPage(page = 0, size = 20): Promise<Page<PcLine
 }
 
 export async function getGameHistoryPage(page = 0, size = 20): Promise<Page<GameHistoryEntry>> {
-  if (state().cache.gameHistory.length === 0) {
+  if (!state().cache.historyHydrated) {
     const { fetchGameHistory } = await import('../../../services/gameService');
     const res = await fetchGameHistory(page, size);
     return { ...res, content: mapGameHistoryList(res.content) };
@@ -91,6 +91,9 @@ export async function getPokemonSpeciesBatch(
   }
 
   if (missing.length === 0) return result;
+
+  const catalogReady = selectAllPokemon(state()).length > 0;
+  if (catalogReady) return result;
 
   const { fetchPokemonSpeciesBatch } = await import('../../../services/pokemonService');
   const fromNetwork = await fetchPokemonSpeciesBatch(missing);

@@ -1,15 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { POKEDEX_DEFAULT_PAGE_SIZE } from '../../../services/pokedexService';
-import type { PokemonDto } from '../../../services/types/pokemon';
 import type { PokedexEntryDto } from '../../../services/types/pokemon';
-import { ApiError } from '../../../services/http';
 import { PokemonBillGrid } from '../../../components/PokemonBillGrid';
 import { PokemonGridPagination } from '../../../components/PokemonGridPagination';
 import { POKEDEX_PAGE_SIZE_OPTIONS } from '../../../lib/ui/gridPageSizes';
-import { ensureNationalCatalog, paginateSpecies } from '../../../lib/pokedex/nationalCatalog';
+import { paginateSpecies } from '../../../lib/pokedex/nationalCatalog';
 import { Card, InlineAlert, PageSection, PageShell } from '../../../ds';
 import { PokedexDetailPanel } from './components/PokedexDetailPanel';
 import { buildPokedexGridData } from '../../../lib/pokedex/buildGridData';
+import { useNationalCatalog } from '../../../hooks/useNationalCatalog';
 import { useAppSelector } from '../../../store/hooks';
 import { selectRegisteredPokedexNumbers } from '../../../store/slices/cache';
 import styles from './pokedex.module.css';
@@ -18,30 +17,11 @@ export default function PokedexPage() {
   const registeredNumbers = useAppSelector(selectRegisteredPokedexNumbers);
   const registeredSet = useMemo(() => new Set(registeredNumbers), [registeredNumbers]);
 
+  const { catalog, loading, error } = useNationalCatalog();
+  const species = catalog?.species ?? [];
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(POKEDEX_DEFAULT_PAGE_SIZE);
-  const [species, setSpecies] = useState<PokemonDto[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-
-  const loadCatalog = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const catalog = await ensureNationalCatalog();
-      setSpecies(catalog.species);
-    } catch (e) {
-      setSpecies([]);
-      setError(e instanceof ApiError ? e.message : 'Não foi possível carregar a Pokédex.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadCatalog();
-  }, [loadCatalog]);
 
   useEffect(() => {
     setPage(0);

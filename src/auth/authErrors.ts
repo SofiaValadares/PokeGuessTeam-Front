@@ -43,6 +43,11 @@ export function isCodeResendCooldownError(err: unknown): boolean {
   return payload?.code === 'AUTH_CODE_RESEND_COOLDOWN';
 }
 
+export function isLoginLockedError(err: unknown): boolean {
+  const payload = toAuthErrorPayload(err);
+  return payload?.code === 'AUTH_LOGIN_LOCKED';
+}
+
 export function authErrorMessage(err: unknown, fallback: string): string {
   const payload = toAuthErrorPayload(err);
   if (payload) return payload.message;

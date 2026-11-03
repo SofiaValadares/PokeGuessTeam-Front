@@ -10,11 +10,7 @@ import { FetchStatus } from '../types/fetchStatus';
 export function usePokemonPcPage(initialPage = 0, pageSize = PC_DEFAULT_PAGE_SIZE) {
   const pcLines = useAppSelector(selectPcLines);
   const [page, setPage] = useState(initialPage);
-  const [status, setStatus] = useState(FetchStatus.Loading);
-
-  useEffect(() => {
-    setStatus(FetchStatus.Success);
-  }, [pcLines]);
+  const [status] = useState(FetchStatus.Success);
 
   useEffect(() => {
     setPage(0);
@@ -39,9 +35,7 @@ export function usePokemonPcPage(initialPage = 0, pageSize = PC_DEFAULT_PAGE_SIZ
     }
   }, [data, page]);
 
-  const refresh = useCallback(() => {
-    setStatus(FetchStatus.Success);
-  }, []);
+  const refresh = useCallback(() => undefined, []);
 
   return {
     page,

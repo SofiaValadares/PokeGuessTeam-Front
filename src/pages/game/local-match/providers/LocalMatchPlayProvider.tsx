@@ -145,7 +145,7 @@ export function LocalMatchPlayProvider({ hostName, children }: LocalMatchPlayPro
       dispatch(setCommitmentVerified(verified));
       const entry = mapGameHistoryEntry(response.historyEntry);
       applyMatchHistory(entry);
-      await syncMatchRewards();
+      syncMatchRewards(response.reward);
       dispatch(setClientState(state));
       await applyDexForView(state, state.currentTurn, entry);
     },

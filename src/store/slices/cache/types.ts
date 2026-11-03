@@ -14,6 +14,10 @@ export type UserCacheState = {
   trainingTeam: TrainingTeam | null;
   gameHistory: GameHistoryEntry[];
   profileMe: ProfileMe | null;
+  /** True após o PC ter sido hidratado — um PC vazio não deve disparar refetch. */
+  pcHydrated: boolean;
+  /** True após o histórico completo ter sido carregado. */
+  historyHydrated: boolean;
 };
 
 export const emptyUserCacheState = (): UserCacheState => ({
@@ -26,6 +30,8 @@ export const emptyUserCacheState = (): UserCacheState => ({
   trainingTeam: null,
   gameHistory: [],
   profileMe: null,
+  pcHydrated: false,
+  historyHydrated: false,
 });
 
 export type PersistedUserCache = Pick<
@@ -37,4 +43,6 @@ export type PersistedUserCache = Pick<
   | 'trainingTeam'
   | 'gameHistory'
   | 'profileMe'
+  | 'pcHydrated'
+  | 'historyHydrated'
 >;

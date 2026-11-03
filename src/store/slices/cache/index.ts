@@ -13,6 +13,7 @@ export {
   applyGachaDraw,
   applyTrainingTeam,
   applyMatchHistoryEntry,
+  applyMatchRewards,
   removeGameHistoryEntry,
   applyFavoritePokemon,
   applyClaimRewards,
@@ -22,4 +23,4 @@ export {
 export { cacheReducer } from './cacheSlice';
 export * from './selectors';
 export * from './queries';
-export { syncMatchRewardsToCache } from './matchRewardsSync';
+export { applyMatchRewardsToCache, syncMatchRewardsToCache } from './matchRewardsSync';

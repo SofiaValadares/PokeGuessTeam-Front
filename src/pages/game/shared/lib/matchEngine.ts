@@ -72,13 +72,17 @@ export function createClientMatch(
     localOpponentName?: string;
     hostDisplayName?: string;
     opponentTeamHidden?: boolean;
+    startingPlayer?: MatchPlayerSide;
+    currentTurn?: MatchPlayerSide;
   },
 ): ClientMatchState {
-  const starter: MatchPlayerSide = Math.random() > 0.5 ? 'HOST' : 'OPPONENT';
+  const starter: MatchPlayerSide = options?.startingPlayer
+    ?? options?.currentTurn
+    ?? (Math.random() > 0.5 ? 'HOST' : 'OPPONENT');
   return {
     matchId: options?.matchId ?? crypto.randomUUID(),
     status: 'ACTIVE',
-    currentTurn: starter,
+    currentTurn: options?.currentTurn ?? starter,
     startingPlayer: starter,
     finalResponseFor: null,
     lastCompletingPlayer: null,

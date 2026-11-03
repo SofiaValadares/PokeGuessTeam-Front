@@ -6,8 +6,7 @@ import {
   useMemo,
   useRef,
 } from 'react';
-import { RIVAL } from '../../../../lib/game/characters';
-import { checkBotGuess, finishBotMatch } from '../../../../api/gameApi';
+import { finishBotMatch, submitBotGuess } from '../../../../api/gameApi';
 import { verifyOpenedCommitments } from '../../../../lib/game/teamCommitment';
 import {
   appendGuessLog,
@@ -25,25 +24,63 @@ import { ApiError } from '../../../../services/http';
 import { useCacheActions } from '../../../../store/providers/CacheProvider';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import { useRegisteredPokedexPokemon } from '../../../../hooks/useRegisteredPokedexPokemon';
-import { chooseBotGuess } from '../../../../lib/game/botAi';
 import { resolveUserResult, type ClientMatchState } from '../../../../lib/game/clientMatchTypes';
 import { toBotMatchView } from '../../../../lib/game/clientMatchView';
+import type {
+  BotMatchGuessFeedbackDto,
+  FriendMatchStateDto,
+  OpponentKnowledgeSlotDto,
+} from '../../../../services/types/game';
 import {
   dexMapHasAll,
   mergeDexRecords,
   resolveMatchDexMap,
-  resolvePokemonForMatch,
 } from '../../../../lib/game/matchPokemonResolve';
 import { BOT_GUESS_DELAY_MS } from '../../../../lib/game/constants';
-import { applyGuess, applySurrender, isGuessAlreadyUsed } from '../../../../lib/game/matchEngine';
+import { applySurrender, isGuessAlreadyUsed } from '../../../../lib/game/matchEngine';
 import { mapGameHistoryEntry, type GameHistoryEntry, type Pokemon } from '../../../../model';
-import type { PokemonDto } from '../../../../api/types/pokemon';
 import { mergePokemonDex } from '../../shared/slice/matchDexSlice';
 import { selectMatchDex } from '../../shared/slice/matchDexSelectors';
 import { selectBotMatch } from '../slice/botMatchSelectors';
 import { recordToMap } from '../../../../lib/game/pokemonDexMaps';
 
 const BOT_TURN_DISPLAY_MS = BOT_GUESS_DELAY_MS;
+
+function clientStateFromFriendMatch(
+  match: FriendMatchStateDto,
+  prev: ClientMatchState | null,
+): ClientMatchState {
+  return {
+    matchId: match.matchId,
+    status: match.status,
+    currentTurn: match.currentTurn,
+    startingPlayer: match.startingPlayer,
+    finalResponseFor: match.finalResponseFor,
+    lastCompletingPlayer: prev?.lastCompletingPlayer ?? null,
+    hostTeam: match.yourTeam,
+    opponentTeam: match.opponentTeam ?? prev?.opponentTeam ?? [],
+    hostHits: [...match.yourHits],
+    opponentHits: [...match.opponentHitsOnYourTeam],
+    hostSkipTurns: prev?.hostSkipTurns ?? 0,
+    opponentSkipTurns: prev?.opponentSkipTurns ?? 0,
+    guesses: (match.recentGuesses ?? []).map((g) => ({
+      id: g.id,
+      playerSide: g.playerSide,
+      guessedPokedexNumber: g.guessedPokedexNumber,
+      guessedPokemonName: g.guessedPokemonName,
+      exactMatch: g.exactMatch,
+      matchedPokedexNumbers: g.matchedPokedexNumbers ?? [],
+      outcome: g.outcome ?? 'SWITCH_TURN',
+      message: g.message ?? '',
+      createdAt: g.createdAt,
+    })),
+    winner: match.winner,
+    startedAt: match.startedAt,
+    finishedAt: match.finishedAt,
+    hostDisplayName: prev?.hostDisplayName,
+    opponentTeamHidden: match.opponentTeam == null,
+  };
+}
 
 export type BotMatchPlayContextValue = {
   hostName: string;
@@ -54,7 +91,7 @@ export type BotMatchPlayContextValue = {
   botBusy: boolean;
   busy: boolean;
   error: string | null;
-  registeredPokemon: PokemonDto[];
+  registeredPokemon: ReturnType<typeof useRegisteredPokedexPokemon>['availablePokemon'];
   guess: (dex: number) => Promise<void>;
   surrender: () => Promise<void>;
   beginMatch: (state: ClientMatchState) => void;
@@ -79,20 +116,28 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
     [registeredPokemon],
   );
 
-  const botRunningRef = useRef(false);
-  const runBotTurnsRef = useRef<(state: ClientMatchState) => Promise<void>>(async () => {});
-
   const syncView = useCallback(
     (
       state: ClientMatchState,
       historyEntry: GameHistoryEntry | null = null,
       dexMap?: Map<number, Pokemon>,
+      opponentKnowledge?: OpponentKnowledgeSlotDto[] | null,
     ) => {
       const map = dexMap ?? recordToMap(pokemonByDex);
       if (map.size === 0) return;
-      dispatch(setMatchView(toBotMatchView(state, map, historyEntry)));
+      const previousKnowledge = botMatch.matchView?.opponentKnowledge ?? null;
+      dispatch(
+        setMatchView(
+          toBotMatchView(
+            state,
+            map,
+            historyEntry,
+            opponentKnowledge ?? previousKnowledge,
+          ),
+        ),
+      );
     },
-    [pokemonByDex, dispatch],
+    [pokemonByDex, dispatch, botMatch.matchView?.opponentKnowledge],
   );
 
   const applyDexForView = useCallback(
@@ -134,88 +179,30 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
       dispatch(setCommitmentVerified(verified));
       const entry = mapGameHistoryEntry(response.historyEntry);
       applyMatchHistory(entry);
-      await syncMatchRewards();
+      syncMatchRewards(response.reward);
       dispatch(setClientState(revealedState));
       await applyDexForView(revealedState, entry);
     },
     [applyMatchHistory, applyDexForView, botMatch.hostCommitment, botMatch.opponentCommitment, dispatch, syncMatchRewards],
   );
 
-  const pickBotGuess = useCallback(
-    (state: ClientMatchState) => {
-      const dexMap = recordToMap(pokemonByDex);
-      const pool = registeredPokemon;
-      if (pool.length === 0 || dexMap.size === 0) return null;
-
-      const chosen = chooseBotGuess(pool, state, 'OPPONENT', dexMap);
-      if (chosen) return chosen;
-
-      const used = new Set(
-        state.guesses
-          .filter((g) => g.playerSide === 'OPPONENT')
-          .map((g) => g.guessedPokedexNumber),
-      );
-      const remaining = pool.filter((p) => !used.has(p.number));
-      if (remaining.length === 0) return null;
-      return remaining[Math.floor(Math.random() * remaining.length)] ?? null;
-    },
-    [pokemonByDex, registeredPokemon],
-  );
-
-  const runBotTurns = useCallback(
-    async (initial: ClientMatchState) => {
-      if (Object.keys(pokemonByDex).length === 0 || botRunningRef.current) return;
-      botRunningRef.current = true;
+  const animateBotFeedbacks = useCallback(
+    async (feedbacks: BotMatchGuessFeedbackDto[]) => {
+      const botTurns = feedbacks.filter((f) => f.playerSide === 'OPPONENT');
+      if (botTurns.length === 0) return;
       dispatch(setBotBusy(true));
-
-      let state = initial;
       try {
-        while (state.status === 'ACTIVE' && state.currentTurn === 'OPPONENT') {
-          const botGuess = pickBotGuess(state);
-          if (!botGuess) {
-            dispatch(setError(`${RIVAL.shortName} could not pick a guess.`));
-            break;
-          }
-
-          const { feedback, state: next } = applyGuess(state, 'OPPONENT', botGuess);
-          state = next;
-          dispatch(setClientState(next));
-          await applyDexForView(next);
-          dispatch(appendGuessLog([feedback]));
+        for (const feedback of botTurns) {
           dispatch(setActiveBotGuess(feedback));
-
           await new Promise((resolve) => window.setTimeout(resolve, BOT_TURN_DISPLAY_MS));
           dispatch(setActiveBotGuess(null));
-
-          if (next.status === 'FINISHED') {
-            await finishOnServer(next, false);
-            break;
-          }
-          if (feedback.outcome === 'SWITCH_TURN' || next.currentTurn !== 'OPPONENT') {
-            break;
-          }
         }
       } finally {
-        botRunningRef.current = false;
         dispatch(setBotBusy(false));
       }
     },
-    [applyDexForView, pokemonByDex, dispatch, finishOnServer, pickBotGuess],
+    [dispatch],
   );
-
-  runBotTurnsRef.current = runBotTurns;
-
-  useEffect(() => {
-    if (botMatch.phase !== 'playing' || Object.keys(pokemonByDex).length === 0) return;
-    const state = botMatch.clientState;
-    if (!state || state.status !== 'ACTIVE' || state.currentTurn !== 'OPPONENT') return;
-    if (botRunningRef.current) return;
-    void runBotTurnsRef.current(state);
-  }, [
-    botMatch.phase,
-    pokemonByDex,
-    botMatch.clientState,
-  ]);
 
   const beginMatch = useCallback(
     (state: ClientMatchState) => {
@@ -258,22 +245,19 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
       dispatch(setBusy(true));
       dispatch(setError(null));
       try {
-        let dexMap = await resolveMatchDexMap(pokemonByDex, clientState);
-        const pokemon = await resolvePokemonForMatch(dex, dexMap, (next) => {
-          dexMap = next;
-        });
-        const check = await checkBotGuess(clientState.matchId, dex);
-        const { feedback, state } = applyGuess(clientState, 'HOST', pokemon, {
-          exactMatch: check.exactMatch,
-        });
-        dexMap = await resolveMatchDexMap(mergeDexRecords(pokemonByDex, dexMap), state);
+        const res = await submitBotGuess(clientState.matchId, dex);
+        const next = clientStateFromFriendMatch(res.match, clientState);
+        const dexMap = await resolveMatchDexMap(pokemonByDex, next);
         dispatch(mergePokemonDex(mergeDexRecords(pokemonByDex, dexMap)));
-        dispatch(setClientState(state));
-        syncView(state, null, dexMap);
-        dispatch(appendGuessLog([feedback]));
+        dispatch(setClientState(next));
+        syncView(next, null, dexMap, res.match.opponentKnowledge);
+        if (res.turnFeedbacks?.length) {
+          dispatch(appendGuessLog(res.turnFeedbacks));
+        }
+        await animateBotFeedbacks(res.turnFeedbacks ?? []);
 
-        if (state.status === 'FINISHED') {
-          await finishOnServer(state, false);
+        if (next.status === 'FINISHED') {
+          await finishOnServer(next, false);
         }
       } catch (e) {
         dispatch(setError(e instanceof Error ? e.message : 'Palpite inválido.'));
@@ -281,7 +265,15 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
         dispatch(setBusy(false));
       }
     },
-    [botMatch, dispatch, finishOnServer, pokemonByDex, registeredDex, syncView],
+    [
+      animateBotFeedbacks,
+      botMatch,
+      dispatch,
+      finishOnServer,
+      pokemonByDex,
+      registeredDex,
+      syncView,
+    ],
   );
 
   const surrender = useCallback(async () => {

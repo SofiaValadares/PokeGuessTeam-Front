@@ -1,33 +1,43 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { getProfileMe } from '../api/profileApi';
 import type { ProfileMeResponse } from '../api/types/profile';
 import { ApiError } from '../api/http';
 import { FetchStatus } from '../types/fetchStatus';
+import { mapProfileMe } from '../model';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { applyFavoritePokemon, selectProfileMe, selectUserCache } from '../store/slices/cache';
 
 export function useProfileMe() {
-  const [profileMe, setProfileMe] = useState<ProfileMeResponse | null>(null);
-  const [status, setStatus] = useState(FetchStatus.Loading);
+  const dispatch = useAppDispatch();
+  const cached = useAppSelector(selectProfileMe);
+  const cacheStatus = useAppSelector(selectUserCache).status;
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const refresh = useCallback(async () => {
-    setStatus(FetchStatus.Loading);
+    setRefreshing(true);
     setErrorMessage(null);
     try {
       const p = await getProfileMe();
-      setProfileMe(p);
-      setStatus(FetchStatus.Success);
+      dispatch(applyFavoritePokemon(mapProfileMe(p)));
     } catch (e) {
-      setProfileMe(null);
       const msg =
         e instanceof ApiError ? e.message : e instanceof Error ? e.message : 'Erro ao carregar.';
       setErrorMessage(msg);
-      setStatus(FetchStatus.Error);
+    } finally {
+      setRefreshing(false);
     }
-  }, []);
+  }, [dispatch]);
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+  const profileMe: ProfileMeResponse | null = cached;
+  const status =
+    cached != null
+      ? FetchStatus.Success
+      : refreshing || cacheStatus === FetchStatus.Loading
+        ? FetchStatus.Loading
+        : cacheStatus === FetchStatus.Error
+          ? FetchStatus.Error
+          : FetchStatus.Idle;
 
   return { profileMe, status, errorMessage, refresh };
 }

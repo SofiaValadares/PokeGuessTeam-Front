@@ -16,7 +16,7 @@ import {
   mapTrainingTeam,
 } from '../../../model';
 import type { RootState } from '../../state';
-import { readPersistedCache } from './storage';
+import { readValidPersistedCache } from './storage';
 import { emptyUserCacheState, type UserCacheState } from './types';
 
 /** Inventário, time, perfil, PC e set registado — catálogo nacional via localStorage. */
@@ -41,37 +41,15 @@ async function loadEssentialFromNetwork(userId: string): Promise<UserCacheState>
     trainingTeam: mapTrainingTeam(trainingTeamDto),
     gameHistory: [],
     profileMe: mapProfileMe(profileMeDto),
-  };
-}
-
-function canUsePersisted(userId: string): UserCacheState | null {
-  const persisted = readPersistedCache();
-  if (!persisted || persisted.userId !== userId) return null;
-  if (!persisted.profileMe) return null;
-  if (persisted.profileMe.registeredPokedexCount == null) return null;
-  if (!Array.isArray(persisted.registeredPokedexNumbers)) return null;
-  if (
-    (persisted.profileMe.registeredPokedexCount ?? 0) > 0 &&
-    persisted.registeredPokedexNumbers.length === 0
-  ) {
-    return null;
-  }
-  return {
-    ...emptyUserCacheState(),
-    userId: persisted.userId,
-    registeredPokedexNumbers: persisted.registeredPokedexNumbers,
-    pcLines: persisted.pcLines,
-    inventory: persisted.inventory,
-    trainingTeam: persisted.trainingTeam,
-    gameHistory: persisted.gameHistory,
-    profileMe: persisted.profileMe,
+    pcHydrated: true,
+    historyHydrated: false,
   };
 }
 
 export const hydrateUserCache = createAsyncThunk<UserCacheState, string>(
   'cache/hydrate',
   async (userId) => {
-    const fromStorage = canUsePersisted(userId);
+    const fromStorage = readValidPersistedCache(userId);
     if (fromStorage) {
       void ensureNationalCatalog();
       return fromStorage;
@@ -93,9 +71,8 @@ export const ensurePcCache = createAsyncThunk<
   void,
   { state: RootState }
 >('cache/ensurePc', async (_, { getState }) => {
-  const { pcLines, userId } = getState().cache;
-  if (!userId) return pcLines;
-  if (pcLines.length > 0) return pcLines;
+  const { pcLines, userId, pcHydrated } = getState().cache;
+  if (!userId || pcHydrated) return pcLines;
   return mapPcLineList(await fetchAllPcLines());
 });
 
@@ -105,9 +82,8 @@ export const ensureGameHistoryCache = createAsyncThunk<
   void,
   { state: RootState }
 >('cache/ensureHistory', async (_, { getState }) => {
-  const { gameHistory, userId } = getState().cache;
-  if (!userId) return gameHistory;
-  if (gameHistory.length > 0) return gameHistory;
+  const { gameHistory, userId, historyHydrated } = getState().cache;
+  if (!userId || historyHydrated) return gameHistory;
   return mapGameHistoryList(await fetchAllGameHistory());
 });
 

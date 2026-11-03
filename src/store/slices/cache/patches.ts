@@ -2,6 +2,15 @@ import type { GachaDrawResult, GameHistoryEntry, TrainingTeam } from '../../../m
 import type { PcLine } from '../../../model';
 import type { PokeballInventory, ProfileMe } from '../../../model';
 import { normalizePokeballType } from '../../../lib/pokeball/sprites';
+import {
+  levelFromTotalXp,
+  pendingMilestones,
+  xpForStepFromLevel,
+  xpRemainingToNextLevel,
+} from '../../../lib/pokemon/inventoryXp';
+import { dexNumbersUnlockedAtLevel } from '../../../lib/pokemon/pokedexUnlock';
+import { getSpecies } from '../../../lib/pokedex/nationalCatalog';
+import type { MatchRewardDto } from '../../../services/types/game';
 import type { UserCacheState } from './types';
 
 function markRegistered(
@@ -21,6 +30,54 @@ function upsertPcLine(lines: PcLine[], line: PcLine): PcLine[] {
   const next = [...lines];
   next[idx] = line;
   return next;
+}
+
+export function applyXpToPcLine(line: PcLine, xpGained: number): PcLine {
+  if (xpGained <= 0) return line;
+  const totalXp = line.totalXp + xpGained;
+  const level = levelFromTotalXp(totalXp);
+  return {
+    ...line,
+    totalXp,
+    level,
+    xpToNextLevel: xpRemainingToNextLevel(totalXp),
+    xpForCurrentStep: xpForStepFromLevel(level),
+    pendingMilestones: pendingMilestones(level, line.claimedMilestones),
+  };
+}
+
+function addPokeballs(
+  inventory: PokeballInventory,
+  pokeballType: string,
+  amount: number,
+): PokeballInventory {
+  if (amount <= 0) return inventory;
+  const normalized = normalizePokeballType(pokeballType) ?? pokeballType;
+  let found = false;
+  const items = inventory.items.map((item) => {
+    if (normalizePokeballType(item.pokeballType) !== normalized && item.pokeballType !== normalized) {
+      return item;
+    }
+    found = true;
+    return { ...item, quantity: item.quantity + amount };
+  });
+  if (!found) {
+    items.push({ pokeballType: normalized, quantity: amount });
+  }
+  return { ...inventory, items };
+}
+
+function unlockPokedexForLine(numbers: number[], line: PcLine): { numbers: number[]; added: number } {
+  const species = getSpecies().filter((s) => line.members.includes(s.number));
+  const unlocked = dexNumbersUnlockedAtLevel(species, line.level);
+  let next = numbers;
+  let added = 0;
+  for (const dex of unlocked) {
+    const marked = markRegistered(next, dex);
+    if (marked.added) added += 1;
+    next = marked.numbers;
+  }
+  return { numbers: next, added };
 }
 
 function decrementPokeball(inventory: PokeballInventory, pokeballType: string): PokeballInventory {
@@ -55,8 +112,8 @@ export function patchAfterGachaDraw(state: UserCacheState, draw: GachaDrawResult
           rarity: draw.rolledRarity,
           level: 1,
           totalXp: 0,
-          xpToNextLevel: 100,
-          xpForCurrentStep: 0,
+          xpToNextLevel: xpRemainingToNextLevel(0),
+          xpForCurrentStep: xpForStepFromLevel(1),
           timesObtained: draw.timesObtainedOnLine,
           claimedMilestones: [],
           pendingMilestones: [],
@@ -108,6 +165,83 @@ export function patchAfterPostMatchSync(
   inventory: PokeballInventory,
 ): UserCacheState {
   return patchAfterInventoryUpdate(patchAfterTrainingTeamUpdate(state, team), inventory);
+}
+
+/** Aplica XP/bolas/fragmentos da partida no cache — a forma evolui via nível, sem refetch. */
+export function patchAfterMatchRewards(
+  state: UserCacheState,
+  reward: MatchRewardDto,
+): UserCacheState {
+  const occupied =
+    state.trainingTeam?.slots.filter((slot) => slot.line != null && slot.evolutionLineKey != null) ??
+    [];
+
+  let pcLines = state.pcLines;
+  let trainingTeam = state.trainingTeam;
+  let registeredPokedexNumbers = state.registeredPokedexNumbers;
+  let registeredAdded = 0;
+
+  if (reward.trainingTeamXpGranted > 0 && occupied.length > 0) {
+    const perSlot = Math.floor(reward.trainingTeamXpGranted / occupied.length);
+    const remainder = reward.trainingTeamXpGranted % occupied.length;
+    const xpByLineKey = new Map<number, number>();
+    occupied.forEach((slot, index) => {
+      const key = slot.evolutionLineKey as number;
+      const grant = perSlot + (index === 0 ? remainder : 0);
+      xpByLineKey.set(key, (xpByLineKey.get(key) ?? 0) + grant);
+    });
+
+    pcLines = pcLines.map((line) => {
+      const grant = xpByLineKey.get(line.evolutionLineKey);
+      if (!grant) return line;
+      const next = applyXpToPcLine(line, grant);
+      const unlocked = unlockPokedexForLine(registeredPokedexNumbers, next);
+      registeredPokedexNumbers = unlocked.numbers;
+      registeredAdded += unlocked.added;
+      return next;
+    });
+
+    if (trainingTeam) {
+      trainingTeam = {
+        slots: trainingTeam.slots.map((slot) => {
+          if (!slot.line) return slot;
+          const grant = xpByLineKey.get(slot.line.evolutionLineKey);
+          if (!grant) return slot;
+          return { ...slot, line: applyXpToPcLine(slot.line, grant) };
+        }),
+      };
+    }
+  }
+
+  let inventory = state.inventory;
+  if (inventory && reward.pokeBallsGranted > 0 && reward.pokeballTypeGranted) {
+    inventory = addPokeballs(inventory, reward.pokeballTypeGranted, reward.pokeBallsGranted);
+  }
+  if (inventory && reward.pokeballFragmentsGranted > 0) {
+    inventory = {
+      ...inventory,
+      pokeballFragments: inventory.pokeballFragments + reward.pokeballFragmentsGranted,
+    };
+  }
+
+  const profileMe =
+    registeredAdded > 0 && state.profileMe
+      ? {
+          ...state.profileMe,
+          registeredPokedexCount:
+            (state.profileMe.registeredPokedexCount ?? registeredPokedexNumbers.length - registeredAdded) +
+            registeredAdded,
+        }
+      : state.profileMe;
+
+  return {
+    ...state,
+    pcLines,
+    trainingTeam,
+    inventory,
+    registeredPokedexNumbers,
+    profileMe,
+  };
 }
 
 export function patchAfterMatchFinish(
