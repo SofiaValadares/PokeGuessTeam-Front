@@ -204,6 +204,10 @@ export type PokeballDrawResponse = {
   timesObtainedOnLine: number;
 };
 
+export type PokeballMultiDrawResponse = {
+  draws: PokeballDrawResponse[];
+};
+
 export type TrainingTeamSlotDto = {
   slot: number;
   evolutionLineKey: number | null;

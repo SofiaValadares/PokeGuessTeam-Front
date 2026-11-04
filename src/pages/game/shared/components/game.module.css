@@ -328,7 +328,7 @@
   border-radius: var(--ds-radius-sm);
 }
 
-/* —— Partida (layout v1) —— */
+/* —— Partida —— */
 .matchShell {
   display: flex;
   flex: 1;
@@ -337,9 +337,18 @@
   height: 100%;
   max-height: 100%;
   width: 100%;
-  border-radius: var(--ds-radius-lg);
-  border: 2px solid var(--ds-color-border-default);
-  background: var(--ds-color-bg-elevated);
+  border-radius: var(--ds-radius-xl);
+  border: 1px solid color-mix(in srgb, var(--ds-color-accent) 28%, var(--ds-color-border-default));
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--ds-color-accent) 10%, var(--ds-color-bg-elevated)) 0%,
+      var(--ds-color-bg-elevated) 42%,
+      color-mix(in srgb, var(--ds-color-gold) 6%, var(--ds-color-bg-elevated)) 100%
+    );
+  box-shadow:
+    var(--ds-shadow-lg),
+    inset 0 1px 0 color-mix(in srgb, var(--ds-palette-white-100) 8%, transparent);
   overflow: hidden;
   animation: dsScaleIn var(--ds-duration-slow) var(--ds-ease-standard) both;
 }
@@ -350,39 +359,45 @@
   justify-content: space-between;
   gap: var(--ds-space-3);
   flex-shrink: 0;
-  padding: var(--ds-space-2) var(--ds-space-4);
-  background: var(--ds-color-bg-base);
-  border-bottom: 1px solid var(--ds-color-border-default);
+  padding: var(--ds-space-3) var(--ds-space-4);
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--ds-color-accent) 14%, transparent),
+      transparent 55%
+    ),
+    color-mix(in srgb, var(--ds-color-bg-base) 88%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--ds-color-accent) 22%, var(--ds-color-border-default));
+  backdrop-filter: blur(8px);
 }
 
 .matchShellTitle {
   font-size: var(--ds-text-sm);
   font-weight: var(--ds-weight-semibold);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ds-color-text-primary);
 }
 
 .matchHeaderScores {
-  display: none;
+  display: inline-flex;
   align-items: center;
   gap: var(--ds-space-2);
+  padding: var(--ds-space-1) var(--ds-space-3);
+  border-radius: var(--ds-radius-full, 999px);
+  border: 1px solid color-mix(in srgb, var(--ds-color-gold) 35%, var(--ds-color-border-default));
+  background: color-mix(in srgb, var(--ds-color-gold) 12%, var(--ds-color-bg-elevated));
   font-size: var(--ds-text-xs);
   font-weight: var(--ds-weight-semibold);
   font-variant-numeric: tabular-nums;
-  color: var(--ds-color-text-secondary);
+  color: var(--ds-color-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .matchHeaderScoresSep {
-  color: var(--ds-color-text-muted);
-}
-
-@media (min-width: 40rem) {
-  .matchHeaderScores {
-    display: inline-flex;
-  }
+  color: var(--ds-color-gold);
+  opacity: 0.7;
 }
 
 .matchLayout {
@@ -414,7 +429,9 @@
   min-height: 0;
   overflow: hidden;
   padding: var(--ds-space-3) var(--ds-space-4) var(--ds-space-4);
-  background: var(--ds-color-bg-base);
+  background:
+    radial-gradient(ellipse 80% 40% at 0% 0%, color-mix(in srgb, var(--ds-color-accent) 12%, transparent), transparent 60%),
+    color-mix(in srgb, var(--ds-color-bg-base) 92%, transparent);
 }
 
 .matchGuessBar {
@@ -425,9 +442,11 @@
   gap: var(--ds-space-2);
   flex-shrink: 0;
   margin: 0 0 var(--ds-space-3);
-  padding: 0 0 var(--ds-space-3);
-  border-bottom: 1px solid var(--ds-color-border-default);
-  background: transparent;
+  padding: var(--ds-space-3);
+  border: 1px solid color-mix(in srgb, var(--ds-color-accent) 25%, var(--ds-color-border-default));
+  border-radius: var(--ds-radius-lg);
+  background: color-mix(in srgb, var(--ds-color-bg-elevated) 80%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ds-palette-white-100) 6%, transparent);
 }
 
 @media (min-width: 56rem) {
@@ -442,11 +461,13 @@
   flex-direction: column;
   gap: var(--ds-space-3);
   padding: var(--ds-space-3) var(--ds-space-4) var(--ds-space-4);
-  background: var(--ds-color-bg-base);
+  background:
+    radial-gradient(ellipse 70% 45% at 100% 0%, color-mix(in srgb, var(--ds-color-gold) 10%, transparent), transparent 55%),
+    color-mix(in srgb, var(--ds-color-bg-base) 92%, transparent);
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  border-top: 1px solid var(--ds-color-border-default);
+  border-top: 1px solid color-mix(in srgb, var(--ds-color-gold) 18%, var(--ds-color-border-default));
 }
 
 @media (min-width: 56rem) {
@@ -495,15 +516,57 @@
   flex-direction: column;
   gap: 0;
   padding: 0;
-  border-radius: var(--ds-radius-md);
-  background: var(--ds-color-bg-elevated);
-  border: 1px solid var(--ds-color-border-default);
+  border-radius: var(--ds-radius-lg);
+  background: color-mix(in srgb, var(--ds-color-bg-elevated) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ds-color-accent) 16%, var(--ds-color-border-default));
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
   flex-shrink: 0;
   overflow: hidden;
+  transition:
+    border-color var(--ds-duration-fast) var(--ds-ease-standard),
+    transform var(--ds-duration-fast) var(--ds-ease-standard);
+}
+
+.clueCard:hover {
+  transform: translateY(-1px);
 }
 
 .clueCardRevealed {
-  border-color: color-mix(in srgb, var(--ds-color-success, #22c55e) 45%, var(--ds-color-border-default));
+  border-color: color-mix(in srgb, var(--ds-color-success, #22c55e) 55%, var(--ds-color-border-default));
+  box-shadow:
+    0 8px 24px rgb(0 0 0 / 0.18),
+    0 0 0 1px color-mix(in srgb, var(--ds-color-success, #22c55e) 25%, transparent),
+    0 0 36px color-mix(in srgb, var(--ds-color-success, #22c55e) 18%, transparent);
+}
+
+.clueCardRevealPop {
+  animation: clueRevealPop 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes clueRevealPop {
+  0% {
+    transform: scale(0.96);
+    filter: brightness(1.35);
+  }
+  55% {
+    transform: scale(1.02);
+    filter: brightness(1.15);
+  }
+  100% {
+    transform: scale(1);
+    filter: none;
+  }
+}
+
+.clueCardRevealTag {
+  display: inline-block;
+  margin-right: var(--ds-space-2);
+  padding: 0.1rem 0.55rem;
+  border-radius: var(--ds-radius-full);
+  background: color-mix(in srgb, var(--ds-color-success, #22c55e) 22%, transparent);
+  color: var(--ds-palette-green-300, #86efac);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
 }
 
 .clueCardBanner {
@@ -671,21 +734,41 @@
 
 .turnBanner {
   margin: 0;
-  padding: var(--ds-space-3);
-  border-radius: var(--ds-radius-sm);
+  padding: var(--ds-space-3) var(--ds-space-4);
+  border-radius: var(--ds-radius-lg);
   font-size: var(--ds-text-sm);
   text-align: center;
+  border: 1px solid transparent;
 }
 
 .turnBannerActive {
-  background: var(--ds-color-accent-muted);
-  color: var(--ds-color-accent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ds-color-accent) 28%, transparent),
+    color-mix(in srgb, var(--ds-color-cyan-500, #2fafc0) 16%, transparent)
+  );
+  border-color: color-mix(in srgb, var(--ds-color-accent) 45%, transparent);
+  color: var(--ds-color-text-primary);
   font-weight: var(--ds-weight-semibold);
+  animation: dsPulseSoft 1.8s ease-in-out infinite;
 }
 
 .turnBannerWait {
-  background: var(--ds-color-bg-elevated);
+  background: color-mix(in srgb, var(--ds-color-bg-elevated) 85%, transparent);
+  border-color: var(--ds-color-border-default);
   color: var(--ds-color-text-muted);
+}
+
+.turnBannerBot {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ds-color-gold) 28%, transparent),
+    color-mix(in srgb, var(--ds-palette-gray-700) 40%, transparent)
+  );
+  border-color: color-mix(in srgb, var(--ds-color-gold) 50%, transparent);
+  color: var(--ds-color-text-primary);
+  font-weight: var(--ds-weight-semibold);
+  animation: dsPulseSoft 1.6s ease-in-out infinite;
 }
 
 .matchPlayers {
@@ -700,14 +783,21 @@
   align-items: center;
   gap: var(--ds-space-2);
   padding: var(--ds-space-3);
-  border-radius: var(--ds-radius-md);
+  border-radius: var(--ds-radius-lg);
   border: 1px solid var(--ds-color-border-default);
-  background: var(--ds-color-bg-elevated);
+  background: color-mix(in srgb, var(--ds-color-bg-elevated) 90%, transparent);
+  transition:
+    border-color var(--ds-duration-fast) var(--ds-ease-standard),
+    box-shadow var(--ds-duration-fast) var(--ds-ease-standard),
+    transform var(--ds-duration-fast) var(--ds-ease-standard);
 }
 
 .matchPlayerCardActive {
   border-color: var(--ds-color-accent);
-  box-shadow: 0 0 0 2px var(--ds-color-accent-muted);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--ds-color-accent) 35%, transparent),
+    0 10px 28px color-mix(in srgb, var(--ds-color-accent) 18%, transparent);
+  transform: translateY(-2px);
 }
 
 .matchPlayerAvatar {
@@ -767,10 +857,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--ds-radius-sm);
-  border: 1px dashed var(--ds-color-border-default);
-  background: var(--ds-color-bg-elevated);
+  border-radius: var(--ds-radius-md);
+  border: 1px dashed color-mix(in srgb, var(--ds-color-gold) 30%, var(--ds-color-border-default));
+  background:
+    radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--ds-color-gold) 14%, transparent), transparent 65%),
+    color-mix(in srgb, var(--ds-color-bg-elevated) 90%, transparent);
   padding: var(--ds-space-1);
+  transition: border-color var(--ds-duration-fast) var(--ds-ease-standard);
+}
+
+.matchHitCell:has(img) {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--ds-color-success, #22c55e) 50%, var(--ds-color-border-default));
+  animation: dsPopIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .matchShellGuest {
@@ -945,30 +1044,214 @@
   background: var(--ds-color-bg-elevated);
 }
 
+.hostHitOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1250;
+  display: grid;
+  place-items: center;
+  padding: var(--ds-space-6);
+  pointer-events: none;
+  background: rgb(0 0 0 / 0.45);
+}
+
+.hostHitOverlayEnter {
+  animation: hostHitFadeIn 0.35s ease-out both;
+}
+
+@keyframes hostHitFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.hostHitBurst {
+  position: absolute;
+  width: min(28rem, 80vw);
+  height: min(28rem, 80vw);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--ds-color-success, #22c55e) 35%, transparent) 0%,
+    transparent 68%
+  );
+  animation: hostHitBurst 0.9s ease-out both;
+}
+
+@keyframes hostHitBurst {
+  from {
+    transform: scale(0.4);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.15);
+    opacity: 0.35;
+  }
+}
+
+.hostHitCard {
+  position: relative;
+  z-index: 1;
+  width: min(28rem, calc(100vw - var(--ds-space-8)));
+  overflow: hidden;
+  padding: var(--ds-space-6);
+  padding-bottom: calc(var(--ds-space-6) + 0.4rem);
+  border-radius: var(--ds-radius-xl);
+  border: 1px solid color-mix(in srgb, var(--ds-color-success, #22c55e) 55%, transparent);
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--ds-color-success, #22c55e) 22%, var(--ds-color-bg-elevated)) 0%,
+      var(--ds-color-bg-raised) 55%,
+      var(--ds-color-bg-deep) 100%
+    );
+  box-shadow:
+    0 24px 64px rgb(0 0 0 / 0.45),
+    0 0 48px color-mix(in srgb, var(--ds-color-success, #22c55e) 28%, transparent);
+  animation: hostHitCardIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes hostHitCardIn {
+  from {
+    transform: translateY(1.5rem) scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.hostHitEyebrow {
+  margin: 0 0 var(--ds-space-4);
+  text-align: center;
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-text-sm);
+  font-weight: var(--ds-weight-bold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ds-palette-green-300, #86efac);
+}
+
+.hostHitBody {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-5);
+}
+
+.hostHitSprite {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 7.5rem;
+  height: 7.5rem;
+  border-radius: var(--ds-radius-lg);
+  border: 1px solid color-mix(in srgb, var(--ds-color-success, #22c55e) 40%, transparent);
+  background:
+    radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--ds-color-success, #22c55e) 30%, transparent), transparent 70%),
+    var(--ds-color-bg-input);
+}
+
+.hostHitMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.hostHitName {
+  font-family: var(--ds-font-display);
+  font-size: clamp(1.6rem, 4vw, 2.1rem);
+  font-weight: var(--ds-weight-bold);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--ds-color-text-primary);
+}
+
+.hostHitDex {
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-secondary);
+}
+
+.hostHitBadge {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-top: var(--ds-space-2);
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--ds-radius-full);
+  background: var(--ds-color-success-muted, rgb(34 197 94 / 0.18));
+  color: var(--ds-palette-green-300, #86efac);
+  font-size: var(--ds-text-xs);
+  font-weight: var(--ds-weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hostHitTimer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0.32rem;
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--ds-color-success, #22c55e), var(--ds-color-gold));
+  animation-name: botGuessTimer;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
 .botGuessOverlay {
   position: fixed;
-  top: var(--ds-space-4);
+  top: max(var(--ds-space-4), env(safe-area-inset-top, 0px));
   left: 50%;
   z-index: 1200;
-  width: min(22rem, calc(100vw - var(--ds-space-8)));
+  width: min(26rem, calc(100vw - var(--ds-space-8)));
   transform: translate(-50%, 0);
   opacity: 1;
   pointer-events: none;
 }
 
 .botGuessOverlayEnter {
-  animation: botGuessSlideIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: botGuessSlideIn 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes botGuessSlideIn {
   from {
-    transform: translate(-50%, -120%);
+    transform: translate(-50%, -140%) scale(0.92);
     opacity: 0;
   }
 
   to {
-    transform: translate(-50%, 0);
+    transform: translate(-50%, 0) scale(1);
     opacity: 1;
+  }
+}
+
+@keyframes botGuessTimer {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes botGuessPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 18px 48px rgb(0 0 0 / 0.4),
+      0 0 0 1px color-mix(in srgb, var(--ds-color-accent) 40%, transparent),
+      0 0 32px color-mix(in srgb, var(--ds-color-accent) 28%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 18px 48px rgb(0 0 0 / 0.4),
+      0 0 0 1px color-mix(in srgb, var(--ds-color-accent) 55%, transparent),
+      0 0 48px color-mix(in srgb, var(--ds-color-accent) 42%, transparent);
   }
 }
 
@@ -978,25 +1261,41 @@
 }
 
 .botGuessOverlayCard {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: var(--ds-space-3);
-  padding: var(--ds-space-4);
-  border-radius: var(--ds-radius-lg);
-  border: 2px solid var(--ds-color-accent);
-  background: var(--ds-color-bg-elevated);
-  box-shadow:
-    0 12px 40px rgb(0 0 0 / 0.28),
-    0 0 0 1px rgb(255 255 255 / 0.04);
+  padding: var(--ds-space-5);
+  padding-bottom: calc(var(--ds-space-5) + 0.35rem);
+  border-radius: var(--ds-radius-xl);
+  border: 1px solid color-mix(in srgb, var(--ds-color-accent) 55%, transparent);
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--ds-color-bg-elevated) 92%, var(--ds-color-accent)) 0%,
+      var(--ds-color-bg-raised) 55%,
+      var(--ds-color-bg-deep) 100%
+    );
+  animation: botGuessPulse 1.6s ease-in-out infinite;
+}
+
+.botGuessOverlayCardHit {
+  border-color: color-mix(in srgb, var(--ds-color-success) 60%, transparent);
+}
+
+.botGuessOverlayCardMiss {
+  border-color: color-mix(in srgb, var(--ds-color-danger) 55%, transparent);
 }
 
 .botGuessOverlayLabel {
   margin: 0;
+  font-family: var(--ds-font-display);
   font-size: var(--ds-text-xs);
-  font-weight: var(--ds-weight-semibold);
-  letter-spacing: 0.08em;
+  font-weight: var(--ds-weight-bold);
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ds-color-text-muted);
+  color: var(--ds-color-accent);
   text-align: center;
 }
 
@@ -1006,16 +1305,40 @@
   gap: var(--ds-space-4);
 }
 
+.botGuessOverlaySpriteWrap {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 6.5rem;
+  height: 6.5rem;
+  border-radius: var(--ds-radius-lg);
+  background:
+    radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--ds-color-accent) 28%, transparent), transparent 70%),
+    var(--ds-color-bg-input);
+  border: 1px solid var(--ds-color-border-subtle);
+}
+
 .botGuessOverlayMeta {
   display: flex;
   flex-direction: column;
-  gap: var(--ds-space-1);
+  gap: 0.15rem;
   min-width: 0;
 }
 
-.botGuessOverlayName {
-  font-size: var(--ds-text-lg);
+.botGuessOverlayKicker {
+  font-size: var(--ds-text-xs);
   font-weight: var(--ds-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ds-color-text-muted);
+}
+
+.botGuessOverlayName {
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-text-2xl);
+  font-weight: var(--ds-weight-bold);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
   color: var(--ds-color-text-primary);
 }
 
@@ -1027,23 +1350,36 @@
 .botGuessOverlayResult {
   display: inline-flex;
   align-self: flex-start;
-  margin-top: var(--ds-space-1);
-  padding: 0.15rem 0.55rem;
+  margin-top: var(--ds-space-2);
+  padding: 0.25rem 0.7rem;
   border-radius: var(--ds-radius-full);
   font-size: var(--ds-text-xs);
-  font-weight: var(--ds-weight-semibold);
-  letter-spacing: 0.04em;
+  font-weight: var(--ds-weight-bold);
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .botGuessOverlayHit {
-  background: rgb(34 197 94 / 0.18);
-  color: rgb(74 222 128);
+  background: var(--ds-color-success-muted);
+  color: var(--ds-palette-green-300);
 }
 
 .botGuessOverlayMiss {
-  background: rgb(248 113 113 / 0.15);
-  color: rgb(252 165 165);
+  background: var(--ds-color-danger-muted);
+  color: var(--ds-palette-red-200);
+}
+
+.botGuessOverlayTimer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0.28rem;
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--ds-color-accent), var(--ds-color-gold));
+  animation-name: botGuessTimer;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
 }
 
 .commitmentStrip {

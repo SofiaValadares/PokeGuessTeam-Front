@@ -15,6 +15,7 @@ export type BotMatchSliceState = {
   busy: boolean;
   botBusy: boolean;
   activeBotGuess: MatchGuessFeedback | null;
+  activeHostHit: MatchGuessFeedback | null;
   error: string | null;
 };
 
@@ -30,5 +31,6 @@ export const initialBotMatchState: BotMatchSliceState = {
   busy: false,
   botBusy: false,
   activeBotGuess: null,
+  activeHostHit: null,
   error: null,
 };

@@ -47,7 +47,10 @@
 }
 
 .titleH2 {
+  font-family: var(--ds-font-display);
   font-size: var(--ds-text-xl);
+  font-weight: var(--ds-weight-bold);
+  letter-spacing: -0.02em;
 }
 
 .titleH3 {

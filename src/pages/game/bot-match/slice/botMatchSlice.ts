@@ -17,6 +17,7 @@ const botMatchSlice = createSlice({
       state.busy = false;
       state.botBusy = false;
       state.activeBotGuess = null;
+      state.activeHostHit = null;
       state.error = null;
     },
     /** Limpa partida em curso/terminada; mantém equipe escolhida para nova partida. */
@@ -26,6 +27,7 @@ const botMatchSlice = createSlice({
       state.matchView = null;
       state.guessLog = [];
       state.activeBotGuess = null;
+      state.activeHostHit = null;
       state.botBusy = false;
       state.busy = false;
       state.error = null;
@@ -71,6 +73,9 @@ const botMatchSlice = createSlice({
     setActiveBotGuess(state, action: PayloadAction<MatchGuessFeedback | null>) {
       state.activeBotGuess = action.payload;
     },
+    setActiveHostHit(state, action: PayloadAction<MatchGuessFeedback | null>) {
+      state.activeHostHit = action.payload;
+    },
     setError(state, action: PayloadAction<string | null>) {
       state.error = action.payload;
     },
@@ -92,6 +97,7 @@ export const {
   setBusy,
   setBotBusy,
   setActiveBotGuess,
+  setActiveHostHit,
   setError,
 } = botMatchSlice.actions;
 

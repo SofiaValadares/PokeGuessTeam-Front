@@ -36,6 +36,8 @@ export type MatchBoardProps = {
   searchablePokemon?: PokemonDto[];
   /** Conteúdo extra abaixo do botão de desistir (ex.: atualizar partida online). */
   actionsBelowSurrender?: ReactNode;
+  /** Substitui o texto do banner de turno (ex.: bot a pensar). */
+  turnBannerText?: string | null;
 };
 
 export function MatchBoard({
@@ -60,6 +62,7 @@ export function MatchBoard({
   playerTheme = 'default',
   searchablePokemon,
   actionsBelowSurrender,
+  turnBannerText = null,
 }: MatchBoardProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PokemonDto[]>([]);
@@ -227,14 +230,19 @@ export function MatchBoard({
             <p
               className={[
                 styles.turnBanner,
-                isYourTurn ? styles.turnBannerActive : styles.turnBannerWait,
-              ].join(' ')}
+                isYourTurn && !turnBannerText ? styles.turnBannerActive : styles.turnBannerWait,
+                turnBannerText ? styles.turnBannerBot : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
             >
-              {guessLoading
-                ? 'A enviar palpite…'
-                : isYourTurn
-                  ? 'A tua vez — escolhe um Pokémon na pesquisa.'
-                  : `À espera de ${opponentName}.`}
+              {turnBannerText
+                ? turnBannerText
+                : guessLoading
+                  ? 'A enviar palpite…'
+                  : isYourTurn
+                    ? 'A tua vez — escolhe um Pokémon na pesquisa.'
+                    : `À espera de ${opponentName}.`}
             </p>
           ) : null}
 

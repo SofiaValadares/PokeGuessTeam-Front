@@ -8,7 +8,7 @@ import { useAppSelector } from '../../../store/hooks';
 import { PC_PAGE_SIZE_OPTIONS } from '../../../lib/ui/gridPageSizes';
 import { usePokemonPcPage } from '../../../hooks/usePokemonPcPage';
 import { useSpeciesMeta } from '../../../hooks/useSpeciesMeta';
-import { Card, InlineAlert, PageSection, PageShell, TextField, Spinner } from '../../../ds';
+import { InlineAlert, PageShell, TextField, Spinner } from '../../../ds';
 import { FetchStatus } from '../../../types/fetchStatus';
 import { PcDetailPanel } from './components/PcDetailPanel';
 import { buildPcGridData } from '../../../lib/pc/buildGridData';
@@ -73,28 +73,40 @@ export default function PcPage() {
 
   const showEmpty = !loading && !metaLoading && gridItems.length === 0;
   const showPagination = !isSearching && data != null;
+  const totalLines = data?.totalElements ?? cachedPcLines.length;
 
   return (
     <PageShell width="fluid" className={styles.pageShell}>
-      <Card padding="md" className={styles.card}>
-        <PageSection
-          title="Caixa Pokémon"
-          headingLevel="h1"
-          divider
-          action={
+      <div className={styles.stage}>
+        <header className={styles.toolbar}>
+          <div className={styles.toolbarCopy}>
+            <p className={styles.kicker}>Inventário · Coleção</p>
+            <h1 className={styles.title}>Caixa Pokémon</h1>
+          </div>
+          <div className={styles.toolbarEnd}>
+            <div className={styles.statChip}>
+              <span className={styles.statLabel}>Linhas</span>
+              <span className={styles.statValue}>{totalLines.toLocaleString('pt-PT')}</span>
+            </div>
+            {isSearching ? (
+              <div className={styles.statChip}>
+                <span className={styles.statLabel}>Hits</span>
+                <span className={styles.statValue}>{gridItems.length.toLocaleString('pt-PT')}</span>
+              </div>
+            ) : null}
             <div className={styles.searchWrap}>
               <TextField
                 label="Pesquisar"
                 name="pcSearch"
                 value={searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                placeholder="Nome ou nº da Pokédex"
+                placeholder="Nome ou nº"
               />
             </div>
-          }
-        />
+          </div>
+        </header>
 
-        <PageSection grow>
+        <div className={styles.panel}>
           {errorMessage && !isSearching ? (
             <InlineAlert tone="error" role="alert">
               {errorMessage}
@@ -104,58 +116,63 @@ export default function PcPage() {
           {loading && lines.length === 0 ? (
             <Spinner label="A carregar inventário…" />
           ) : showEmpty ? (
-          <p className={styles.empty}>
-            {isSearching
-              ? `Nenhum Pokémon encontrado para «${trimmedSearch}».`
-              : 'Ainda não há Pokémon na coleção.'}
-          </p>
-        ) : (
-          <>
-            {metaLoading ? (
-              <p className={`ds-body-muted ${styles.metaLoading}`}>A resolver formas evolutivas…</p>
-            ) : null}
-            {isSearching ? (
-              <p className={styles.searchSummary}>
-                {gridItems.length.toLocaleString('pt-PT')} resultado(s) para «{trimmedSearch}»
-              </p>
-            ) : null}
-            <div className={styles.layout}>
-              <div className={styles.gridColumn}>
-                <PokemonBillGrid
-                  items={gridItems}
-                  slotCount={pageSlotCount}
-                  className={styles.pcGrid}
-                  selectedKey={selectedKey}
-                  onSelect={(item) => setSelectedKey(item.key)}
-                  aria-label="Caixa Pokémon do jogador"
+            <p className={styles.empty}>
+              {isSearching
+                ? `Nenhum Pokémon encontrado para «${trimmedSearch}».`
+                : 'Ainda não há Pokémon na coleção.'}
+            </p>
+          ) : (
+            <>
+              {metaLoading ? (
+                <p className={`ds-body-muted ${styles.metaLoading}`}>A resolver formas evolutivas…</p>
+              ) : null}
+              {isSearching ? (
+                <p className={styles.searchSummary}>
+                  {gridItems.length.toLocaleString('pt-PT')} resultado(s) para «{trimmedSearch}»
+                </p>
+              ) : null}
+              <div className={styles.layout}>
+                <div className={styles.gridColumn}>
+                  <PokemonBillGrid
+                    key={`pc-page-${page}-${pageSize}-${trimmedSearch}`}
+                    items={gridItems}
+                    slotCount={pageSlotCount}
+                    fillHeight
+                    dense
+                    variant="pc"
+                    className={`${styles.pcGrid} ${styles.gridFlash}`}
+                    selectedKey={selectedKey}
+                    onSelect={(item) => setSelectedKey(item.key)}
+                    aria-label="Caixa Pokémon do jogador"
+                  />
+                </div>
+                <PcDetailPanel
+                  key={selectedKey ?? 'empty'}
+                  line={selectedLine}
+                  item={selectedItem}
+                  species={selectedItem ? speciesByDex.get(selectedItem.dex) : undefined}
                 />
               </div>
-              <PcDetailPanel
-                line={selectedLine}
-                item={selectedItem}
-                species={selectedItem ? speciesByDex.get(selectedItem.dex) : undefined}
-              />
-            </div>
-            {showPagination ? (
-              <PokemonGridPagination
-                loading={loading}
-                page={page}
-                totalPages={data.totalPages}
-                totalElements={data.totalElements}
-                totalLabel={`${data.totalElements.toLocaleString('pt-PT')} linhas`}
-                isFirst={data.first}
-                isLast={data.last}
-                pageSize={pageSize}
-                pageSizeOptions={PC_PAGE_SIZE_OPTIONS}
-                onPageSizeChange={setPageSize}
-                onPrev={() => setPage((p) => Math.max(0, p - 1))}
-                onNext={() => setPage((p) => p + 1)}
-              />
-            ) : null}
-          </>
+              {showPagination ? (
+                <PokemonGridPagination
+                  loading={loading}
+                  page={page}
+                  totalPages={data.totalPages}
+                  totalElements={data.totalElements}
+                  totalLabel={`${data.totalElements.toLocaleString('pt-PT')} linhas`}
+                  isFirst={data.first}
+                  isLast={data.last}
+                  pageSize={pageSize}
+                  pageSizeOptions={PC_PAGE_SIZE_OPTIONS}
+                  onPageSizeChange={setPageSize}
+                  onPrev={() => setPage((p) => Math.max(0, p - 1))}
+                  onNext={() => setPage((p) => p + 1)}
+                />
+              ) : null}
+            </>
           )}
-        </PageSection>
-      </Card>
+        </div>
+      </div>
     </PageShell>
   );
 }

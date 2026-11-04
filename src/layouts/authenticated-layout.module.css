@@ -10,6 +10,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: auto;
 }
 
 .layoutGame {
@@ -22,6 +23,21 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+
+/* Pokédex / PC / Área selvagem — cabe no viewport com header */
+.layoutFill {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.layoutFill .shellGrow {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .headerEnd {
