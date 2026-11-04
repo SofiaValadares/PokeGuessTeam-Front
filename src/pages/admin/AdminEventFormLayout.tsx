@@ -75,12 +75,14 @@ export default function AdminEventFormLayout() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [formBlocked, setFormBlocked] = useState(false);
 
   const basePath = isEdit ? `/admin/events/${eventId}/edit` : '/admin/events/new';
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setFormBlocked(false);
     try {
       const entries = await getPokedexAll();
       setAllPokemon(entries.map((e) => e.pokemon));
@@ -94,10 +96,12 @@ export default function AdminEventFormLayout() {
       const ev = events.find((e) => e.id === eventId);
       if (!ev) {
         setError('Evento não encontrado.');
+        setFormBlocked(true);
         return;
       }
       if (ev.status === 'ACTIVE') {
         setError('Não é possível editar um evento em andamento.');
+        setFormBlocked(true);
         return;
       }
       setForm({
@@ -109,6 +113,7 @@ export default function AdminEventFormLayout() {
       });
     } catch (e) {
       setError(toFriendlyUserMessage(e, 'Não foi possível carregar o formulário.'));
+      setFormBlocked(true);
     } finally {
       setLoading(false);
     }
@@ -222,8 +227,9 @@ export default function AdminEventFormLayout() {
   return (
     <AdminEventFormContext.Provider value={value}>
       {error ? <InlineAlert tone="error">{error}</InlineAlert> : null}
+      {formBlocked ? <Link to="/admin/events">Voltar aos eventos</Link> : null}
       {loading ? <p className="ds-body-muted">A carregar…</p> : null}
-      {!loading ? <Outlet /> : null}
+      {!loading && !formBlocked ? <Outlet /> : null}
     </AdminEventFormContext.Provider>
   );
 }

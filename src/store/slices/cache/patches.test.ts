@@ -1,3 +1,5 @@
+import { reconcilePokeballInventory } from '../../../lib/pokeball/fragments';
+import { FetchStatus } from '../../../types/fetchStatus';
 import { emptyUserCacheState } from './types';
 import {
   applyXpToPcLine,
@@ -10,7 +12,6 @@ import {
   patchAfterPostMatchSync,
   patchAfterTrainingTeamUpdate,
 } from './patches';
-import { FetchStatus } from '../../../types/fetchStatus';
 
 jest.mock('../../../lib/pokedex/nationalCatalog', () => ({
   getSpecies: () => [
@@ -125,6 +126,29 @@ describe('patches do cache', () => {
       pokeballTypeGranted: 'POKE_BALL',
     });
     expect(afterRewards.inventory?.pokeballFragments).toBe(7);
+
+    const afterConvert = patchAfterMatchRewards(
+      {
+        ...state(),
+        inventory: { ...inventory, pokeballFragments: 8 },
+      },
+      {
+        trainingTeamXpGranted: 0,
+        pokeBallsGranted: 0,
+        pokeballFragmentsGranted: 5,
+        pokeballTypeGranted: null,
+      },
+    );
+    expect(afterConvert.inventory?.pokeballFragments).toBe(3);
+    expect(
+      afterConvert.inventory?.items.find((i) => i.pokeballType === 'POKE_BALL')?.quantity,
+    ).toBe((inventory.items.find((i) => i.pokeballType === 'POKE_BALL')?.quantity ?? 0) + 1);
+
+    const stuck = reconcilePokeballInventory({ ...inventory, pokeballFragments: 10 });
+    expect(stuck.pokeballFragments).toBe(0);
+    expect(stuck.items.find((i) => i.pokeballType === 'POKE_BALL')?.quantity).toBe(
+      (inventory.items.find((i) => i.pokeballType === 'POKE_BALL')?.quantity ?? 0) + 1,
+    );
 
     const afterSync = patchAfterPostMatchSync(
       state(),

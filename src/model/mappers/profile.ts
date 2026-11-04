@@ -1,5 +1,6 @@
 import type { ProfileMeResponse, ProfilePokeballPayload } from '../../services/types/profile';
 import type { ProfileMe, PokeballInventory } from '../profile';
+import { reconcilePokeballInventory } from '../../lib/pokeball/fragments';
 
 export function mapProfileMe(dto: ProfileMeResponse): ProfileMe {
   return {
@@ -12,9 +13,9 @@ export function mapProfileMe(dto: ProfileMeResponse): ProfileMe {
 }
 
 export function mapPokeballInventory(dto: ProfilePokeballPayload): PokeballInventory {
-  return {
+  return reconcilePokeballInventory({
     pokeballFragments: dto.pokeballFragments,
     fragmentsPerPokeBall: dto.fragmentsPerPokeBall,
     items: dto.items.map((item) => ({ ...item })),
-  };
+  });
 }

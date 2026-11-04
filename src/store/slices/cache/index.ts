@@ -18,6 +18,7 @@ export {
   applyFavoritePokemon,
   applyClaimRewards,
   applyPostMatchSync,
+  applyInventory,
   restoreFromStorage,
 } from './cacheSlice';
 export { cacheReducer } from './cacheSlice';

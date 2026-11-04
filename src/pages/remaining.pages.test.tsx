@@ -260,11 +260,15 @@ jest.mock('../services/pokemonService', () => {
   return {
     ...actual,
     drawPokemon: jest.fn(async () => ({
-      pokeballType: 'POKE_BALL',
-      rolledRarity: 'COMMON',
-      pokemon: mockPikachu,
-      newInventoryLine: true,
-      timesObtainedOnLine: 1,
+      draws: [
+        {
+          pokeballType: 'POKE_BALL',
+          rolledRarity: 'COMMON',
+          pokemon: mockPikachu,
+          newInventoryLine: true,
+          timesObtainedOnLine: 1,
+        },
+      ],
     })),
   };
 });
@@ -448,11 +452,15 @@ beforeEach(() => {
   (fetchActiveBonusEvent as jest.Mock).mockResolvedValue(null);
   (getCompetitiveQueueStatus as jest.Mock).mockResolvedValue({ status: 'IDLE' });
   (drawPokemon as jest.Mock).mockResolvedValue({
-    pokeballType: 'POKE_BALL',
-    rolledRarity: 'COMMON',
-    pokemon: mockPikachu,
-    newInventoryLine: true,
-    timesObtainedOnLine: 1,
+    draws: [
+      {
+        pokeballType: 'POKE_BALL',
+        rolledRarity: 'COMMON',
+        pokemon: mockPikachu,
+        newInventoryLine: true,
+        timesObtainedOnLine: 1,
+      },
+    ],
   });
   (getAllPokemon as jest.Mock).mockReturnValue(mockDexPool);
   (authService.changeUsername as jest.Mock).mockResolvedValue(undefined);
@@ -589,7 +597,7 @@ describe('home, área selvagem e partidas', () => {
     renderWithApp(<HomePage />, { store: pagesStore() });
     expect(screen.getByText('Iniciar jogo')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Regras' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Online competitivo' }));
+    fireEvent.click(screen.getByRole('button', { name: /Online competitivo/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Partida amigável' }));
     fireEvent.click(screen.getByRole('button', { name: /Duelo vs/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Jogo local' }));
@@ -606,13 +614,15 @@ describe('home, área selvagem e partidas', () => {
     renderWithApp(<GameRulesPanel />);
     renderWithApp(
       <GachaResultPanel
-        draw={{
-          pokeballType: 'POKE_BALL',
-          rolledRarity: 'COMMON',
-          pokemon: mockPikachu as never,
-          newInventoryLine: true,
-          timesObtainedOnLine: 1,
-        }}
+        draws={[
+          {
+            pokeballType: 'POKE_BALL',
+            rolledRarity: 'COMMON',
+            pokemon: mockPikachu as never,
+            newInventoryLine: true,
+            timesObtainedOnLine: 1,
+          },
+        ]}
       />,
     );
     renderWithApp(<GachaDrawingOverlay drawingType="POKE_BALL" />);

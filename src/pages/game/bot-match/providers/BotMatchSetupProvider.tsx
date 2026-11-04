@@ -55,7 +55,16 @@ export function BotMatchSetupProvider({ hostName, children }: BotMatchSetupProvi
         }),
       );
     } catch (e) {
-      dispatch(setError(e instanceof ApiError ? e.message : 'Equipe inválida.'));
+      const code = e instanceof ApiError ? e.body?.code : null;
+      if (e instanceof ApiError && code === 'GAME_MATCH_ALREADY_IN_PROGRESS') {
+        dispatch(
+          setError(
+            'Há uma partida antiga a bloquear o início. Recarrega a página e tenta de novo — o servidor limpa duelos vs bot órfãos.',
+          ),
+        );
+      } else {
+        dispatch(setError(e instanceof ApiError ? e.message : 'Equipe inválida.'));
+      }
     } finally {
       dispatch(setBusy(false));
     }

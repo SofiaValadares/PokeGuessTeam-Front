@@ -1,5 +1,5 @@
 import { PokemonSprite } from '../../../components/PokemonSprite';
-import { Button, Card, InlineAlert, PageSection, Spinner } from '../../../ds';
+import { Card, InlineAlert, PageSection, Spinner } from '../../../ds';
 import { useHome } from '../providers/HomeProvider';
 import styles from './profile-summary.module.css';
 
@@ -11,7 +11,6 @@ export function ProfileSummaryCard() {
     profileMe,
     playerName,
     pokedexRegisteredCount,
-    goToHistory,
   } = useHome();
 
   if (loading) {
@@ -47,11 +46,6 @@ export function ProfileSummaryCard() {
         }
         headingLevel="h2"
         headerSpacing="tight"
-        action={
-          <Button type="button" variant="secondary" size="md" className={styles.historyBtn} onClick={goToHistory}>
-            Histórico
-          </Button>
-        }
         divider
         aria-label="Resumo do perfil"
       >

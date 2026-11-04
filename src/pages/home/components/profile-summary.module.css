@@ -17,14 +17,17 @@
   aspect-ratio: 1;
   height: 100%;
   width: auto;
-  min-width: 7.5rem;
-  min-height: 7.5rem;
+  min-width: 5.5rem;
+  min-height: 5.5rem;
   max-height: 100%;
   padding: var(--ds-space-2);
   box-sizing: border-box;
-  border-radius: var(--ds-radius-lg);
-  background: var(--ds-color-surface-raised, rgba(255, 255, 255, 0.04));
-  border: 1px solid var(--ds-color-border-subtle, rgba(255, 255, 255, 0.1));
+  border-radius: var(--ds-radius-xl);
+  background:
+    radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--ds-color-accent) 22%, transparent), transparent 65%),
+    var(--ds-color-surface-raised);
+  border: 1px solid color-mix(in srgb, var(--ds-color-accent) 28%, var(--ds-color-border-subtle));
+  box-shadow: 0 0 28px color-mix(in srgb, var(--ds-color-accent) 16%, transparent);
   overflow: hidden;
 }
 

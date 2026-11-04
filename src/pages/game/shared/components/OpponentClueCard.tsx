@@ -48,11 +48,18 @@ export function OpponentClueCard({ slot }: OpponentClueCardProps) {
 
   return (
     <article
-      className={[styles.clueCard, slot.revealed ? styles.clueCardRevealed : '']
+      className={[
+        styles.clueCard,
+        slot.revealed ? styles.clueCardRevealed : '',
+        slot.revealed ? styles.clueCardRevealPop : '',
+      ]
         .filter(Boolean)
         .join(' ')}
     >
-      <header className={styles.clueCardBanner}>{bannerLabel}</header>
+      <header className={styles.clueCardBanner}>
+        {slot.revealed ? <span className={styles.clueCardRevealTag}>Revelado</span> : null}
+        {bannerLabel}
+      </header>
 
       <div className={styles.clueCardBody}>
         <div className={styles.clueCardLeft}>

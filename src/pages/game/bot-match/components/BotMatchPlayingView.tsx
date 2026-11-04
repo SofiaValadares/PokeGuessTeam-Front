@@ -2,12 +2,14 @@ import { useMemo } from 'react';
 import { RIVAL } from '../../../../lib/game/characters';
 import { BotMatchBoard } from './BotMatchBoard';
 import { BotGuessOverlay } from './BotGuessOverlay';
+import { BotThinkingBanner } from './BotThinkingBanner';
+import { HostHitOverlay } from './HostHitOverlay';
 import { MatchResultModal } from '../../shared/components/MatchResultModal';
 import { TeamCommitmentStrip } from '../../shared/components/TeamCommitmentStrip';
 import { useMatchFinishRedirect } from '../../../../hooks/useMatchFinishRedirect';
 import { guessedDexNumbersForSide } from '../../../../lib/game/matchGuesses';
 import { gameResultLabel } from '../../../../lib/game/labels';
-import { InlineAlert } from '../../../../ds';
+import { Button, InlineAlert } from '../../../../ds';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
 import { prepareNewBotMatch } from '../slice/botMatchSlice';
 import { selectBotMatch } from '../slice/botMatchSelectors';
@@ -23,11 +25,13 @@ export function BotMatchPlayingView() {
     clientState,
     guessLog,
     activeBotGuess,
+    activeHostHit,
     botBusy,
     busy,
     error,
     guess,
     surrender,
+    retryFinish,
   } = useBotMatchPlay();
 
   const matchEnded = clientState?.status === 'FINISHED';
@@ -39,17 +43,17 @@ export function BotMatchPlayingView() {
   });
 
   const awaitingBotFinalResponse =
-    clientState?.status === 'ACTIVE' &&
-    clientState.finalResponseFor === 'OPPONENT' &&
-    clientState.lastCompletingPlayer === 'HOST';
+    clientState?.status === 'ACTIVE' && clientState.finalResponseFor === 'OPPONENT';
 
   const botTurnActive = activeBotGuess !== null || botBusy;
+  const celebratingHit = activeHostHit != null;
 
   const yourTurn =
     clientState?.status === 'ACTIVE' &&
     clientState.currentTurn === 'HOST' &&
     !matchEnded &&
-    !botTurnActive;
+    !botTurnActive &&
+    !celebratingHit;
 
   const excludedGuesses = useMemo(
     () => guessedDexNumbersForSide(guessLog, 'HOST'),
@@ -65,17 +69,27 @@ export function BotMatchPlayingView() {
   if (!matchView) {
     return (
       <div className={layout.matchScreen}>
-        <p className="ds-body-muted">A preparar duelo…</p>
+        <div className={layout.matchBootCard} role="status">
+          <span className={layout.matchBootPulse} aria-hidden />
+          <p className={layout.matchBootTitle}>A preparar duelo…</p>
+          <p className={layout.matchBootSub}>A sincronizar compromisso e Pokédex.</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div
-      className={[layout.matchScreen, botTurnActive ? layout.matchScreenWaiting : '']
+      className={[
+        layout.matchScreen,
+        botTurnActive ? layout.matchScreenWaiting : '',
+        celebratingHit ? layout.matchScreenHit : '',
+      ]
         .filter(Boolean)
         .join(' ')}
     >
+      {activeHostHit ? <HostHitOverlay key={activeHostHit.id} guess={activeHostHit} /> : null}
+
       {activeBotGuess ? (
         <BotGuessOverlay
           key={activeBotGuess.id}
@@ -103,18 +117,21 @@ export function BotMatchPlayingView() {
         </InlineAlert>
       ) : null}
 
-      {awaitingBotFinalResponse && !botTurnActive ? (
-        <p className="ds-body-muted" role="status">
-          Encontraste os 6 — {RIVAL.shortName} tem uma ronda extra para tentar empatar.
-        </p>
+      {awaitingBotFinalResponse && !botTurnActive && !celebratingHit ? (
+        <BotThinkingBanner mode="final-response" />
       ) : null}
 
-      {botBusy && !activeBotGuess ? (
-        <p className="ds-body-muted">{RIVAL.shortName} está a pensar…</p>
-      ) : null}
+      {botBusy && !activeBotGuess ? <BotThinkingBanner mode="thinking" /> : null}
 
       {pendingServerFinish ? (
-        <p className="ds-body-muted">A guardar resultado…</p>
+        <div className={layout.matchSaveRow}>
+          <p className={layout.matchSaveText} role="status">
+            A guardar resultado…
+          </p>
+          <Button type="button" variant="secondary" size="sm" disabled={busy} onClick={() => void retryFinish()}>
+            Tentar gravar de novo
+          </Button>
+        </div>
       ) : null}
 
       {!matchEnded || pendingServerFinish ? (
@@ -131,9 +148,18 @@ export function BotMatchPlayingView() {
             opponentHitsOnMyTeam={matchView.opponentHits ?? []}
             onGuess={guess}
             onSurrender={() => void surrender()}
-            busy={busy || botTurnActive || pendingServerFinish}
+            busy={busy || botTurnActive || pendingServerFinish || celebratingHit}
             excludedPokedexNumbers={excludedGuesses}
-            playerTheme={botTurnActive ? 'waiting' : 'default'}
+            playerTheme={botTurnActive || celebratingHit ? 'waiting' : 'default'}
+            turnBannerText={
+              celebratingHit
+                ? 'Acertaste! A revelar o slot…'
+                : botBusy && !activeBotGuess
+                  ? `${RIVAL.shortName} está a escolher o chute…`
+                  : activeBotGuess
+                    ? `${RIVAL.shortName} chutou!`
+                    : null
+            }
           />
         </div>
       ) : null}

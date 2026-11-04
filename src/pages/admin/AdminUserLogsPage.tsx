@@ -61,6 +61,11 @@ export default function AdminUserLogsPage() {
       setCandidates([]);
       return;
     }
+    // Evita reabrir a lista logo após selecionar (searchInput = username).
+    if (selected && searchQuery === selected.username) {
+      setCandidates([]);
+      return;
+    }
     let cancelled = false;
     setLoadingUsers(true);
     void fetchAdminUsers({ page: 0, size: 10, q: searchQuery, filter: 'ALL' })
@@ -78,7 +83,7 @@ export default function AdminUserLogsPage() {
     return () => {
       cancelled = true;
     };
-  }, [searchQuery]);
+  }, [searchQuery, selected]);
 
   const loadLogs = useCallback(async () => {
     if (!selected) {

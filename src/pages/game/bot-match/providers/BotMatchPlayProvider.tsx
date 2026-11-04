@@ -10,7 +10,9 @@ import { verifyOpenedCommitments } from '../../../../lib/game/teamCommitment';
 import {
   appendGuessLog,
   clearGuessLog,
+  prepareNewBotMatch,
   setActiveBotGuess,
+  setActiveHostHit,
   setBotBusy,
   setBusy,
   setClientState,
@@ -19,6 +21,7 @@ import {
   setMatchView,
   setPhase,
 } from '../slice/botMatchSlice';
+import { clearPersistedBotMatch } from '../slice/botMatchStorage';
 import { ApiError } from '../../../../services/http';
 import { useCacheActions } from '../../../../store/providers/CacheProvider';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
@@ -35,7 +38,11 @@ import {
   mergeDexRecords,
   resolveMatchDexMap,
 } from '../../../../lib/game/matchPokemonResolve';
-import { BOT_GUESS_DELAY_MS } from '../../../../lib/game/constants';
+import {
+  BOT_GUESS_DELAY_MS,
+  BOT_THINK_DELAY_MS,
+  HOST_HIT_DELAY_MS,
+} from '../../../../lib/game/constants';
 import { applySurrender, isGuessAlreadyUsed } from '../../../../lib/game/matchEngine';
 import { mapGameHistoryEntry, type GameHistoryEntry, type Pokemon } from '../../../../model';
 import { mergePokemonDex } from '../../shared/slice/matchDexSlice';
@@ -43,7 +50,11 @@ import { selectMatchDex } from '../../shared/slice/matchDexSelectors';
 import { selectBotMatch } from '../slice/botMatchSelectors';
 import { recordToMap } from '../../../../lib/game/pokemonDexMaps';
 
-const BOT_TURN_DISPLAY_MS = BOT_GUESS_DELAY_MS;
+function wait(ms: number) {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
 
 function clientStateFromFriendMatch(
   match: FriendMatchStateDto,
@@ -87,12 +98,14 @@ export type BotMatchPlayContextValue = {
   clientState: ClientMatchState | null;
   guessLog: ReturnType<typeof selectBotMatch>['guessLog'];
   activeBotGuess: ReturnType<typeof selectBotMatch>['activeBotGuess'];
+  activeHostHit: ReturnType<typeof selectBotMatch>['activeHostHit'];
   botBusy: boolean;
   busy: boolean;
   error: string | null;
   registeredPokemon: ReturnType<typeof useRegisteredPokedexPokemon>['availablePokemon'];
   guess: (dex: number) => Promise<void>;
   surrender: () => Promise<void>;
+  retryFinish: () => Promise<void>;
   beginMatch: (state: ClientMatchState) => void;
 };
 
@@ -191,10 +204,17 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
       if (botTurns.length === 0) return;
       dispatch(setBotBusy(true));
       try {
-        for (const feedback of botTurns) {
+        // “A pensar…” antes do primeiro chute — a vez do bot não pode parecer instantânea.
+        await wait(BOT_THINK_DELAY_MS);
+        for (let i = 0; i < botTurns.length; i += 1) {
+          const feedback = botTurns[i]!;
           dispatch(setActiveBotGuess(feedback));
-          await new Promise((resolve) => window.setTimeout(resolve, BOT_TURN_DISPLAY_MS));
+          dispatch(appendGuessLog([feedback]));
+          await wait(BOT_GUESS_DELAY_MS);
           dispatch(setActiveBotGuess(null));
+          if (i < botTurns.length - 1) {
+            await wait(450);
+          }
         }
       } finally {
         dispatch(setBotBusy(false));
@@ -238,8 +258,14 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
       if (!clientState || Object.keys(pokemonByDex).length === 0 || botBusy || clientState.currentTurn !== 'HOST') {
         return;
       }
-      if (isGuessAlreadyUsed(clientState, 'HOST', dex)) return;
-      if (!registeredDex.has(dex)) return;
+      if (isGuessAlreadyUsed(clientState, 'HOST', dex)) {
+        dispatch(setError('Já usaste este Pokémon nesta partida.'));
+        return;
+      }
+      if (!registeredDex.has(dex)) {
+        dispatch(setError('Só podes palpitar espécies registadas na tua Pokédex.'));
+        return;
+      }
 
       dispatch(setBusy(true));
       dispatch(setError(null));
@@ -248,18 +274,90 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
         const next = clientStateFromFriendMatch(res.match, clientState);
         const dexMap = await resolveMatchDexMap(pokemonByDex, next);
         dispatch(mergePokemonDex(mergeDexRecords(pokemonByDex, dexMap)));
+
+        const feedbacks = res.turnFeedbacks ?? [];
+        const hostFeedbacks = feedbacks.filter((f) => f.playerSide === 'HOST');
+        const botFeedbacks = feedbacks.filter((f) => f.playerSide === 'OPPONENT');
+
+        if (hostFeedbacks.length) {
+          dispatch(appendGuessLog(hostFeedbacks));
+        }
+
+        const hostHit = hostFeedbacks.find((f) => f.exactMatch) ?? null;
+        if (hostHit) {
+          // Mostra o acerto + pistas atualizadas antes da vez do bot (ou do próximo chute).
+          dispatch(setClientState({ ...clientState, hostHits: next.hostHits, guesses: next.guesses }));
+          syncView(
+            { ...clientState, hostHits: next.hostHits, guesses: next.guesses },
+            null,
+            dexMap,
+            res.match.opponentKnowledge,
+          );
+          dispatch(setActiveHostHit(hostHit));
+          await wait(HOST_HIT_DELAY_MS);
+          dispatch(setActiveHostHit(null));
+        }
+
+        // Congela o tabuleiro na “vez do bot” ANTES de aplicar o estado final do servidor.
+        if (botFeedbacks.length > 0) {
+          const waitingState: ClientMatchState = {
+            ...clientState,
+            currentTurn: 'OPPONENT',
+            hostHits: next.hostHits,
+            finalResponseFor: next.finalResponseFor,
+            guesses: [
+              ...clientState.guesses,
+              ...hostFeedbacks.map((g) => ({
+                id: g.id,
+                playerSide: g.playerSide,
+                guessedPokedexNumber: g.guessedPokedexNumber,
+                guessedPokemonName: g.guessedPokemonName,
+                exactMatch: g.exactMatch,
+                matchedPokedexNumbers: g.matchedPokedexNumbers ?? [],
+                outcome: g.outcome ?? 'SWITCH_TURN',
+                message: g.message ?? '',
+                createdAt: typeof g.createdAt === 'string' ? g.createdAt : String(g.createdAt ?? ''),
+              })),
+            ],
+          };
+          dispatch(setClientState(waitingState));
+          syncView(waitingState, null, dexMap, res.match.opponentKnowledge);
+          await animateBotFeedbacks(feedbacks);
+        }
+
         dispatch(setClientState(next));
         syncView(next, null, dexMap, res.match.opponentKnowledge);
-        if (res.turnFeedbacks?.length) {
-          dispatch(appendGuessLog(res.turnFeedbacks));
+        if (botFeedbacks.length === 0 && feedbacks.length && !hostFeedbacks.length) {
+          dispatch(appendGuessLog(feedbacks));
         }
-        await animateBotFeedbacks(res.turnFeedbacks ?? []);
 
         if (next.status === 'FINISHED') {
-          await finishOnServer(next, false);
+          try {
+            await finishOnServer(next, false);
+          } catch (finishErr) {
+            dispatch(
+              setError(
+                finishErr instanceof Error
+                  ? finishErr.message
+                  : 'Partida terminada, mas falhou a gravar o resultado. Tenta de novo.',
+              ),
+            );
+          }
         }
       } catch (e) {
-        dispatch(setError(e instanceof Error ? e.message : 'Palpite inválido.'));
+        const code = e instanceof ApiError ? e.body?.code : null;
+        if (
+          e instanceof ApiError &&
+          (e.status === 404 ||
+            code === 'GAME_MATCH_NOT_FOUND' ||
+            code === 'GAME_MATCH_NOT_ACTIVE')
+        ) {
+          clearPersistedBotMatch();
+          dispatch(prepareNewBotMatch());
+          dispatch(setError('Essa partida já não existe. Escolhe a equipa e começa outra.'));
+        } else {
+          dispatch(setError(e instanceof Error ? e.message : 'Palpite inválido.'));
+        }
       } finally {
         dispatch(setBusy(false));
       }
@@ -283,11 +381,40 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
       dispatch(setClientState(state));
       await finishOnServer(state, true);
     } catch (e) {
-      dispatch(setError(e instanceof ApiError ? e.message : 'Não foi possível desistir.'));
+      const code = e instanceof ApiError ? e.body?.code : null;
+      if (
+        e instanceof ApiError &&
+        (e.status === 404 ||
+          code === 'GAME_MATCH_NOT_FOUND' ||
+          code === 'GAME_MATCH_NOT_ACTIVE' ||
+          code === 'GAME_MATCH_INVALID_PHASE')
+      ) {
+        clearPersistedBotMatch();
+        dispatch(prepareNewBotMatch());
+        dispatch(setError('Partida inválida no servidor. Podes começar outra.'));
+      } else {
+        dispatch(setError(e instanceof ApiError ? e.message : 'Não foi possível desistir.'));
+      }
     } finally {
       dispatch(setBusy(false));
     }
   }, [botMatch.clientState, dispatch, finishOnServer]);
+
+  const retryFinish = useCallback(async () => {
+    if (!botMatch.clientState || botMatch.clientState.status !== 'FINISHED') return;
+    if (botMatch.matchView?.historyEntry) return;
+    dispatch(setBusy(true));
+    dispatch(setError(null));
+    try {
+      await finishOnServer(botMatch.clientState, false);
+    } catch (e) {
+      dispatch(
+        setError(e instanceof Error ? e.message : 'Não foi possível gravar o resultado.'),
+      );
+    } finally {
+      dispatch(setBusy(false));
+    }
+  }, [botMatch.clientState, botMatch.matchView?.historyEntry, dispatch, finishOnServer]);
 
   const value = useMemo(
     () => ({
@@ -296,15 +423,17 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
       clientState: botMatch.clientState,
       guessLog: botMatch.guessLog,
       activeBotGuess: botMatch.activeBotGuess,
+      activeHostHit: botMatch.activeHostHit,
       botBusy: botMatch.botBusy,
       busy: botMatch.busy,
       error: botMatch.error,
       registeredPokemon,
       guess,
       surrender,
+      retryFinish,
       beginMatch,
     }),
-    [hostName, botMatch, registeredPokemon, guess, surrender, beginMatch],
+    [hostName, botMatch, registeredPokemon, guess, surrender, retryFinish, beginMatch],
   );
 
   return <BotMatchPlayContext.Provider value={value}>{children}</BotMatchPlayContext.Provider>;

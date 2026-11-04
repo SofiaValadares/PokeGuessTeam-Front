@@ -1,4 +1,4 @@
-import { Button } from '../../ds';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from './PokemonGridPagination.module.css';
 
 export type PokemonGridPaginationProps = {
@@ -33,38 +33,55 @@ export function PokemonGridPagination({
   const meta =
     totalLabel ??
     (totalElements != null ? `${totalElements.toLocaleString('pt-PT')} no total` : '');
+  const pageKey = `${page}-${totalPages ?? 0}`;
 
   return (
     <div className={styles.bar}>
       <p className={styles.meta}>{meta}</p>
       <div className={styles.controls}>
-        <label className={styles.pageSize}>
-          Por página
-          <select
-            className={styles.pageSizeSelect}
-            value={pageSize}
-            disabled={loading}
-            onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            aria-label="Quantidade de Pokémon por página"
+        <div className={styles.pageSize} role="group" aria-label="Quantidade de Pokémon por página">
+          <span className={styles.pageSizeLabel}>Por página</span>
+          <div className={styles.pageSizeSeg}>
+            {pageSizeOptions.map((n) => {
+              const active = pageSize === n;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  className={active ? styles.pageSizeSegActive : styles.pageSizeSegBtn}
+                  aria-pressed={active}
+                  disabled={loading}
+                  onClick={() => onPageSizeChange(n)}
+                >
+                  {n}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className={styles.pagination} role="group" aria-label="Paginação">
+          <button
+            type="button"
+            className={styles.navBtn}
+            disabled={loading || isFirst}
+            onClick={onPrev}
+            aria-label="Página anterior"
           >
-            {pageSizeOptions.map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className={styles.pagination}>
-          <Button type="button" variant="secondary" size="sm" disabled={loading || isFirst} onClick={onPrev}>
-            Anterior
-          </Button>
-          <span className={styles.pageLabel}>
-            Página {page + 1}
+            <ChevronLeft size={18} strokeWidth={2.25} aria-hidden />
+          </button>
+          <span key={pageKey} className={styles.pageLabel}>
+            {page + 1}
             {totalPages != null ? ` / ${Math.max(1, totalPages)}` : ''}
           </span>
-          <Button type="button" variant="secondary" size="sm" disabled={loading || isLast} onClick={onNext}>
-            Seguinte
-          </Button>
+          <button
+            type="button"
+            className={styles.navBtn}
+            disabled={loading || isLast}
+            onClick={onNext}
+            aria-label="Página seguinte"
+          >
+            <ChevronRight size={18} strokeWidth={2.25} aria-hidden />
+          </button>
         </div>
       </div>
     </div>

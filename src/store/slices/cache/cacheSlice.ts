@@ -1,13 +1,14 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { GachaDrawResult, GameHistoryEntry, TrainingTeam } from '../../../model';
 import type { PcLine } from '../../../model';
-import type { ProfileMe } from '../../../model';
+import type { PokeballInventory, ProfileMe } from '../../../model';
 import type { MatchRewardDto } from '../../../services/types/game';
 import { FetchStatus } from '../../../types/fetchStatus';
 import {
   patchAfterClaimRewards,
   patchAfterFavoritePokemon,
-  patchAfterGachaDraw,
+  patchAfterGachaDraws,
+  patchAfterInventoryUpdate,
   patchAfterMatchFinish,
   patchAfterMatchRewards,
   patchAfterTrainingTeamUpdate,
@@ -38,8 +39,9 @@ const cacheSlice = createSlice({
     restoreFromStorage(state, action: PayloadAction<UserCacheState>) {
       Object.assign(state, action.payload);
     },
-    applyGachaDraw(state, action: PayloadAction<GachaDrawResult>) {
-      Object.assign(state, patchAfterGachaDraw(state, action.payload));
+    applyGachaDraw(state, action: PayloadAction<GachaDrawResult | GachaDrawResult[]>) {
+      const draws = Array.isArray(action.payload) ? action.payload : [action.payload];
+      Object.assign(state, patchAfterGachaDraws(state, draws));
       persist(state);
     },
     applyTrainingTeam(state, action: PayloadAction<TrainingTeam>) {
@@ -74,9 +76,13 @@ const cacheSlice = createSlice({
     },
     applyPostMatchSync(
       state,
-      action: PayloadAction<{ trainingTeam: TrainingTeam; inventory: import('../../../model').PokeballInventory }>,
+      action: PayloadAction<{ trainingTeam: TrainingTeam; inventory: PokeballInventory }>,
     ) {
       Object.assign(state, patchAfterPostMatchSync(state, action.payload.trainingTeam, action.payload.inventory));
+      persist(state);
+    },
+    applyInventory(state, action: PayloadAction<PokeballInventory>) {
+      Object.assign(state, patchAfterInventoryUpdate(state, action.payload));
       persist(state);
     },
   },
@@ -145,6 +151,7 @@ export const {
   applyFavoritePokemon,
   applyClaimRewards,
   applyPostMatchSync,
+  applyInventory,
 } = cacheSlice.actions;
 
 export const cacheReducer = cacheSlice.reducer;

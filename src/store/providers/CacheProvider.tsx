@@ -20,7 +20,7 @@ export function useCacheActions() {
   const dispatch = useAppDispatch();
 
   const applyGacha = useCallback(
-    (draw: GachaDrawResult) => dispatch(applyGachaDraw(draw)),
+    (draw: GachaDrawResult | GachaDrawResult[]) => dispatch(applyGachaDraw(draw)),
     [dispatch],
   );
 

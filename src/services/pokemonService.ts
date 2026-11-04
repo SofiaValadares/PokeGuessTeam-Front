@@ -1,5 +1,5 @@
 import { apiFetchJson } from './http';
-import type { PokeballDrawResponse } from './types/game';
+import type { PokeballDrawResponse, PokeballMultiDrawResponse } from './types/game';
 import type { PcPageResponse, PokemonDto } from './types/pokemon';
 
 export const PC_DEFAULT_PAGE_SIZE = 20;
@@ -52,12 +52,30 @@ export async function searchPokemonFromNetwork(query: string, limit = 30): Promi
   return apiFetchJson<PokemonDto[]>(`/api/pokemon/search?${params.toString()}`, { method: 'GET' });
 }
 
-/** POST /api/pokemon/draw — gacha (consome Pokébola). */
-export async function drawPokemon(pokeballType: string): Promise<PokeballDrawResponse> {
-  return apiFetchJson(`/api/pokemon/draw`, {
+function normalizeDrawResponse(payload: unknown): PokeballMultiDrawResponse {
+  if (!payload || typeof payload !== 'object') return { draws: [] };
+  const body = payload as Record<string, unknown>;
+  if (Array.isArray(body.draws)) {
+    return { draws: body.draws as PokeballDrawResponse[] };
+  }
+  // Compat: backend antigo devolvia um único draw “flat”.
+  if (body.pokemon) {
+    return { draws: [body as unknown as PokeballDrawResponse] };
+  }
+  return { draws: [] };
+}
+
+/** POST /api/pokemon/draw — gacha (consome 1–10 Pokébolas). */
+export async function drawPokemon(
+  pokeballType: string,
+  count = 1,
+): Promise<PokeballMultiDrawResponse> {
+  const safeCount = Math.min(10, Math.max(1, Math.floor(count)));
+  const payload = await apiFetchJson<unknown>(`/api/pokemon/draw`, {
     method: 'POST',
-    body: JSON.stringify({ pokeballType }),
+    body: JSON.stringify({ pokeballType, count: safeCount }),
   });
+  return normalizeDrawResponse(payload);
 }
 
 export type ClaimEvolutionRewardsResponse = {

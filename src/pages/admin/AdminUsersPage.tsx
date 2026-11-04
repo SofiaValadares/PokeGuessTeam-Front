@@ -237,7 +237,11 @@ export default function AdminUsersPage() {
         scope,
       );
 
-      patchRow(updated);
+      if (filter === 'BANNED') {
+        await load();
+      } else {
+        patchRow(updated);
+      }
     } catch (e) {
       setError(
         toFriendlyUserMessage(
@@ -523,11 +527,13 @@ export default function AdminUsersPage() {
                         disabled={
                           busyId === u.userId
                           || u.role === 'MASTER_ADMIN'
+                          || u.userId === me?.userId
                         }
                         onClick={() => {
                           setPermanent(false);
                           setDurationHours('24');
                           setReason('');
+                          setError(null);
 
                           setBanDraft({
                             userId: u.userId,
@@ -546,11 +552,13 @@ export default function AdminUsersPage() {
                         disabled={
                           busyId === u.userId
                           || u.role === 'MASTER_ADMIN'
+                          || u.userId === me?.userId
                         }
                         onClick={() => {
                           setPermanent(false);
                           setDurationHours('24');
                           setReason('');
+                          setError(null);
 
                           setBanDraft({
                             userId: u.userId,
@@ -764,6 +772,9 @@ export default function AdminUsersPage() {
         confirming={busyId != null}
       >
         <div className={styles.modalFields}>
+          {error && banDraft != null ? (
+            <InlineAlert tone="error">{error}</InlineAlert>
+          ) : null}
           <label className={styles.checkRow}>
             <input
               type="checkbox"
@@ -829,6 +840,9 @@ export default function AdminUsersPage() {
         confirming={busyId != null}
       >
         <div className={styles.modalFields}>
+          {error && roleDraft != null ? (
+            <InlineAlert tone="error">{error}</InlineAlert>
+          ) : null}
           <TextField
             label="Nome do usuário"
             name="roleConfirmation"

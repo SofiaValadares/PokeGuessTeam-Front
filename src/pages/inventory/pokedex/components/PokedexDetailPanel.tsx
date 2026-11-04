@@ -65,9 +65,10 @@ export function PokedexDetailPanel({
         className={`${styles.detailPanel} ${styles.detailPanelMystery}`}
         aria-label="Pokémon não registado"
       >
+        <span className={`${styles.detailBadge} ${styles.detailBadgeMystery}`}>Não registado</span>
         <div className={styles.detailHeader}>
           <div className={styles.detailSprite}>
-            <PokemonSprite dex={item.dex} name={POKEMON_MYSTERY_LABEL} registered={false} size={96} />
+            <PokemonSprite dex={item.dex} name={POKEMON_MYSTERY_LABEL} registered={false} size={72} />
           </div>
           <div className={styles.detailTitles}>
             <h2 className={`${styles.detailName} ${styles.detailNameMystery}`}>{POKEMON_MYSTERY_LABEL}</h2>
@@ -91,9 +92,10 @@ export function PokedexDetailPanel({
 
   return (
     <aside className={styles.detailPanel} aria-label={`Detalhes de ${p.name}`}>
+      <span className={styles.detailBadge}>Registado</span>
       <div className={styles.detailHeader}>
         <div className={styles.detailSprite}>
-          <PokemonSprite dex={p.number} name={p.name} registered size={96} />
+          <PokemonSprite dex={p.number} name={p.name} registered size={72} animated />
         </div>
         <div className={styles.detailTitles}>
           <h2 className={styles.detailName}>{p.name}</h2>

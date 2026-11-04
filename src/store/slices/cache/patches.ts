@@ -1,6 +1,7 @@
 import type { GachaDrawResult, GameHistoryEntry, TrainingTeam } from '../../../model';
 import type { PcLine } from '../../../model';
 import type { PokeballInventory, ProfileMe } from '../../../model';
+import { addPokeballs, applyPokeballFragments } from '../../../lib/pokeball/fragments';
 import { normalizePokeballType } from '../../../lib/pokeball/sprites';
 import {
   levelFromTotalXp,
@@ -12,6 +13,8 @@ import { dexNumbersUnlockedAtLevel } from '../../../lib/pokemon/pokedexUnlock';
 import { getSpecies } from '../../../lib/pokedex/nationalCatalog';
 import type { MatchRewardDto } from '../../../services/types/game';
 import type { UserCacheState } from './types';
+
+export { reconcilePokeballInventory } from '../../../lib/pokeball/fragments';
 
 function markRegistered(
   numbers: number[],
@@ -46,27 +49,6 @@ export function applyXpToPcLine(line: PcLine, xpGained: number): PcLine {
   };
 }
 
-function addPokeballs(
-  inventory: PokeballInventory,
-  pokeballType: string,
-  amount: number,
-): PokeballInventory {
-  if (amount <= 0) return inventory;
-  const normalized = normalizePokeballType(pokeballType) ?? pokeballType;
-  let found = false;
-  const items = inventory.items.map((item) => {
-    if (normalizePokeballType(item.pokeballType) !== normalized && item.pokeballType !== normalized) {
-      return item;
-    }
-    found = true;
-    return { ...item, quantity: item.quantity + amount };
-  });
-  if (!found) {
-    items.push({ pokeballType: normalized, quantity: amount });
-  }
-  return { ...inventory, items };
-}
-
 function unlockPokedexForLine(numbers: number[], line: PcLine): { numbers: number[]; added: number } {
   const species = getSpecies().filter((s) => line.members.includes(s.number));
   const unlocked = dexNumbersUnlockedAtLevel(species, line.level);
@@ -80,55 +62,74 @@ function unlockPokedexForLine(numbers: number[], line: PcLine): { numbers: numbe
   return { numbers: next, added };
 }
 
-function decrementPokeball(inventory: PokeballInventory, pokeballType: string): PokeballInventory {
+function decrementPokeball(
+  inventory: PokeballInventory,
+  pokeballType: string,
+  amount = 1,
+): PokeballInventory {
   const normalized = normalizePokeballType(pokeballType);
+  const qty = Math.max(0, amount);
   return {
     ...inventory,
     items: inventory.items.map((item) => {
       if (normalizePokeballType(item.pokeballType) !== normalized) return item;
-      return { ...item, quantity: Math.max(0, item.quantity - 1) };
+      return { ...item, quantity: Math.max(0, item.quantity - qty) };
     }),
   };
 }
 
 export function patchAfterGachaDraw(state: UserCacheState, draw: GachaDrawResult): UserCacheState {
-  const inventory = state.inventory
-    ? decrementPokeball(state.inventory, draw.pokeballType)
-    : state.inventory;
+  return patchAfterGachaDraws(state, [draw]);
+}
 
-  const lineKey = draw.pokemon.evolutionLine?.key;
-  let pcLines = state.pcLines;
-  if (lineKey != null) {
-    const existing = state.pcLines.find((l) => l.evolutionLineKey === lineKey);
-    const members = draw.pokemon.evolutionLine?.members ?? [draw.pokemon.number];
-    const patchedLine: PcLine = existing
-      ? {
-          ...existing,
-          timesObtained: draw.timesObtainedOnLine,
-        }
-      : {
-          evolutionLineKey: lineKey,
-          members,
-          rarity: draw.rolledRarity,
-          level: 1,
-          totalXp: 0,
-          xpToNextLevel: xpRemainingToNextLevel(0),
-          xpForCurrentStep: xpForStepFromLevel(1),
-          timesObtained: draw.timesObtainedOnLine,
-          claimedMilestones: [],
-          pendingMilestones: [],
-        };
-    pcLines = upsertPcLine(state.pcLines, patchedLine);
+/** Aplica vários draws de uma vez (ex.: ×10), consumindo N bolas. */
+export function patchAfterGachaDraws(state: UserCacheState, draws: GachaDrawResult[]): UserCacheState {
+  if (draws.length === 0) return state;
+
+  const firstType = draws[0]?.pokeballType;
+  let inventory = state.inventory;
+  if (inventory && firstType) {
+    inventory = decrementPokeball(inventory, firstType, draws.length);
   }
 
-  const { numbers, added } = markRegistered(state.registeredPokedexNumbers, draw.pokemon.number);
-  const profileMe =
-    added && state.profileMe
-      ? {
-          ...state.profileMe,
-          registeredPokedexCount: (state.profileMe.registeredPokedexCount ?? numbers.length - 1) + 1,
-        }
-      : state.profileMe;
+  let pcLines = state.pcLines;
+  let numbers = state.registeredPokedexNumbers;
+  let profileMe = state.profileMe;
+
+  for (const draw of draws) {
+    const lineKey = draw.pokemon.evolutionLine?.key;
+    if (lineKey != null) {
+      const existing = pcLines.find((l) => l.evolutionLineKey === lineKey);
+      const members = draw.pokemon.evolutionLine?.members ?? [draw.pokemon.number];
+      const patchedLine: PcLine = existing
+        ? {
+            ...existing,
+            timesObtained: draw.timesObtainedOnLine,
+          }
+        : {
+            evolutionLineKey: lineKey,
+            members,
+            rarity: draw.rolledRarity,
+            level: 1,
+            totalXp: 0,
+            xpToNextLevel: xpRemainingToNextLevel(0),
+            xpForCurrentStep: xpForStepFromLevel(1),
+            timesObtained: draw.timesObtainedOnLine,
+            claimedMilestones: [],
+            pendingMilestones: [],
+          };
+      pcLines = upsertPcLine(pcLines, patchedLine);
+    }
+
+    const marked = markRegistered(numbers, draw.pokemon.number);
+    numbers = marked.numbers;
+    if (marked.added && profileMe) {
+      profileMe = {
+        ...profileMe,
+        registeredPokedexCount: (profileMe.registeredPokedexCount ?? numbers.length - 1) + 1,
+      };
+    }
+  }
 
   return {
     ...state,
@@ -218,10 +219,7 @@ export function patchAfterMatchRewards(
     inventory = addPokeballs(inventory, reward.pokeballTypeGranted, reward.pokeBallsGranted);
   }
   if (inventory && reward.pokeballFragmentsGranted > 0) {
-    inventory = {
-      ...inventory,
-      pokeballFragments: inventory.pokeballFragments + reward.pokeballFragmentsGranted,
-    };
+    inventory = applyPokeballFragments(inventory, reward.pokeballFragmentsGranted);
   }
 
   const profileMe =

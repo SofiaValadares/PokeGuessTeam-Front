@@ -141,3 +141,70 @@
   transform: translateY(-2px);
   box-shadow: var(--ds-shadow-md);
 }
+
+@keyframes dsFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes dsShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes dsGlowPulse {
+  0%,
+  100% {
+    box-shadow: var(--ds-shadow-md), 0 0 0 0 transparent;
+  }
+  50% {
+    box-shadow: var(--ds-shadow-md), var(--ds-shadow-glow);
+  }
+}
+
+@keyframes dsPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.86) translateY(10px);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.03) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.ds-motion-float {
+  animation: dsFloat 3.6s ease-in-out infinite;
+}
+
+.ds-motion-glow-pulse {
+  animation: dsGlowPulse 2.8s ease-in-out infinite;
+}
+
+.ds-motion-pop-in {
+  animation: dsPopIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ds-motion-shimmer {
+  background-image: linear-gradient(
+    110deg,
+    transparent 25%,
+    color-mix(in srgb, var(--ds-color-accent) 18%, transparent) 45%,
+    transparent 65%
+  );
+  background-size: 200% 100%;
+  animation: dsShimmer 2.8s linear infinite;
+}

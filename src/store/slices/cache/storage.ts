@@ -1,3 +1,4 @@
+import { reconcilePokeballInventory } from '../../../lib/pokeball/fragments';
 import { emptyUserCacheState, type PersistedUserCache, type UserCacheState } from './types';
 
 const STORAGE_KEY = 'pokeguessteam:user-cache:v2';
@@ -50,12 +51,15 @@ export function hasPersistedCache(): boolean {
 }
 
 export function persistedToUserCache(persisted: PersistedUserCache): UserCacheState {
+  const inventory = persisted.inventory
+    ? reconcilePokeballInventory(persisted.inventory)
+    : null;
   return {
     ...emptyUserCacheState(),
     userId: persisted.userId,
     registeredPokedexNumbers: persisted.registeredPokedexNumbers ?? [],
     pcLines: persisted.pcLines ?? [],
-    inventory: persisted.inventory ?? null,
+    inventory,
     trainingTeam: persisted.trainingTeam ?? null,
     gameHistory: persisted.gameHistory ?? [],
     profileMe: persisted.profileMe ?? null,

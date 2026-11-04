@@ -14,6 +14,11 @@ function isGameRoute(pathname: string): boolean {
   );
 }
 
+/** Inventário em ecrã cheio (sem scroll vertical da shell). */
+function isInventoryFillRoute(pathname: string): boolean {
+  return pathname === '/pokedex' || pathname === '/pc' || pathname === '/wild-area';
+}
+
 function AdminHeaderNav() {
   return (
     <>
@@ -59,6 +64,7 @@ function AuthenticatedLayoutInner() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const gameScreen = isGameRoute(pathname);
+  const inventoryFill = isInventoryFillRoute(pathname);
   const { canAccessAdmin, isAdminUi, toggleAdminUiMode } = useAdminMode();
 
   const onToggleMode = () => {
@@ -72,6 +78,7 @@ function AuthenticatedLayoutInner() {
       className={[
         styles.layout,
         gameScreen ? styles.layoutGame : '',
+        inventoryFill ? styles.layoutFill : '',
         isAdminUi ? styles.layoutAdmin : '',
       ]
         .filter(Boolean)

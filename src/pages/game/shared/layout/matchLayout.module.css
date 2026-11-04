@@ -9,6 +9,11 @@
   padding: var(--ds-space-2);
   box-sizing: border-box;
   gap: var(--ds-space-2);
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -10%, color-mix(in srgb, var(--ds-color-accent) 16%, transparent), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 100% 100%, color-mix(in srgb, var(--ds-color-gold) 8%, transparent), transparent 50%),
+    var(--ds-color-bg-deep);
+  animation: dsFadeIn var(--ds-duration-slow) var(--ds-ease-standard) both;
 }
 
 @media (min-width: 48rem) {
@@ -19,11 +24,15 @@
 }
 
 .matchScreenGuest {
-  background: linear-gradient(180deg, #2a0f0f 0%, #140606 100%);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, color-mix(in srgb, var(--ds-palette-red-500) 22%, transparent), transparent 60%),
+    linear-gradient(180deg, #2a1218 0%, var(--ds-color-bg-deep) 100%);
 }
 
 .matchScreenWaiting {
-  background: linear-gradient(180deg, #2e2e32 0%, #1a1a1d 100%);
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 0%, color-mix(in srgb, var(--ds-color-gold) 18%, transparent), transparent 55%),
+    linear-gradient(180deg, var(--ds-palette-gray-800) 0%, var(--ds-color-bg-deep) 100%);
 }
 
 .matchBoardWrap {
@@ -32,6 +41,16 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  border-radius: var(--ds-radius-xl);
+  border: 1px solid color-mix(in srgb, var(--ds-color-accent) 22%, var(--ds-color-border-subtle));
+  background:
+    radial-gradient(ellipse 90% 55% at 20% -10%, color-mix(in srgb, var(--ds-color-accent) 18%, transparent), transparent 60%),
+    radial-gradient(ellipse 70% 45% at 100% 110%, color-mix(in srgb, var(--ds-color-gold) 12%, transparent), transparent 55%),
+    color-mix(in srgb, var(--ds-color-bg-raised) 62%, transparent);
+  box-shadow:
+    var(--ds-shadow-lg),
+    0 0 40px color-mix(in srgb, var(--ds-color-accent) 10%, transparent);
+  animation: dsPopIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .opponentField {
@@ -45,4 +64,222 @@
 
 .guestTeamHint {
   margin-bottom: var(--ds-space-4);
+}
+
+.matchStatusPulse {
+  margin: 0;
+  padding: var(--ds-space-2) var(--ds-space-4);
+  border-radius: var(--ds-radius-full, 999px);
+  border: 1px solid color-mix(in srgb, var(--ds-color-gold) 35%, transparent);
+  background: color-mix(in srgb, var(--ds-color-gold) 12%, transparent);
+  width: fit-content;
+  max-width: 100%;
+  animation: dsPulseSoft 1.8s ease-in-out infinite;
+}
+
+.matchScreenHit {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, color-mix(in srgb, var(--ds-color-success, #22c55e) 28%, transparent), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, color-mix(in srgb, var(--ds-color-gold) 16%, transparent), transparent 55%),
+    var(--ds-color-bg-deep);
+}
+
+.matchBootCard {
+  margin: auto;
+  display: grid;
+  gap: var(--ds-space-2);
+  justify-items: center;
+  text-align: center;
+  padding: var(--ds-space-8);
+  border-radius: var(--ds-radius-xl);
+  border: 1px solid color-mix(in srgb, var(--ds-color-accent) 30%, transparent);
+  background: color-mix(in srgb, var(--ds-color-bg-raised) 70%, transparent);
+  box-shadow: var(--ds-shadow-lg);
+}
+
+.matchBootPulse {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 3px solid color-mix(in srgb, var(--ds-color-accent) 35%, transparent);
+  border-top-color: var(--ds-color-accent);
+  animation: matchBootSpin 0.8s linear infinite;
+}
+
+@keyframes matchBootSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.matchBootTitle {
+  margin: 0;
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-text-xl);
+  font-weight: var(--ds-weight-bold);
+}
+
+.matchBootSub {
+  margin: 0;
+  color: var(--ds-color-text-muted);
+  font-size: var(--ds-text-sm);
+}
+
+.matchSaveRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ds-space-3);
+}
+
+.matchSaveText {
+  margin: 0;
+  color: var(--ds-color-text-secondary);
+}
+
+.botThinkBanner {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--ds-space-4);
+  align-items: center;
+  width: 100%;
+  padding: var(--ds-space-4) var(--ds-space-5);
+  border-radius: var(--ds-radius-xl);
+  border: 1px solid color-mix(in srgb, var(--ds-color-gold) 45%, transparent);
+  box-shadow:
+    var(--ds-shadow-lg),
+    0 0 48px color-mix(in srgb, var(--ds-color-gold) 18%, transparent);
+  animation: dsPopIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.botThinkBannerThink {
+  background:
+    linear-gradient(
+      120deg,
+      color-mix(in srgb, var(--ds-color-gold) 22%, var(--ds-color-bg-raised)) 0%,
+      color-mix(in srgb, var(--ds-palette-gray-800) 70%, var(--ds-color-bg-deep)) 100%
+    );
+}
+
+.botThinkBannerFinal {
+  background:
+    linear-gradient(
+      120deg,
+      color-mix(in srgb, var(--ds-color-accent) 28%, var(--ds-color-bg-raised)) 0%,
+      color-mix(in srgb, var(--ds-palette-gray-800) 65%, var(--ds-color-bg-deep)) 100%
+    );
+  border-color: color-mix(in srgb, var(--ds-color-accent) 45%, transparent);
+}
+
+.botThinkGlow {
+  position: absolute;
+  inset: -40% -20% auto auto;
+  width: 16rem;
+  height: 16rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--ds-color-gold) 35%, transparent), transparent 70%);
+  pointer-events: none;
+  animation: dsPulseSoft 2s ease-in-out infinite;
+}
+
+.botThinkPortrait {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: var(--ds-radius-lg);
+  border: 1px solid color-mix(in srgb, var(--ds-color-gold) 40%, transparent);
+  background:
+    radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--ds-color-gold) 22%, transparent), transparent 70%),
+    var(--ds-color-bg-input);
+}
+
+.botThinkPulseDot {
+  position: absolute;
+  right: -0.2rem;
+  top: -0.2rem;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  background: var(--ds-color-gold);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ds-color-gold) 25%, transparent);
+  animation: dsPulseSoft 1.2s ease-in-out infinite;
+}
+
+.botThinkCopy {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.botThinkKicker {
+  margin: 0 0 var(--ds-space-1);
+  font-size: var(--ds-text-xs);
+  font-weight: var(--ds-weight-bold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ds-color-gold);
+}
+
+.botThinkTitle {
+  margin: 0;
+  font-family: var(--ds-font-display);
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  font-weight: var(--ds-weight-bold);
+  letter-spacing: -0.02em;
+  color: var(--ds-color-text-primary);
+}
+
+.botThinkBody {
+  margin: var(--ds-space-2) 0 0;
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-secondary);
+  max-width: 36rem;
+}
+
+.botThinkDots {
+  display: inline-flex;
+  gap: 0.4rem;
+  margin-top: var(--ds-space-3);
+}
+
+.botThinkDots span {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--ds-color-gold);
+  opacity: 0.35;
+  animation: botThinkDot 1.2s ease-in-out infinite;
+}
+
+.botThinkDots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.botThinkDots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes botThinkDot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@media (max-width: 40rem) {
+  .botThinkBanner {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
 }
