@@ -99,13 +99,17 @@ export default function AdminEventsPage() {
         <span className={active ? `${styles.badge} ${styles.badgeLive}` : styles.badge}>{ev.status}</span>
       </div>
       <p className={styles.eventDescription}>{ev.description}</p>
-      <p className="ds-body-muted">
+      <p className={styles.secondaryText}>
         ×{ev.xpMultiplier} XP · {ev.durationHours}h · {ev.pokedexNumbers.length} Pokémon
       </p>
       {active && ev.endsAt ? (
-        <p className="ds-body-muted">Termina: {new Date(ev.endsAt).toLocaleString('pt-PT')}</p>
+        <p className={styles.secondaryText}>Termina: {new Date(ev.endsAt).toLocaleString('pt-PT')}</p>
       ) : null}
-      <div className={styles.actions} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+      <div
+        className={`${styles.actions} ${styles.actionsInline}`}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
         {ev.status !== 'ACTIVE' && !hasActive ? (
           <Button
             type="button"
@@ -171,12 +175,19 @@ export default function AdminEventsPage() {
   return (
     <>
       <div className={styles.pageHeader}>
-        <h1 className="ds-h1">Eventos</h1>
-        {isMasterAdmin ? (
-          <Link to="/admin/events/new" className={adminButtonLinkClass('primary', 'md')}>
-            Criar evento
-          </Link>
-        ) : null}
+        <div>
+          <h1 className="ds-h1">Eventos</h1>
+          <p className={styles.pageHeaderLead}>
+            Bonus events do modo online — inicia, acompanha e gere o ciclo de vida.
+          </p>
+        </div>
+        <div className={styles.headerActions}>
+          {isMasterAdmin ? (
+            <Link to="/admin/events/new" className={adminButtonLinkClass('primary', 'md')}>
+              Criar evento
+            </Link>
+          ) : null}
+        </div>
       </div>
 
       {error ? <InlineAlert tone="error">{error}</InlineAlert> : null}
@@ -199,10 +210,10 @@ export default function AdminEventsPage() {
         <div className={styles.eventList}>
           {otherEvents.map((ev) => renderEventCard(ev))}
           {!loading && otherEvents.length === 0 && !activeEvent ? (
-            <p className="ds-body-muted">Ainda não há eventos.</p>
+            <p className={styles.secondaryText}>Ainda não há eventos.</p>
           ) : null}
           {!loading && otherEvents.length === 0 && activeEvent ? (
-            <p className="ds-body-muted">Não há mais eventos na lista.</p>
+            <p className={styles.secondaryText}>Não há mais eventos na lista.</p>
           ) : null}
         </div>
       </section>

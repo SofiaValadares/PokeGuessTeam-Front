@@ -379,22 +379,25 @@ export default function AdminUsersPage() {
   return (
     <>
       <div className={styles.pageHeader}>
-        <h1 className="ds-h1">
-          Utilizadores
-        </h1>
-
-        <label className={styles.checkRow}>
-          <input
-            type="checkbox"
-            checked={sortByAbandoned}
-            onChange={(e) => {
-              setPage(0);
-              setSortByAbandoned(e.target.checked);
-            }}
-          />
-
-          Ordenar por abandonos
-        </label>
+        <div>
+          <h1 className="ds-h1">Utilizadores</h1>
+          <p className={styles.pageHeaderLead}>
+            Pesquisa, filtros e gestão de papéis, banimentos e perfil Lab.
+          </p>
+        </div>
+        <div className={styles.headerActions}>
+          <label className={styles.checkRow}>
+            <input
+              type="checkbox"
+              checked={sortByAbandoned}
+              onChange={(e) => {
+                setPage(0);
+                setSortByAbandoned(e.target.checked);
+              }}
+            />
+            Ordenar por abandonos
+          </label>
+        </div>
       </div>
 
       <div className={styles.toolbar}>
@@ -444,16 +447,10 @@ export default function AdminUsersPage() {
         </InlineAlert>
       ) : null}
 
-      {loading ? (
-        <p className="ds-body-muted">
-          A carregar…
-        </p>
-      ) : null}
+      {loading ? <p className={styles.secondaryText}>A carregar…</p> : null}
 
       {!loading && rows.length === 0 ? (
-        <p className="ds-body-muted">
-          Nenhum utilizador encontrado.
-        </p>
+        <p className={styles.secondaryText}>Nenhum utilizador encontrado.</p>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -471,12 +468,9 @@ export default function AdminUsersPage() {
               {rows.map((u) => (
                 <tr key={u.userId}>
                   <td>
-                    <strong>
-                      {u.username}
-                    </strong>
-
-                    <div className="ds-body-muted">
-                      {u.email}
+                    <div className={styles.userCell}>
+                      <span className={styles.userCellName}>{u.username}</span>
+                      <span className={styles.userCellEmail}>{u.email}</span>
                     </div>
                   </td>
 
@@ -756,9 +750,8 @@ export default function AdminUsersPage() {
           Anterior
         </Button>
 
-        <span className="ds-body-muted">
-          Página {page + 1}/
-          {Math.max(totalPages, 1)}
+        <span className={styles.secondaryText}>
+          Página {page + 1}/{Math.max(totalPages, 1)}
         </span>
 
         <Button

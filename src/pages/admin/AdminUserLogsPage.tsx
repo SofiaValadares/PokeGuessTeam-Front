@@ -162,7 +162,7 @@ export default function AdminUserLogsPage() {
       <div className={styles.pageHeader}>
         <div>
           <h1 className="ds-h1">Logs por utilizador</h1>
-          <p className="ds-body-muted" style={{ margin: '0.35rem 0 0' }}>
+          <p className={styles.pageHeaderLead}>
             Histórico de pedidos e eventos atrelados a uma conta.
           </p>
         </div>
@@ -200,11 +200,12 @@ export default function AdminUserLogsPage() {
           />
         </div>
         {selected ? (
-          <p className="ds-body-muted" style={{ margin: 0 }}>
-            Selecionado: <strong>{selected.username}</strong> ({selected.email})
+          <p className={styles.secondaryText} style={{ margin: 0, alignSelf: 'center' }}>
+            Selecionado: <strong className={styles.userCellName}>{selected.username}</strong>{' '}
+            ({selected.email})
           </p>
         ) : (
-          <p className="ds-body-muted" style={{ margin: 0 }}>
+          <p className={styles.secondaryText} style={{ margin: 0, alignSelf: 'center' }}>
             Escolhe um utilizador na pesquisa ou na lista.
           </p>
         )}
@@ -230,7 +231,7 @@ export default function AdminUserLogsPage() {
           ))}
         </ul>
       ) : null}
-      {loadingUsers ? <p className="ds-body-muted">A pesquisar…</p> : null}
+      {loadingUsers ? <p className={styles.secondaryText}>A pesquisar…</p> : null}
 
       {selected ? (
         <div className={styles.searchField} style={{ maxWidth: '22rem' }}>
@@ -284,7 +285,7 @@ export default function AdminUserLogsPage() {
                   <td>
                     <div className={styles.logActionCell}>
                       <strong>{row.action}</strong>
-                      <span className="ds-body-muted">{formatAuditActionDetail(row)}</span>
+                      <span className={styles.logActionDetail}>{formatAuditActionDetail(row)}</span>
                     </div>
                   </td>
                 </tr>
@@ -305,7 +306,7 @@ export default function AdminUserLogsPage() {
           >
             Anterior
           </Button>
-          <span className="ds-body-muted">
+          <span className={styles.secondaryText}>
             Página {page + 1}
             {totalPages > 0 ? ` / ${totalPages}` : ''}
           </span>
@@ -338,7 +339,7 @@ export default function AdminUserLogsPage() {
             placeholder="Nome, e-mail ou ID"
           />
           {loadingCounts ? (
-            <p className="ds-body-muted">A carregar…</p>
+            <p className={styles.secondaryText}>A carregar…</p>
           ) : (
             <ul className={styles.userCountList}>
               {userCounts.map((u) => (
@@ -352,7 +353,7 @@ export default function AdminUserLogsPage() {
                   >
                     <span>
                       <strong>{u.username}</strong>
-                      <span className="ds-body-muted"> · {u.email}</span>
+                      <span className={styles.secondaryText}> · {u.email}</span>
                     </span>
                     <span className={styles.logCountBadge}>{u.logCount} logs</span>
                   </button>
@@ -368,7 +369,7 @@ export default function AdminUserLogsPage() {
                 </li>
               ))}
               {userCounts.length === 0 ? (
-                <li className="ds-body-muted">Nenhum utilizador encontrado.</li>
+                <li className={styles.secondaryText}>Nenhum utilizador encontrado.</li>
               ) : null}
             </ul>
           )}

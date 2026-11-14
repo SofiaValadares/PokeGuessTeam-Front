@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button, InlineAlert, TextField } from '../../ds';
 import { ApiError } from '../../services/http';
 import {
@@ -24,19 +25,8 @@ import {
   type StatisticalResponse,
 } from '../../services/securityLabService';
 import { useAdminMode } from '../../store/providers/AdminModeProvider';
+import { LAB_TABS, parseLabTab } from '../dev/labTabs';
 import styles from './admin-security-lab.module.css';
-
-type Tab = 'objectives' | 'cipher' | 'stego' | 'stego-attack' | 'attacks' | 'anomalies' | 'dashboard';
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'objectives', label: 'Objetivos' },
-  { id: 'cipher', label: 'Cifragem' },
-  { id: 'stego', label: 'Estego (gerar)' },
-  { id: 'stego-attack', label: 'Ataque estego' },
-  { id: 'attacks', label: 'Ataques cripto' },
-  { id: 'anomalies', label: 'Anomalias' },
-  { id: 'dashboard', label: 'Dashboard' },
-];
 
 type Objective = {
   id: string;
@@ -167,9 +157,21 @@ function BarChart({
 
 export default function AdminSecurityLabPage() {
   const { temporaryLabNotice } = useAdminMode();
-  const [tab, setTab] = useState<Tab>('objectives');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = parseLabTab(searchParams.get('tab'));
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const setTab = useCallback(
+    (next: string) => {
+      if (next === 'objectives') {
+        setSearchParams({}, { replace: true });
+        return;
+      }
+      setSearchParams({ tab: next }, { replace: true });
+    },
+    [setSearchParams],
+  );
 
   // Cipher
   const [plaintext, setPlaintext] = useState('Mensagem secreta do lab Pokémon');
@@ -244,11 +246,13 @@ export default function AdminSecurityLabPage() {
       <header className={styles.header}>
         <div>
           <p className={styles.kicker}>Lab · Unidade 2</p>
-          <h1 className={styles.title}>Security Lab</h1>
+          <h1 className={styles.title}>
+            {LAB_TABS.find((t) => t.id === tab)?.label ?? 'Security Lab'}
+          </h1>
           <p className={styles.lead}>
             Área restrita ao perfil Lab. Cipher didático, estego, ataques controlados e anomalias —
-            sem abrir buracos no BCrypt/AES-GCM do jogo. Usa o separador Objetivos para o roteiro de
-            testes.
+            sem abrir buracos no BCrypt/AES-GCM do jogo. Usa a navegação no topo para mudar de
+            secção.
           </p>
         </div>
       </header>
@@ -262,8 +266,8 @@ export default function AdminSecurityLabPage() {
         </p>
       ) : null}
 
-      <div className={styles.tabs} role="tablist" aria-label="Secções do lab">
-        {TABS.map((t) => (
+      <div className={styles.mobileTabs} role="tablist" aria-label="Secções do lab">
+        {LAB_TABS.map((t) => (
           <button
             key={t.id}
             type="button"
@@ -272,7 +276,7 @@ export default function AdminSecurityLabPage() {
             className={tab === t.id ? styles.tabActive : styles.tab}
             onClick={() => setTab(t.id)}
           >
-            {t.label}
+            {t.shortLabel}
           </button>
         ))}
       </div>

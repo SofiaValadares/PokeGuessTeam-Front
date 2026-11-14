@@ -7,25 +7,26 @@ import {
   type AnomalyHit,
   type DashboardResponse,
 } from '../../services/securityLabService';
-import styles from './admin-security-lab.module.css';
+import styles from './admin.module.css';
+import labStyles from './admin-security-lab.module.css';
 
 function BarChart({ items }: { items: { label: string; value: number }[] }) {
   const max = Math.max(1, ...items.map((i) => i.value));
   if (items.length === 0) {
-    return <p className={styles.meta}>Sem dados no período.</p>;
+    return <p className={styles.secondaryText}>Sem dados no período.</p>;
   }
   return (
-    <div className={styles.bars} role="img" aria-label="Gráfico de barras">
+    <div className={labStyles.bars} role="img" aria-label="Gráfico de barras">
       {items.map((item) => (
-        <div key={item.label} className={styles.barRow}>
-          <span className={styles.barLabel}>{item.label}</span>
-          <div className={styles.barTrack}>
+        <div key={item.label} className={labStyles.barRow}>
+          <span className={labStyles.barLabel}>{item.label}</span>
+          <div className={labStyles.barTrack}>
             <div
-              className={styles.barFill}
+              className={labStyles.barFill}
               style={{ width: `${Math.round((item.value / max) * 100)}%` }}
             />
           </div>
-          <span className={styles.barValue}>{item.value}</span>
+          <span className={labStyles.barValue}>{item.value}</span>
         </div>
       ))}
     </div>
@@ -76,76 +77,82 @@ export default function AdminAnomalyDashboardPage() {
   };
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
+    <>
+      <div className={styles.pageHeader}>
         <div>
-          <p className={styles.kicker}>Admin</p>
-          <h1 className={styles.title}>Dashboard de anomalias</h1>
-          <p className={styles.lead}>
+          <h1 className="ds-h1">Dashboard de anomalias</h1>
+          <p className={styles.pageHeaderLead}>
             Resumo de eventos de ataque (14 dias), anomalias recentes e scan sob demanda.
           </p>
         </div>
-      </header>
-
-      <div className={styles.panel}>
-        <div className={styles.actions}>
-          <Button type="button" variant="secondary" disabled={busy} onClick={() => void load()}>
+        <div className={styles.headerActions}>
+          <Button type="button" size="sm" variant="secondary" disabled={busy} onClick={() => void load()}>
             Atualizar
           </Button>
-          <Button type="button" disabled={busy} onClick={() => void onScan()}>
-            Correr scan de anomalias
+          <Button type="button" size="sm" disabled={busy} onClick={() => void onScan()}>
+            Correr scan
           </Button>
         </div>
+      </div>
 
-        {error ? (
-          <InlineAlert tone="error" role="alert">
-            {error}
-          </InlineAlert>
-        ) : null}
+      {error ? (
+        <InlineAlert tone="error" role="alert">
+          {error}
+        </InlineAlert>
+      ) : null}
 
-        {dash ? (
-          <>
-            <p className={styles.conclusion}>{dash.conclusions}</p>
+      {dash ? (
+        <>
+          <p className={styles.conclusion}>{dash.conclusions}</p>
 
-            <h2 className={styles.sub}>Eventos por tipo (14 dias)</h2>
+          <section className={styles.panel}>
+            <h2 className={styles.panelTitle}>Eventos por tipo (14 dias)</h2>
             <BarChart items={totalsBars} />
+          </section>
 
-            <h2 className={styles.sub}>Anomalias recentes</h2>
+          <section className={styles.panel}>
+            <h2 className={styles.panelTitle}>Anomalias recentes</h2>
             {dash.recentAnomalies.length === 0 ? (
-              <p className={styles.meta}>Sem anomalias gravadas.</p>
+              <p className={styles.secondaryText}>Sem anomalias gravadas.</p>
             ) : (
-              <ul className={styles.list}>
+              <ul className={styles.plainList}>
                 {dash.recentAnomalies.map((h, i) => (
                   <li key={`a-${i}`}>
-                    <strong>{h.code}</strong> — {h.summary} (score {(h.score ?? 0).toFixed(2)})
+                    <strong>{h.code}</strong>
+                    <span className={styles.secondaryText}>
+                      {h.summary} · score {(h.score ?? 0).toFixed(2)}
+                    </span>
                   </li>
                 ))}
               </ul>
             )}
-          </>
-        ) : (
-          <p className={styles.meta}>{busy ? 'A carregar…' : 'Sem dados.'}</p>
-        )}
+          </section>
+        </>
+      ) : (
+        <p className={styles.secondaryText}>{busy ? 'A carregar…' : 'Sem dados.'}</p>
+      )}
 
-        {scanHits != null ? (
-          <>
-            <h2 className={styles.sub}>Resultado do último scan</h2>
-            {scanHits.length === 0 ? (
-              <p className={styles.meta}>
-                Nenhuma anomalia neste scan (tráfego ainda abaixo dos limiares).
-              </p>
-            ) : (
-              <ul className={styles.list}>
-                {scanHits.map((h, i) => (
-                  <li key={`s-${h.code}-${i}`}>
-                    <strong>{h.code}</strong> — {h.summary} (score {h.score.toFixed(2)})
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
-        ) : null}
-      </div>
-    </div>
+      {scanHits != null ? (
+        <section className={styles.panel}>
+          <h2 className={styles.panelTitle}>Resultado do último scan</h2>
+          {scanHits.length === 0 ? (
+            <p className={styles.secondaryText}>
+              Nenhuma anomalia neste scan (tráfego ainda abaixo dos limiares).
+            </p>
+          ) : (
+            <ul className={styles.plainList}>
+              {scanHits.map((h, i) => (
+                <li key={`s-${h.code}-${i}`}>
+                  <strong>{h.code}</strong>
+                  <span className={styles.secondaryText}>
+                    {h.summary} · score {h.score.toFixed(2)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
+    </>
   );
 }

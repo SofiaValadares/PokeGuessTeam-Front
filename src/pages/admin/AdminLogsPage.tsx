@@ -67,7 +67,7 @@ export default function AdminLogsPage() {
       <div className={styles.pageHeader}>
         <div>
           <h1 className="ds-h1">Logs do Sistema</h1>
-          <p className="ds-body-muted" style={{ margin: '0.35rem 0 0' }}>
+          <p className={styles.pageHeaderLead}>
             Apenas ações de administradores e eventos críticos de segurança.
           </p>
         </div>
@@ -149,7 +149,7 @@ export default function AdminLogsPage() {
                   <td>
                     <div className={styles.logActionCell}>
                       <strong>{row.action}</strong>
-                      <span className="ds-body-muted">{formatAuditActionDetail(row)}</span>
+                      <span className={styles.logActionDetail}>{formatAuditActionDetail(row)}</span>
                     </div>
                   </td>
                 </tr>
@@ -169,7 +169,7 @@ export default function AdminLogsPage() {
         >
           Anterior
         </Button>
-        <span className="ds-body-muted">
+        <span className={styles.secondaryText}>
           Página {page + 1}
           {totalPages > 0 ? ` / ${totalPages}` : ''}
         </span>
