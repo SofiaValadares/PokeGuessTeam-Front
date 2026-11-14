@@ -8,6 +8,9 @@ export function mapProfileMe(dto: ProfileMeResponse): ProfileMe {
     userId: dto.userId,
     favoritePokemonId: dto.favoritePokemonId,
     favoritePokemonName: dto.favoritePokemonName,
+    avatarMode: dto.avatarMode ?? 'POKEMON',
+    hasCustomAvatar: Boolean(dto.hasCustomAvatar),
+    avatarUrl: dto.avatarUrl,
     registeredPokedexCount: dto.registeredPokedexCount ?? null,
   };
 }

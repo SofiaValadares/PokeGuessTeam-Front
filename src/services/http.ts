@@ -130,7 +130,11 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
   if (!headers.has('Accept-Language')) {
     headers.set('Accept-Language', 'pt-BR');
   }
-  if (init.body != null && !headers.has('Content-Type')) {
+  if (
+    init.body != null &&
+    !(init.body instanceof FormData) &&
+    !headers.has('Content-Type')
+  ) {
     headers.set('Content-Type', 'application/json');
   }
 

@@ -52,7 +52,13 @@ export function ProfileSummaryCard() {
         <div className={styles.header}>
           <div className={styles.avatarWrap}>
             <div className={styles.avatarStage}>
-              {favoriteDex != null && profileMe?.favoritePokemonName ? (
+              {profileMe?.avatarMode === 'CUSTOM' && profileMe.hasCustomAvatar && profileMe.userId ? (
+                <img
+                  src={`/api/profile/avatar/${profileMe.userId}`}
+                  alt="Avatar"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : favoriteDex != null && profileMe?.favoritePokemonName ? (
                 <PokemonSprite
                   dex={favoriteDex}
                   name={profileMe.favoritePokemonName}

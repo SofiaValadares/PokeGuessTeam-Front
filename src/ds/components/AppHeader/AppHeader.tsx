@@ -31,7 +31,7 @@ export function AppHeader({ end, navEnabled = true, nav }: AppHeaderProps) {
         </Link>
         {showTrailing ? (
           <div className={styles.trailing}>
-            {showCustomNav ? <nav className={styles.nav} aria-label="Admin">{nav}</nav> : null}
+            {showCustomNav ? <nav className={styles.nav} aria-label="Navegação do painel">{nav}</nav> : null}
             {showDefaultNav ? (
               <nav className={styles.nav} aria-label="Atalhos principais">
                 <NavLink

@@ -18,10 +18,14 @@ import AdminUsersPage from '../pages/admin/AdminUsersPage';
 import AdminEventsPage from '../pages/admin/AdminEventsPage';
 import AdminLogsPage from '../pages/admin/AdminLogsPage';
 import AdminUserLogsPage from '../pages/admin/AdminUserLogsPage';
+import AdminSecurityLabPage from '../pages/admin/AdminSecurityLabPage';
+import AdminAttackReportsPage from '../pages/admin/AdminAttackReportsPage';
+import AdminAnomalyDashboardPage from '../pages/admin/AdminAnomalyDashboardPage';
 import AdminEventFormLayout from '../pages/admin/AdminEventFormLayout';
 import AdminEventDetailsPage from '../pages/admin/AdminEventDetailsPage';
 import AdminEventPokemonPage from '../pages/admin/AdminEventPokemonPage';
 import AdminEventViewPage from '../pages/admin/AdminEventViewPage';
+import DevLayout from '../pages/dev/DevLayout';
 import ForgotPasswordPage from '../pages/auth/forgot-password/forgot-password';
 import RegisterPage from '../pages/auth/register/register';
 import ResetPasswordPage from '../pages/auth/reset-password/reset-password';
@@ -69,11 +73,17 @@ export function AppRouter() {
             <Route path="jogo/amigo" element={<Navigate to="/game/amigo" replace />} />
             <Route path="jogo/historico" element={<Navigate to="/game/historico" replace />} />
             <Route path="pokedex" element={<PokedexPage />} />
+            <Route path="dev" element={<DevLayout />}>
+              <Route index element={<Navigate to="security-lab" replace />} />
+              <Route path="security-lab" element={<AdminSecurityLabPage />} />
+            </Route>
             <Route path="admin" element={<AdminLayout />}>
               <Route index element={<Navigate to="users" replace />} />
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="logs" element={<AdminLogsPage />} />
               <Route path="logs/users" element={<AdminUserLogsPage />} />
+              <Route path="attack-reports" element={<AdminAttackReportsPage />} />
+              <Route path="anomaly-dashboard" element={<AdminAnomalyDashboardPage />} />
               <Route path="events">
                 <Route index element={<AdminEventsPage />} />
                 <Route path="new" element={<AdminEventFormLayout />}>

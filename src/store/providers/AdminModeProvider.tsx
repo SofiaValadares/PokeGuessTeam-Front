@@ -1,60 +1,137 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { getGameMeta } from '../../services/metaService';
 import { useAuth } from './AuthProvider';
 
-const MODE_KEY = 'pokeguessteam:admin-ui-mode';
-
-type AdminUiMode = 'player' | 'admin';
+type ShellMode = 'player' | 'admin' | 'developer';
 
 type AdminModeContextValue = {
   canAccessAdmin: boolean;
   isMasterAdmin: boolean;
-  adminUiMode: AdminUiMode;
+  /** Conta com perfil Lab (USER_IS_DEVELOPER). */
+  isDeveloper: boolean;
+  /** Lab ligado no servidor (SECURITY_LAB_ENABLED) e utilizador com perfil Lab. */
+  canAccessLab: boolean;
+  securityLabEnabled: boolean;
+  temporaryLabNotice: boolean;
+  /** Modo visual derivado da rota atual (fonte de verdade). */
+  shellMode: ShellMode;
   isAdminUi: boolean;
-  setAdminUiMode: (mode: AdminUiMode) => void;
+  isDeveloperUi: boolean;
+  enterAdminUi: () => void;
+  enterDeveloperUi: () => void;
+  enterPlayerUi: () => void;
+  /** @deprecated prefer enterAdminUi / enterPlayerUi — mantido para testes legados */
+  setAdminUiMode: (mode: 'player' | 'admin') => void;
   toggleAdminUiMode: () => void;
 };
 
 const AdminModeContext = createContext<AdminModeContextValue | null>(null);
 
-function readStoredMode(): AdminUiMode {
-  try {
-    return sessionStorage.getItem(MODE_KEY) === 'admin' ? 'admin' : 'player';
-  } catch {
-    return 'player';
-  }
-}
-
 export function AdminModeProvider({ children }: { children: React.ReactNode }) {
   const { me } = useAuth();
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+
   const role = me?.role ?? 'USER';
   const canAccessAdmin = role === 'ADMIN' || role === 'MASTER_ADMIN';
   const isMasterAdmin = role === 'MASTER_ADMIN';
+  const isDeveloper = Boolean(me?.developer);
 
-  const [adminUiMode, setModeState] = useState<AdminUiMode>(readStoredMode);
+  const [securityLabEnabled, setSecurityLabEnabled] = useState(true);
+  const [temporaryLabNotice, setTemporaryLabNotice] = useState(true);
 
-  const setAdminUiMode = useCallback((mode: AdminUiMode) => {
-    setModeState(mode);
-    try {
-      sessionStorage.setItem(MODE_KEY, mode);
-    } catch {
-      /* ignore */
-    }
+  useEffect(() => {
+    let cancelled = false;
+    void getGameMeta()
+      .then((meta) => {
+        if (cancelled) return;
+        setSecurityLabEnabled(meta.securityLab?.enabled !== false);
+        setTemporaryLabNotice(meta.securityLab?.temporaryDeployNotice !== false);
+      })
+      .catch(() => {
+        /* meta falhou — assume lab disponível se o perfil Lab existir */
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
+  const canAccessLab = isDeveloper && securityLabEnabled;
+
+  const onAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/');
+  const onDevRoute = pathname === '/dev' || pathname.startsWith('/dev/');
+
+  const shellMode: ShellMode =
+    onAdminRoute && canAccessAdmin
+      ? 'admin'
+      : onDevRoute && canAccessLab
+        ? 'developer'
+        : 'player';
+
+  const isAdminUi = shellMode === 'admin';
+  const isDeveloperUi = shellMode === 'developer';
+
+  const enterAdminUi = useCallback(() => {
+    if (!canAccessAdmin) return;
+    navigate('/admin/users');
+  }, [canAccessAdmin, navigate]);
+
+  const enterDeveloperUi = useCallback(() => {
+    if (!canAccessLab) return;
+    navigate('/dev/security-lab');
+  }, [canAccessLab, navigate]);
+
+  const enterPlayerUi = useCallback(() => {
+    navigate('/');
+  }, [navigate]);
+
+  const setAdminUiMode = useCallback(
+    (mode: 'player' | 'admin') => {
+      if (mode === 'admin') enterAdminUi();
+      else enterPlayerUi();
+    },
+    [enterAdminUi, enterPlayerUi],
+  );
+
   const toggleAdminUiMode = useCallback(() => {
-    setAdminUiMode(adminUiMode === 'admin' ? 'player' : 'admin');
-  }, [adminUiMode, setAdminUiMode]);
+    if (isAdminUi) enterPlayerUi();
+    else enterAdminUi();
+  }, [isAdminUi, enterAdminUi, enterPlayerUi]);
 
   const value = useMemo<AdminModeContextValue>(
     () => ({
       canAccessAdmin,
       isMasterAdmin,
-      adminUiMode: canAccessAdmin ? adminUiMode : 'player',
-      isAdminUi: canAccessAdmin && adminUiMode === 'admin',
+      isDeveloper,
+      canAccessLab,
+      securityLabEnabled,
+      temporaryLabNotice,
+      shellMode,
+      isAdminUi,
+      isDeveloperUi,
+      enterAdminUi,
+      enterDeveloperUi,
+      enterPlayerUi,
       setAdminUiMode,
       toggleAdminUiMode,
     }),
-    [canAccessAdmin, isMasterAdmin, adminUiMode, setAdminUiMode, toggleAdminUiMode],
+    [
+      canAccessAdmin,
+      isMasterAdmin,
+      isDeveloper,
+      canAccessLab,
+      securityLabEnabled,
+      temporaryLabNotice,
+      shellMode,
+      isAdminUi,
+      isDeveloperUi,
+      enterAdminUi,
+      enterDeveloperUi,
+      enterPlayerUi,
+      setAdminUiMode,
+      toggleAdminUiMode,
+    ],
   );
 
   return <AdminModeContext.Provider value={value}>{children}</AdminModeContext.Provider>;

@@ -194,6 +194,11 @@ export type GameMetaResponse = {
   fragmentsPerPokeBall: number;
   gameModes: string[];
   gameResults: string[];
+  securityLab?: {
+    enabled: boolean;
+    temporaryDeployNotice: boolean;
+    requiresLabProfile: boolean;
+  };
 };
 
 export type PokeballDrawResponse = {
