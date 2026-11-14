@@ -58,9 +58,12 @@ export async function extractProfileAvatarStego(): Promise<string> {
   return res.message ?? '';
 }
 
-export async function usePokemonProfileAvatar(): Promise<ProfileMeResponse> {
+export async function switchToPokemonProfileAvatar(): Promise<ProfileMeResponse> {
   return apiFetchJson<ProfileMeResponse>('/api/profile/avatar/use-pokemon', {
     method: 'POST',
     body: '{}',
   });
 }
+
+/** @deprecated use switchToPokemonProfileAvatar — o prefixo use* dispara rules-of-hooks no build */
+export const usePokemonProfileAvatar = switchToPokemonProfileAvatar;

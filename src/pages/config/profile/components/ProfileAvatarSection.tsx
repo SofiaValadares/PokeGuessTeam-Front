@@ -5,7 +5,7 @@ import { ApiError } from '../../../../services/http';
 import {
   extractProfileAvatarStego,
   uploadProfileAvatar,
-  usePokemonProfileAvatar,
+  switchToPokemonProfileAvatar,
 } from '../../../../services/profileService';
 import { mapProfileMe } from '../../../../model/mappers/profile';
 import { useCacheActions } from '../../../../store/providers/CacheProvider';
@@ -146,7 +146,7 @@ export function ProfileAvatarSection() {
               size="sm"
               variant="secondary"
               disabled={busy || !me}
-              onClick={() => void applyProfile(() => usePokemonProfileAvatar())}
+              onClick={() => void applyProfile(() => switchToPokemonProfileAvatar())}
             >
               Usar Pokémon favorito
             </Button>
