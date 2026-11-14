@@ -5,7 +5,7 @@ import {
   fetchAttackReports,
   type AttackReportRow,
 } from '../../services/securityLabService';
-import styles from './admin-security-lab.module.css';
+import styles from './admin.module.css';
 
 const TYPE_OPTIONS = [
   '',
@@ -54,118 +54,136 @@ export default function AdminAttackReportsPage() {
   }, [load]);
 
   return (
-    <div className={styles.page}>
-      <header className={styles.header}>
+    <>
+      <div className={styles.pageHeader}>
         <div>
-          <p className={styles.kicker}>Admin</p>
-          <h1 className={styles.title}>Relatório de tentativas de ataque</h1>
-          <p className={styles.lead}>
-            Eventos do Security Lab e ataques (inclui filtro por ator DEV).
+          <h1 className="ds-h1">Relatório de ataques</h1>
+          <p className={styles.pageHeaderLead}>
+            Eventos do Security Lab e tentativas — filtra por tipo ou só atores Lab.
           </p>
         </div>
-      </header>
+        <div className={styles.headerActions}>
+          <Button type="button" size="sm" variant="secondary" disabled={loading} onClick={() => void load()}>
+            Atualizar
+          </Button>
+        </div>
+      </div>
 
-      <div className={styles.panel}>
-        <div className={styles.actions}>
-          <label className={styles.fileLabel}>
-            Tipo
-            <select
-              value={type}
+      <div className={`${styles.toolbar} ${styles.toolbarMulti}`}>
+        <label className={styles.field}>
+          Tipo
+          <select
+            value={type}
+            onChange={(e) => {
+              setPage(0);
+              setType(e.target.value);
+            }}
+          >
+            <option value="">Todos</option>
+            {TYPE_OPTIONS.filter(Boolean).map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className={styles.field}>
+          Filtro Lab
+          <span className={styles.fieldCheck}>
+            <input
+              type="checkbox"
+              checked={developerOnly}
               onChange={(e) => {
                 setPage(0);
-                setType(e.target.value);
+                setDeveloperOnly(e.target.checked);
               }}
-            >
-              <option value="">Todos</option>
-              {TYPE_OPTIONS.filter(Boolean).map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className={styles.fileLabel}>
-            <span>
-              <input
-                type="checkbox"
-                checked={developerOnly}
-                onChange={(e) => {
-                  setPage(0);
-                  setDeveloperOnly(e.target.checked);
-                }}
-              />{' '}
-              Só tentativas de DEVs
-            </span>
-          </label>
+            />
+            Só tentativas de Lab
+          </span>
+        </label>
+        <div className={styles.searchField}>
           <TextField
             label="Pesquisar"
             name="q"
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={(e) => {
+              setPage(0);
+              setQ(e.target.value);
+            }}
           />
-          <Button type="button" variant="secondary" disabled={loading} onClick={() => void load()}>
-            Atualizar
-          </Button>
-        </div>
-
-        {error ? (
-          <InlineAlert tone="error" role="alert">
-            {error}
-          </InlineAlert>
-        ) : null}
-
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Quando</th>
-                <th>Tipo</th>
-                <th>Ator</th>
-                <th>DEV?</th>
-                <th>Resumo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id}>
-                  <td>{r.createdAt?.replace('T', ' ').slice(0, 19)}</td>
-                  <td>{r.eventType}</td>
-                  <td>{r.actorUsername ?? r.actorUserId ?? '—'}</td>
-                  <td>{r.actorWasDeveloper ? 'sim' : 'não'}</td>
-                  <td>{r.summary}</td>
-                </tr>
-              ))}
-              {rows.length === 0 && !loading ? (
-                <tr>
-                  <td colSpan={5}>Sem eventos.</td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-
-        <div className={styles.actions}>
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={loading || page <= 0}
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-          >
-            Anterior
-          </Button>
-          <span className={styles.meta}>
-            Página {page + 1} / {Math.max(1, totalPages)}
-          </span>
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={loading || page + 1 >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Seguinte
-          </Button>
         </div>
       </div>
-    </div>
+
+      {error ? (
+        <InlineAlert tone="error" role="alert">
+          {error}
+        </InlineAlert>
+      ) : null}
+
+      <div className={styles.tableWrap}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>Quando</th>
+              <th>Tipo</th>
+              <th>Ator</th>
+              <th>Lab</th>
+              <th>Resumo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={5}>A carregar…</td>
+              </tr>
+            ) : rows.length === 0 ? (
+              <tr>
+                <td colSpan={5}>Sem eventos.</td>
+              </tr>
+            ) : (
+              rows.map((r) => (
+                <tr key={r.id}>
+                  <td className={styles.monoCell}>{r.createdAt?.replace('T', ' ').slice(0, 19)}</td>
+                  <td>
+                    <span className={styles.badge}>{r.eventType}</span>
+                  </td>
+                  <td>{r.actorUsername ?? r.actorUserId ?? '—'}</td>
+                  <td>
+                    <span className={r.actorWasDeveloper ? styles.badgeLive : styles.badgeMuted}>
+                      {r.actorWasDeveloper ? 'sim' : 'não'}
+                    </span>
+                  </td>
+                  <td>{r.summary}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className={styles.pagination}>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          disabled={loading || page <= 0}
+          onClick={() => setPage((p) => Math.max(0, p - 1))}
+        >
+          Anterior
+        </Button>
+        <span className={styles.secondaryText}>
+          Página {page + 1} / {Math.max(1, totalPages)}
+        </span>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          disabled={loading || page + 1 >= totalPages}
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Seguinte
+        </Button>
+      </div>
+    </>
   );
 }

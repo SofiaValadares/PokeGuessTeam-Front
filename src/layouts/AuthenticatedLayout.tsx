@@ -1,7 +1,8 @@
-import { FlaskConical, Settings, Shield } from 'lucide-react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { AppHeader, Button } from '../ds';
+import { FlaskConical, Gamepad2, Settings, Shield } from 'lucide-react';
+import { NavLink, Outlet, useLocation, useSearchParams } from 'react-router-dom';
+import { AppHeader } from '../ds';
 import headerStyles from '../ds/components/AppHeader/AppHeader.module.css';
+import { LAB_TABS } from '../pages/dev/labTabs';
 import { AdminModeProvider, useAdminMode } from '../store/providers/AdminModeProvider';
 import styles from './authenticated-layout.module.css';
 
@@ -46,7 +47,7 @@ function AdminHeaderNav() {
           [headerStyles.navText, isActive ? headerStyles.navTextActive : ''].filter(Boolean).join(' ')
         }
       >
-        Logs do Sistema
+        Logs
       </NavLink>
       <NavLink
         to="/admin/logs/users"
@@ -54,7 +55,7 @@ function AdminHeaderNav() {
           [headerStyles.navText, isActive ? headerStyles.navTextActive : ''].filter(Boolean).join(' ')
         }
       >
-        Logs por Utilizador
+        Logs user
       </NavLink>
       <NavLink
         to="/admin/attack-reports"
@@ -62,7 +63,7 @@ function AdminHeaderNav() {
           [headerStyles.navText, isActive ? headerStyles.navTextActive : ''].filter(Boolean).join(' ')
         }
       >
-        Relatório Ataques
+        Ataques
       </NavLink>
       <NavLink
         to="/admin/anomaly-dashboard"
@@ -70,33 +71,43 @@ function AdminHeaderNav() {
           [headerStyles.navText, isActive ? headerStyles.navTextActive : ''].filter(Boolean).join(' ')
         }
       >
-        Dashboard Anomalias
+        Anomalias
       </NavLink>
     </>
   );
 }
 
 function DeveloperHeaderNav() {
+  const [params] = useSearchParams();
+  const activeTab = params.get('tab') ?? 'objectives';
+
   return (
-      <NavLink
-        to="/dev/security-lab"
-        className={({ isActive }) =>
-          [headerStyles.navText, isActive ? headerStyles.navTextActive : ''].filter(Boolean).join(' ')
-        }
-      >
-        Lab
-      </NavLink>
+    <>
+      {LAB_TABS.map((tab) => {
+        const to = tab.id === 'objectives' ? '/dev/security-lab' : `/dev/security-lab?tab=${tab.id}`;
+        const isActive = activeTab === tab.id;
+        return (
+          <NavLink
+            key={tab.id}
+            to={to}
+            end={tab.id === 'objectives'}
+            className={() =>
+              [headerStyles.navText, isActive ? headerStyles.navTextActive : ''].filter(Boolean).join(' ')
+            }
+          >
+            {tab.shortLabel}
+          </NavLink>
+        );
+      })}
+    </>
   );
 }
 
-function AuthenticatedLayoutInner() {
-  const { pathname } = useLocation();
-  const gameScreen = isGameRoute(pathname);
-  const inventoryFill = isInventoryFillRoute(pathname);
+function ModeSwitcher() {
   const {
     canAccessAdmin,
-    isAdminUi,
     canAccessLab,
+    isAdminUi,
     isDeveloperUi,
     enterAdminUi,
     enterDeveloperUi,
@@ -104,6 +115,56 @@ function AuthenticatedLayoutInner() {
   } = useAdminMode();
 
   const specialShell = isAdminUi || isDeveloperUi;
+  if (!canAccessAdmin && !canAccessLab && !specialShell) return null;
+
+  return (
+    <div className={styles.modeSwitch} role="group" aria-label="Mudar de área">
+      <button
+        type="button"
+        className={[styles.modeBtn, !specialShell ? styles.modeBtnActive : ''].filter(Boolean).join(' ')}
+        onClick={enterPlayerUi}
+        aria-pressed={!specialShell}
+        title="Modo jogador"
+      >
+        <Gamepad2 size={14} aria-hidden />
+        <span>Jogador</span>
+      </button>
+      {canAccessAdmin ? (
+        <button
+          type="button"
+          className={[styles.modeBtn, isAdminUi ? styles.modeBtnActiveAdmin : ''].filter(Boolean).join(' ')}
+          onClick={enterAdminUi}
+          aria-pressed={isAdminUi}
+          title="Área Admin"
+        >
+          <Shield size={14} aria-hidden />
+          <span>Admin</span>
+        </button>
+      ) : null}
+      {canAccessLab ? (
+        <button
+          type="button"
+          className={[styles.modeBtn, isDeveloperUi ? styles.modeBtnActiveLab : ''].filter(Boolean).join(' ')}
+          onClick={enterDeveloperUi}
+          aria-pressed={isDeveloperUi}
+          title="Área Lab"
+        >
+          <FlaskConical size={14} aria-hidden />
+          <span>Lab</span>
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function AuthenticatedLayoutInner() {
+  const { pathname } = useLocation();
+  const gameScreen = isGameRoute(pathname);
+  const inventoryFill = isInventoryFillRoute(pathname);
+  const { isAdminUi, isDeveloperUi } = useAdminMode();
+
+  const specialShell = isAdminUi || isDeveloperUi;
+  const headerVariant = isAdminUi ? 'admin' : isDeveloperUi ? 'lab' : 'default';
 
   return (
     <div
@@ -111,14 +172,23 @@ function AuthenticatedLayoutInner() {
         styles.layout,
         gameScreen ? styles.layoutGame : '',
         inventoryFill ? styles.layoutFill : '',
-        specialShell ? styles.layoutAdmin : '',
+        isAdminUi ? styles.layoutAdmin : '',
+        isDeveloperUi ? styles.layoutLab : '',
       ]
         .filter(Boolean)
         .join(' ')}
     >
       {gameScreen ? null : (
         <AppHeader
+          variant={headerVariant}
           navEnabled={!specialShell}
+          brandMeta={
+            isAdminUi ? (
+              <span className={styles.modeBadgeAdmin}>Admin</span>
+            ) : isDeveloperUi ? (
+              <span className={styles.modeBadgeLab}>Lab</span>
+            ) : undefined
+          }
           nav={
             isAdminUi ? (
               <AdminHeaderNav />
@@ -128,70 +198,7 @@ function AuthenticatedLayoutInner() {
           }
           end={
             <div className={styles.headerEnd}>
-              {isDeveloperUi || isAdminUi ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="primary"
-                  onClick={enterPlayerUi}
-                  aria-label="Mudar para modo jogador"
-                  title="Modo jogador"
-                >
-                  Jogador
-                </Button>
-              ) : null}
-              {canAccessAdmin && !isAdminUi ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  onClick={enterAdminUi}
-                  aria-label="Mudar para modo admin"
-                  title="Modo admin"
-                >
-                  <Shield size={16} aria-hidden />
-                  Admin
-                </Button>
-              ) : null}
-              {canAccessLab && !isDeveloperUi ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  onClick={enterDeveloperUi}
-                  aria-label="Mudar para modo Lab"
-                  title="Modo Lab — testes Unidade 2 (grupo seleto)"
-                >
-                  <FlaskConical size={16} aria-hidden />
-                  Lab
-                </Button>
-              ) : null}
-              {isAdminUi && canAccessLab ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  onClick={enterDeveloperUi}
-                  aria-label="Ir para área Lab"
-                  title="Área Lab"
-                >
-                  <FlaskConical size={16} aria-hidden />
-                  Lab
-                </Button>
-              ) : null}
-              {isDeveloperUi && canAccessAdmin ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  onClick={enterAdminUi}
-                  aria-label="Ir para área admin"
-                  title="Área Admin"
-                >
-                  <Shield size={16} aria-hidden />
-                  Admin
-                </Button>
-              ) : null}
+              <ModeSwitcher />
               {!specialShell ? (
                 <NavLink
                   to="/config"

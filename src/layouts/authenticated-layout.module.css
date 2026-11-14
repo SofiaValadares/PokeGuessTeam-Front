@@ -44,10 +44,124 @@
   display: inline-flex;
   align-items: center;
   gap: var(--ds-space-2);
+  flex-wrap: wrap;
 }
 
-.layoutAdmin .shellGrow {
+.modeSwitch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--ds-radius-lg);
+  border: 1px solid var(--ds-color-border-subtle);
+  background: color-mix(in srgb, var(--ds-color-bg-deep) 55%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 4%, transparent);
+}
+
+.modeBtn {
+  appearance: none;
+  border: 0;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0 0.7rem;
+  border-radius: calc(var(--ds-radius-md) - 2px);
+  background: transparent;
+  color: var(--ds-color-text-muted);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: var(--ds-weight-semibold);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color var(--ds-duration-fast) var(--ds-ease-standard),
+    background-color var(--ds-duration-fast) var(--ds-ease-standard),
+    box-shadow var(--ds-duration-fast) var(--ds-ease-standard);
+}
+
+.modeBtn:hover {
+  color: var(--ds-color-text-primary);
+  background: color-mix(in srgb, var(--ds-color-bg-raised) 70%, transparent);
+}
+
+.modeBtn:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-focus-ring);
+}
+
+.modeBtnActive {
+  color: var(--ds-color-text-primary);
+  background: color-mix(in srgb, var(--ds-color-bg-raised) 88%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ds-color-border-default) 70%, transparent);
+}
+
+.modeBtnActiveAdmin {
+  color: var(--ds-color-accent);
+  background: var(--ds-color-accent-muted);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ds-color-accent) 35%, transparent);
+}
+
+.modeBtnActiveLab {
+  color: color-mix(in srgb, var(--ds-color-gold) 88%, white);
+  background: color-mix(in srgb, var(--ds-color-gold) 18%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ds-color-gold) 40%, transparent);
+}
+
+.modeBadgeAdmin,
+.modeBadgeLab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.55rem;
+  padding: 0 0.55rem;
+  border-radius: var(--ds-radius-full);
+  font-size: 0.68rem;
+  font-weight: var(--ds-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.modeBadgeAdmin {
+  color: var(--ds-color-accent);
+  background: var(--ds-color-accent-muted);
+  border: 1px solid color-mix(in srgb, var(--ds-color-accent) 35%, transparent);
+}
+
+.modeBadgeLab {
+  color: color-mix(in srgb, var(--ds-color-gold) 90%, white);
+  background: color-mix(in srgb, var(--ds-color-gold) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ds-color-gold) 40%, transparent);
+}
+
+.layoutAdmin {
+  background:
+    radial-gradient(1100px 420px at 6% -12%, color-mix(in srgb, var(--ds-color-accent) 16%, transparent), transparent 58%),
+    radial-gradient(800px 360px at 96% 0%, color-mix(in srgb, var(--ds-color-accent) 8%, transparent), transparent 52%),
+    var(--ds-color-bg-base);
+}
+
+.layoutLab {
+  background:
+    radial-gradient(1100px 420px at 8% -12%, color-mix(in srgb, var(--ds-color-gold) 14%, transparent), transparent 58%),
+    radial-gradient(820px 360px at 94% 0%, color-mix(in srgb, var(--ds-color-accent) 8%, transparent), transparent 52%),
+    var(--ds-color-bg-base);
+}
+
+.layoutAdmin .shellGrow,
+.layoutLab .shellGrow {
   min-height: 0;
   overflow: auto;
 }
 
+@media (max-width: 560px) {
+  .modeBtn span {
+    display: none;
+  }
+
+  .modeBtn {
+    min-width: 2rem;
+    padding: 0 0.55rem;
+  }
+}
