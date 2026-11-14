@@ -4,6 +4,9 @@ export type ProfileMeResponse = {
   userId: string;
   favoritePokemonId: string | null;
   favoritePokemonName: string | null;
+  avatarMode?: 'POKEMON' | 'CUSTOM' | string;
+  hasCustomAvatar?: boolean;
+  avatarUrl?: string;
   registeredPokedexCount?: number | null;
 };
 

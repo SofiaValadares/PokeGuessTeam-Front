@@ -95,6 +95,7 @@ export type MeResponse = {
   /** ISO-8601 (LocalDateTime serializado pelo Jackson). */
   registerDate?: string;
   role?: 'USER' | 'ADMIN' | 'MASTER_ADMIN' | string;
+  developer?: boolean;
   siteBanned?: boolean;
   onlineBanned?: boolean;
 };

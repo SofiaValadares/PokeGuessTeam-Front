@@ -9,6 +9,7 @@ export type AdminUserListItem = {
   username: string;
   email: string;
   role: UserRole | string;
+  developer: boolean;
   siteBanned: boolean;
   onlineBanned: boolean;
   abandonedMatchesCount: number;
@@ -102,6 +103,19 @@ export async function setAdminUserRole(
     {
       method: 'PATCH',
       body: JSON.stringify({ role }),
+    },
+  );
+}
+
+export async function setAdminUserDeveloper(
+  userId: string,
+  developer: boolean,
+): Promise<AdminUserListItem> {
+  return apiFetchJson<AdminUserListItem>(
+    `/api/admin/users/${encodeURIComponent(userId)}/developer`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ developer }),
     },
   );
 }

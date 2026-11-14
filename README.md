@@ -17,6 +17,18 @@ npm start
 - API: `http://localhost:8080` (proxy em `src/setupProxy.js`)
 - Cookie `JSESSIONID` first-party em dev (não defina `REACT_APP_API_URL` localmente)
 
+### Contas locais de teste (seed do backend)
+
+Com `DEV_TOOLS_ENABLED=true` no backend, estas contas são criadas no arranque (senha `PokeTeam1!`):
+
+| Username    | E-mail                 | Papel         | DEV |
+|-------------|------------------------|---------------|-----|
+| `masterdev` | `masterdev@local.test` | MASTER_ADMIN  | sim |
+| `adminonly` | `admin@local.test`     | ADMIN         | não |
+| `labdev`    | `dev@local.test`       | USER          | sim |
+| `player1`   | `player1@local.test`   | USER          | não |
+| `player2`   | `player2@local.test`   | USER          | não |
+
 ---
 
 ## Arquitetura

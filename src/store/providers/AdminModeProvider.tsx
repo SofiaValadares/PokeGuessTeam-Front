@@ -1,60 +1,104 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
 
-const MODE_KEY = 'pokeguessteam:admin-ui-mode';
-
-type AdminUiMode = 'player' | 'admin';
+type ShellMode = 'player' | 'admin' | 'developer';
 
 type AdminModeContextValue = {
   canAccessAdmin: boolean;
   isMasterAdmin: boolean;
-  adminUiMode: AdminUiMode;
+  isDeveloper: boolean;
+  /** Modo visual derivado da rota atual (fonte de verdade). */
+  shellMode: ShellMode;
   isAdminUi: boolean;
-  setAdminUiMode: (mode: AdminUiMode) => void;
+  isDeveloperUi: boolean;
+  enterAdminUi: () => void;
+  enterDeveloperUi: () => void;
+  enterPlayerUi: () => void;
+  /** @deprecated prefer enterAdminUi / enterPlayerUi — mantido para testes legados */
+  setAdminUiMode: (mode: 'player' | 'admin') => void;
   toggleAdminUiMode: () => void;
 };
 
 const AdminModeContext = createContext<AdminModeContextValue | null>(null);
 
-function readStoredMode(): AdminUiMode {
-  try {
-    return sessionStorage.getItem(MODE_KEY) === 'admin' ? 'admin' : 'player';
-  } catch {
-    return 'player';
-  }
-}
-
 export function AdminModeProvider({ children }: { children: React.ReactNode }) {
   const { me } = useAuth();
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+
   const role = me?.role ?? 'USER';
   const canAccessAdmin = role === 'ADMIN' || role === 'MASTER_ADMIN';
   const isMasterAdmin = role === 'MASTER_ADMIN';
+  const isDeveloper = Boolean(me?.developer);
 
-  const [adminUiMode, setModeState] = useState<AdminUiMode>(readStoredMode);
+  const onAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/');
+  const onDevRoute = pathname === '/dev' || pathname.startsWith('/dev/');
 
-  const setAdminUiMode = useCallback((mode: AdminUiMode) => {
-    setModeState(mode);
-    try {
-      sessionStorage.setItem(MODE_KEY, mode);
-    } catch {
-      /* ignore */
-    }
-  }, []);
+  const shellMode: ShellMode =
+    onAdminRoute && canAccessAdmin
+      ? 'admin'
+      : onDevRoute && isDeveloper
+        ? 'developer'
+        : 'player';
+
+  const isAdminUi = shellMode === 'admin';
+  const isDeveloperUi = shellMode === 'developer';
+
+  const enterAdminUi = useCallback(() => {
+    if (!canAccessAdmin) return;
+    navigate('/admin/users');
+  }, [canAccessAdmin, navigate]);
+
+  const enterDeveloperUi = useCallback(() => {
+    if (!isDeveloper) return;
+    navigate('/dev/security-lab');
+  }, [isDeveloper, navigate]);
+
+  const enterPlayerUi = useCallback(() => {
+    navigate('/');
+  }, [navigate]);
+
+  const setAdminUiMode = useCallback(
+    (mode: 'player' | 'admin') => {
+      if (mode === 'admin') enterAdminUi();
+      else enterPlayerUi();
+    },
+    [enterAdminUi, enterPlayerUi],
+  );
 
   const toggleAdminUiMode = useCallback(() => {
-    setAdminUiMode(adminUiMode === 'admin' ? 'player' : 'admin');
-  }, [adminUiMode, setAdminUiMode]);
+    if (isAdminUi) enterPlayerUi();
+    else enterAdminUi();
+  }, [isAdminUi, enterAdminUi, enterPlayerUi]);
 
   const value = useMemo<AdminModeContextValue>(
     () => ({
       canAccessAdmin,
       isMasterAdmin,
-      adminUiMode: canAccessAdmin ? adminUiMode : 'player',
-      isAdminUi: canAccessAdmin && adminUiMode === 'admin',
+      isDeveloper,
+      shellMode,
+      isAdminUi,
+      isDeveloperUi,
+      enterAdminUi,
+      enterDeveloperUi,
+      enterPlayerUi,
       setAdminUiMode,
       toggleAdminUiMode,
     }),
-    [canAccessAdmin, isMasterAdmin, adminUiMode, setAdminUiMode, toggleAdminUiMode],
+    [
+      canAccessAdmin,
+      isMasterAdmin,
+      isDeveloper,
+      shellMode,
+      isAdminUi,
+      isDeveloperUi,
+      enterAdminUi,
+      enterDeveloperUi,
+      enterPlayerUi,
+      setAdminUiMode,
+      toggleAdminUiMode,
+    ],
   );
 
   return <AdminModeContext.Provider value={value}>{children}</AdminModeContext.Provider>;

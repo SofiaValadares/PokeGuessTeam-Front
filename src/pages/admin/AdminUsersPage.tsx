@@ -5,6 +5,7 @@ import { ApiError, toFriendlyUserMessage } from '../../services/http';
 import {
   banAdminUser,
   fetchAdminUsers,
+  setAdminUserDeveloper,
   setAdminUserRole,
   unbanAdminUser,
   type AdminUserFilter,
@@ -676,6 +677,31 @@ export default function AdminUsersPage() {
                             Remover admin
                           </Button>
                         </>
+                      ) : null}
+
+                      {isMasterAdmin ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={u.developer ? 'primary' : 'secondary'}
+                          disabled={busyId === u.userId}
+                          onClick={() => {
+                            setBusyId(u.userId);
+                            setError(null);
+                            void setAdminUserDeveloper(u.userId, !u.developer)
+                              .then(() => load())
+                              .catch((e) =>
+                                setError(
+                                  e instanceof ApiError
+                                    ? e.message
+                                    : 'Falha ao alterar papel DEV',
+                                ),
+                              )
+                              .finally(() => setBusyId(null));
+                          }}
+                        >
+                          {u.developer ? 'Remover DEV' : 'Tornar DEV'}
+                        </Button>
                       ) : null}
 
                       {/*
