@@ -146,6 +146,44 @@
   color: var(--ds-color-text-secondary);
 }
 
+.objectiveList {
+  margin: var(--ds-space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+}
+
+.objectiveCard {
+  margin: 0;
+  padding: var(--ds-space-3);
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-color-border-subtle);
+  background: color-mix(in srgb, var(--ds-color-bg-elevated) 90%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.objectiveCard ol {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: grid;
+  gap: 0.25rem;
+  font-size: var(--ds-text-sm);
+  color: var(--ds-color-text-secondary);
+}
+
+.objectiveLabel {
+  margin: 0.35rem 0 0;
+  font-size: 0.7rem;
+  font-weight: var(--ds-weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ds-color-text-muted);
+}
+
 .sub {
   margin: var(--ds-space-2) 0 0;
   font-size: var(--ds-text-sm);
@@ -159,6 +197,17 @@
   border-radius: var(--ds-radius-md);
   border: 1px solid color-mix(in srgb, var(--ds-color-gold) 30%, transparent);
   background: var(--ds-color-gold-muted);
+  font-size: var(--ds-text-sm);
+  line-height: 1.45;
+  color: var(--ds-color-text-primary);
+}
+
+.tempNotice {
+  margin: 0;
+  padding: var(--ds-space-3);
+  border-radius: var(--ds-radius-md);
+  border: 1px solid color-mix(in srgb, #c47a3a 45%, var(--ds-color-border-subtle));
+  background: color-mix(in srgb, #c47a3a 12%, var(--ds-color-bg-elevated));
   font-size: var(--ds-text-sm);
   line-height: 1.45;
   color: var(--ds-color-text-primary);

@@ -23,17 +23,113 @@ import {
   type EncryptResponse,
   type StatisticalResponse,
 } from '../../services/securityLabService';
+import { useAdminMode } from '../../store/providers/AdminModeProvider';
 import styles from './admin-security-lab.module.css';
 
-type Tab = 'cipher' | 'stego' | 'stego-attack' | 'attacks' | 'anomalies' | 'dashboard';
+type Tab = 'objectives' | 'cipher' | 'stego' | 'stego-attack' | 'attacks' | 'anomalies' | 'dashboard';
 
 const TABS: { id: Tab; label: string }[] = [
+  { id: 'objectives', label: 'Objetivos' },
   { id: 'cipher', label: 'Cifragem' },
   { id: 'stego', label: 'Estego (gerar)' },
   { id: 'stego-attack', label: 'Ataque estego' },
   { id: 'attacks', label: 'Ataques cripto' },
   { id: 'anomalies', label: 'Anomalias' },
   { id: 'dashboard', label: 'Dashboard' },
+];
+
+type Objective = {
+  id: string;
+  title: string;
+  goal: string;
+  steps: string[];
+  expect: string;
+};
+
+const TEST_OBJECTIVES: Objective[] = [
+  {
+    id: 'cipher-roundtrip',
+    title: 'Cifragem didática — ida e volta',
+    goal: 'Confirmar chave dinâmica + pipeline XOR / S-box / P-box / blocos no lab (não é o AES do jogo).',
+    steps: [
+      'Separador Cifragem: cifra um texto com uma seed.',
+      'Guarda ciphertext, seed e nonce.',
+      'Descriptografa com os mesmos valores e compara com o original.',
+    ],
+    expect: 'Texto recuperado igual ao original; fingerprint/nonce mudam se mudares a seed.',
+  },
+  {
+    id: 'product-crypto',
+    title: 'Cifragem do produto (observar)',
+    goal: 'Registar que o jogo real usa AES-GCM+HMAC nas partidas e BCrypt nas senhas — o lab não os desliga.',
+    steps: [
+      'Joga uma partida bot/local até ao fim (equipa selada).',
+      'Confirma no relatório/código que o commitment usa AES-GCM (não o cipher XOR).',
+    ],
+    expect: 'Documento: lab = didático; produção = AES/BCrypt intactos.',
+  },
+  {
+    id: 'stego-avatar',
+    title: 'Esteganografia no avatar',
+    goal: 'Esconder e revelar mensagem no fluxo de perfil do jogador.',
+    steps: [
+      'Perfil → mensagem oculta + enviar imagem.',
+      'Revelar mensagem no mesmo ecrã.',
+      'Opcional: no lab, Ataque estego sobre a mesma imagem.',
+    ],
+    expect: 'Mensagem recuperada; evento STEGO_* no relatório Admin.',
+  },
+  {
+    id: 'stego-samples',
+    title: 'Estego com amostras do lab',
+    goal: 'Usar imagens de teste do lab para embed/extract sem inventar ficheiros.',
+    steps: [
+      'Separador Estego: gera imagem com mensagem.',
+      'Extrai a mensagem; descarrega uma amostra e testa extract/ataque.',
+    ],
+    expect: 'Extract coerente; falhas de extract malformado registadas se aplicável.',
+  },
+  {
+    id: 'attack-brute',
+    title: 'Ataque força bruta (lab controlado)',
+    goal: 'Ver que só o espaço reduzido de bits é viável; chave de 256 bits é inviável.',
+    steps: [
+      'Ataques cripto → força bruta com bits baixos (ex. 12).',
+      'Anota tentativas, tempo e mensagem de viabilidade.',
+    ],
+    expect: 'Ataque encontra a seed artificial; conclusão: chave completa inviável.',
+  },
+  {
+    id: 'attack-diff-stat',
+    title: 'Diferencial (avalanche) e estatístico',
+    goal: 'Medir difusão/confusão do cipher didático.',
+    steps: [
+      'Corre ataque diferencial e anota % de avalanche.',
+      'Corre ataque estatístico e anota χ² / se parece uniforme.',
+    ],
+    expect: 'Métricas numéricas para o relatório da cadeira.',
+  },
+  {
+    id: 'lockout',
+    title: 'Proteção de força bruta no login (produto)',
+    goal: 'Validar lockout/rate limit — sem tentar partilhar exploits; só observar o comportamento.',
+    steps: [
+      'Em conta de teste, falha o login várias vezes.',
+      'Observa bloqueio (429 / mensagem de lockout).',
+      'Não uses isto contra contas reais de outras pessoas.',
+    ],
+    expect: 'Login fica temporariamente bloqueado; evidência para o relatório.',
+  },
+  {
+    id: 'anomalies-admin',
+    title: 'Anomalias e relatório Admin',
+    goal: 'Scan de anomalias e consulta dos eventos gerados pelos testes.',
+    steps: [
+      'Lab → Anomalias: correr scan (ou Admin → Dashboard Anomalias).',
+      'Admin → Relatório Ataques: filtra por tipo / só Lab.',
+    ],
+    expect: 'Eventos visíveis; anomalias aparecem se limiares forem atingidos.',
+  },
 ];
 
 function fileToBase64(file: File): Promise<string> {
@@ -70,7 +166,8 @@ function BarChart({
 }
 
 export default function AdminSecurityLabPage() {
-  const [tab, setTab] = useState<Tab>('cipher');
+  const { temporaryLabNotice } = useAdminMode();
+  const [tab, setTab] = useState<Tab>('objectives');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -146,14 +243,24 @@ export default function AdminSecurityLabPage() {
     <div className={styles.page}>
       <header className={styles.header}>
         <div>
-          <p className={styles.kicker}>Admin · Unidade 2</p>
+          <p className={styles.kicker}>Lab · Unidade 2</p>
           <h1 className={styles.title}>Security Lab</h1>
           <p className={styles.lead}>
-            Cipher didático (XOR + S-box + P-box + blocos), esteganografia LSB, ataques controlados,
-            anomalias e dashboard — sem mexer no BCrypt/AES-GCM de produção.
+            Área restrita ao perfil Lab. Cipher didático, estego, ataques controlados e anomalias —
+            sem abrir buracos no BCrypt/AES-GCM do jogo. Usa o separador Objetivos para o roteiro de
+            testes.
           </p>
         </div>
       </header>
+
+      {temporaryLabNotice ? (
+        <p className={styles.tempNotice} role="status">
+          Aviso: o acesso ao Lab em deploy é <strong>temporário</strong> (avaliação da cadeira de
+          cibersegurança) e limitado a contas com <strong>perfil Lab</strong>. Não é um ambiente
+          permanente de produção para ataques; as proteções reais do jogo (BCrypt, AES-GCM, lockout)
+          mantêm-se.
+        </p>
+      ) : null}
 
       <div className={styles.tabs} role="tablist" aria-label="Secções do lab">
         {TABS.map((t) => (
@@ -174,6 +281,31 @@ export default function AdminSecurityLabPage() {
         <InlineAlert tone="error" role="alert">
           {error}
         </InlineAlert>
+      ) : null}
+
+      {tab === 'objectives' ? (
+        <section className={styles.panel}>
+          <p className={styles.meta}>
+            Objetivos de teste (não são vulnerabilidades a deixar abertas). Segue cada item, anota
+            evidências e consulta o Admin → Relatório Ataques / Dashboard Anomalias.
+          </p>
+          <ol className={styles.objectiveList}>
+            {TEST_OBJECTIVES.map((obj) => (
+              <li key={obj.id} className={styles.objectiveCard}>
+                <strong>{obj.title}</strong>
+                <p className={styles.meta}>{obj.goal}</p>
+                <p className={styles.objectiveLabel}>Passos</p>
+                <ol>
+                  {obj.steps.map((s) => (
+                    <li key={s}>{s}</li>
+                  ))}
+                </ol>
+                <p className={styles.objectiveLabel}>Esperado</p>
+                <p className={styles.meta}>{obj.expect}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
       ) : null}
 
       {tab === 'cipher' ? (

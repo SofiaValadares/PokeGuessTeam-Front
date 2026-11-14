@@ -4,9 +4,9 @@ import { useAdminMode } from '../../store/providers/AdminModeProvider';
 import styles from '../admin/admin.module.css';
 
 export default function DevLayout() {
-  const { isDeveloper } = useAdminMode();
+  const { canAccessLab } = useAdminMode();
 
-  if (!isDeveloper) {
+  if (!canAccessLab) {
     return <Navigate to="/" replace />;
   }
 

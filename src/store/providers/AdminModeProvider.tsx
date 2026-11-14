@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useMemo } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { getGameMeta } from '../../services/metaService';
 import { useAuth } from './AuthProvider';
 
 type ShellMode = 'player' | 'admin' | 'developer';
@@ -7,7 +8,12 @@ type ShellMode = 'player' | 'admin' | 'developer';
 type AdminModeContextValue = {
   canAccessAdmin: boolean;
   isMasterAdmin: boolean;
+  /** Conta com perfil Lab (USER_IS_DEVELOPER). */
   isDeveloper: boolean;
+  /** Lab ligado no servidor (SECURITY_LAB_ENABLED) e utilizador com perfil Lab. */
+  canAccessLab: boolean;
+  securityLabEnabled: boolean;
+  temporaryLabNotice: boolean;
   /** Modo visual derivado da rota atual (fonte de verdade). */
   shellMode: ShellMode;
   isAdminUi: boolean;
@@ -32,13 +38,34 @@ export function AdminModeProvider({ children }: { children: React.ReactNode }) {
   const isMasterAdmin = role === 'MASTER_ADMIN';
   const isDeveloper = Boolean(me?.developer);
 
+  const [securityLabEnabled, setSecurityLabEnabled] = useState(true);
+  const [temporaryLabNotice, setTemporaryLabNotice] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getGameMeta()
+      .then((meta) => {
+        if (cancelled) return;
+        setSecurityLabEnabled(meta.securityLab?.enabled !== false);
+        setTemporaryLabNotice(meta.securityLab?.temporaryDeployNotice !== false);
+      })
+      .catch(() => {
+        /* meta falhou — assume lab disponível se o perfil Lab existir */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const canAccessLab = isDeveloper && securityLabEnabled;
+
   const onAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/');
   const onDevRoute = pathname === '/dev' || pathname.startsWith('/dev/');
 
   const shellMode: ShellMode =
     onAdminRoute && canAccessAdmin
       ? 'admin'
-      : onDevRoute && isDeveloper
+      : onDevRoute && canAccessLab
         ? 'developer'
         : 'player';
 
@@ -51,9 +78,9 @@ export function AdminModeProvider({ children }: { children: React.ReactNode }) {
   }, [canAccessAdmin, navigate]);
 
   const enterDeveloperUi = useCallback(() => {
-    if (!isDeveloper) return;
+    if (!canAccessLab) return;
     navigate('/dev/security-lab');
-  }, [isDeveloper, navigate]);
+  }, [canAccessLab, navigate]);
 
   const enterPlayerUi = useCallback(() => {
     navigate('/');
@@ -77,6 +104,9 @@ export function AdminModeProvider({ children }: { children: React.ReactNode }) {
       canAccessAdmin,
       isMasterAdmin,
       isDeveloper,
+      canAccessLab,
+      securityLabEnabled,
+      temporaryLabNotice,
       shellMode,
       isAdminUi,
       isDeveloperUi,
@@ -90,6 +120,9 @@ export function AdminModeProvider({ children }: { children: React.ReactNode }) {
       canAccessAdmin,
       isMasterAdmin,
       isDeveloper,
+      canAccessLab,
+      securityLabEnabled,
+      temporaryLabNotice,
       shellMode,
       isAdminUi,
       isDeveloperUi,

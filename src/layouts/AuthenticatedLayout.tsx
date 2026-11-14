@@ -78,14 +78,14 @@ function AdminHeaderNav() {
 
 function DeveloperHeaderNav() {
   return (
-    <NavLink
-      to="/dev/security-lab"
-      className={({ isActive }) =>
-        [headerStyles.navText, isActive ? headerStyles.navTextActive : ''].filter(Boolean).join(' ')
-      }
-    >
-      Security Lab
-    </NavLink>
+      <NavLink
+        to="/dev/security-lab"
+        className={({ isActive }) =>
+          [headerStyles.navText, isActive ? headerStyles.navTextActive : ''].filter(Boolean).join(' ')
+        }
+      >
+        Lab
+      </NavLink>
   );
 }
 
@@ -96,7 +96,7 @@ function AuthenticatedLayoutInner() {
   const {
     canAccessAdmin,
     isAdminUi,
-    isDeveloper,
+    canAccessLab,
     isDeveloperUi,
     enterAdminUi,
     enterDeveloperUi,
@@ -153,30 +153,30 @@ function AuthenticatedLayoutInner() {
                   Admin
                 </Button>
               ) : null}
-              {isDeveloper && !isDeveloperUi ? (
+              {canAccessLab && !isDeveloperUi ? (
                 <Button
                   type="button"
                   size="sm"
                   variant="secondary"
                   onClick={enterDeveloperUi}
-                  aria-label="Mudar para modo desenvolvedor"
-                  title="Modo desenvolvedor — Security Lab"
+                  aria-label="Mudar para modo Lab"
+                  title="Modo Lab — testes Unidade 2 (grupo seleto)"
                 >
                   <FlaskConical size={16} aria-hidden />
-                  Dev
+                  Lab
                 </Button>
               ) : null}
-              {isAdminUi && isDeveloper ? (
+              {isAdminUi && canAccessLab ? (
                 <Button
                   type="button"
                   size="sm"
                   variant="secondary"
                   onClick={enterDeveloperUi}
-                  aria-label="Ir para área desenvolvedor"
-                  title="Área Dev"
+                  aria-label="Ir para área Lab"
+                  title="Área Lab"
                 >
                   <FlaskConical size={16} aria-hidden />
-                  Dev
+                  Lab
                 </Button>
               ) : null}
               {isDeveloperUi && canAccessAdmin ? (

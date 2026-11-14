@@ -694,13 +694,13 @@ export default function AdminUsersPage() {
                                 setError(
                                   e instanceof ApiError
                                     ? e.message
-                                    : 'Falha ao alterar papel DEV',
+                                    : 'Falha ao alterar perfil Lab',
                                 ),
                               )
                               .finally(() => setBusyId(null));
                           }}
                         >
-                          {u.developer ? 'Remover DEV' : 'Tornar DEV'}
+                          {u.developer ? 'Remover Lab' : 'Tornar Lab'}
                         </Button>
                       ) : null}
 
