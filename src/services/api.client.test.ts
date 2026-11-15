@@ -71,7 +71,7 @@ describe('serviços HTTP da API', () => {
     await game.joinFriendMatch({ joinCode: 'ABCD', team: [1, 2, 3, 4, 5, 6] });
     json.mockResolvedValue({ match: { status: 'ACTIVE', yourSide: 'HOST', currentTurn: 'HOST', opponentKnowledge: [] }, turnFeedbacks: [] });
     await game.submitFriendTeam([1, 2, 3, 4, 5, 6]);
-    await game.submitFriendGuess(25);
+    await game.submitFriendGuess('fm-1', 25);
     await game.skipFriendTurn();
     await game.surrenderFriendMatch();
     await game.leaveFriendMatch();

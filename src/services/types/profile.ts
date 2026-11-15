@@ -6,6 +6,7 @@ export type ProfileMeResponse = {
   favoritePokemonName: string | null;
   avatarMode?: 'POKEMON' | 'CUSTOM' | string;
   hasCustomAvatar?: boolean;
+  avatarVersion?: number | null;
   avatarUrl?: string;
   registeredPokedexCount?: number | null;
 };

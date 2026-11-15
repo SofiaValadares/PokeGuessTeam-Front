@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { useAuth } from '../../../store/providers/AuthProvider';
 import { Card } from '../../../ds';
 import { ProfileIdentityBar } from './components/ProfileIdentityBar';
-import { ProfileAvatarSection } from './components/ProfileAvatarSection';
 import { ProfileMetaStrip } from './components/ProfileMetaStrip';
 import { ProfileEmailSection } from './components/ProfileEmailSection';
 import { ProfileCredentialsSection, ProfileDeleteSection } from './components/ProfileCredentialsSection';
@@ -24,7 +23,6 @@ export default function ProfilePage() {
     <Card padding="md" className={styles.pageCard}>
       <h1 className="ds-h1">Perfil</h1>
       <ProfileIdentityBar settings={settings} />
-      <ProfileAvatarSection />
       <ProfileMetaStrip
         me={me}
         onEditEmail={emailChange.openEditor}

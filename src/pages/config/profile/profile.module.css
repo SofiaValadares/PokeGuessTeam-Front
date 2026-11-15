@@ -82,6 +82,40 @@
   color: var(--ds-color-text-muted);
 }
 
+.modeTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2);
+}
+
+.modeTab {
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid var(--ds-color-border-default);
+  background: var(--ds-color-bg-raised);
+  color: var(--ds-color-text-secondary);
+  font-size: var(--ds-text-sm);
+  font-weight: var(--ds-weight-semibold);
+  cursor: pointer;
+}
+
+.modeTab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.modeTabActive {
+  border-color: var(--ds-color-accent);
+  background: var(--ds-color-accent-muted);
+  color: var(--ds-color-text-primary);
+}
+
+.modePanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-space-3);
+}
+
 .editIconBtn {
   display: inline-flex;
   align-items: center;

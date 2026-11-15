@@ -37,10 +37,10 @@ export function FriendMatchPlayingView() {
     FINISH_MODAL_SECONDS,
   );
 
-  const opponentName =
-    match?.yourSide === 'HOST'
-      ? (match.guest?.username ?? 'Amigo')
-      : (match?.host.username ?? 'Amigo');
+  const youParticipant = match?.yourSide === 'HOST' ? match.host : match?.guest;
+  const oppParticipant = match?.yourSide === 'HOST' ? match?.guest : match?.host;
+
+  const opponentName = oppParticipant?.username ?? 'Amigo';
 
   const excludedGuesses = useMemo(
     () => guessedDexNumbersForSide(match?.recentGuesses ?? [], match?.yourSide ?? 'HOST'),
@@ -180,6 +180,14 @@ export function FriendMatchPlayingView() {
             guessLoading={guessSending}
             excludedPokedexNumbers={excludedGuesses}
             playerTheme={opponentTurnActive ? 'waiting' : 'default'}
+            playerUserId={youParticipant?.userId}
+            opponentUserId={oppParticipant?.userId}
+            playerHasCustomAvatar={Boolean(youParticipant?.hasCustomAvatar)}
+            opponentHasCustomAvatar={Boolean(oppParticipant?.hasCustomAvatar)}
+            playerAvatarVersion={youParticipant?.avatarVersion ?? null}
+            opponentAvatarVersion={oppParticipant?.avatarVersion ?? null}
+            playerAvatarDex={youParticipant?.favoritePokedexNumber ?? null}
+            opponentAvatarDex={oppParticipant?.favoritePokedexNumber ?? null}
           />
         </div>
       ) : null}
