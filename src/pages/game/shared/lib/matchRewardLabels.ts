@@ -2,6 +2,13 @@ import type { GameResult, MatchRewardDto } from '../../../../services/types/game
 
 /** Espelha {@code GameMatchRewards.payoutFriend} no backend. */
 export function friendMatchRewardForResult(result: GameResult): MatchRewardDto {
+  if (result === 'CANCELLED') {
+    return {
+      trainingTeamXpGranted: 0,
+      pokeBallsGranted: 0,
+      pokeballFragmentsGranted: 0,
+    };
+  }
   if (result === 'WIN') {
     return {
       trainingTeamXpGranted: 300,

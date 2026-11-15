@@ -11,7 +11,7 @@ export type GuessOutcome =
   | 'FINISHED';
 
 export type GameMode = 'BOT' | 'LOCAL' | 'FRIEND';
-export type GameResult = 'WIN' | 'LOSE' | 'DRAW' | 'DESISTENCE';
+export type GameResult = 'WIN' | 'LOSE' | 'DRAW' | 'DESISTENCE' | 'CANCELLED';
 
 export type OpponentKnowledgeSlotDto = {
   slot: number;

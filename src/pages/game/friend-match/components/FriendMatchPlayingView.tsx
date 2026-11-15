@@ -147,6 +147,12 @@ export function FriendMatchPlayingView() {
           </p>
         ) : null}
 
+        {matchEnded && resultReady && yourResult === 'CANCELLED' ? (
+          <p className="ds-body-muted" role="status">
+            Partida anulada por comportamento anormal detectado. Nenhuma recompensa foi concedida.
+          </p>
+        ) : null}
+
         {pendingServerFinish ? (
           <p className="ds-body-muted">A guardar resultado…</p>
         ) : null}

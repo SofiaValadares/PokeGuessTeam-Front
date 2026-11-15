@@ -14,6 +14,7 @@ const RESULT_LABELS: Record<GameResult, string> = {
   LOSE: 'Derrota',
   DRAW: 'Empate',
   DESISTENCE: 'Desistência',
+  CANCELLED: 'Partida anulada',
 };
 
 const GAME_MODE_LABELS: Record<GameMode, string> = {
