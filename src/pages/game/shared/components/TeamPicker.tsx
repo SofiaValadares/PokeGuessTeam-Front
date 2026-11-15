@@ -13,6 +13,8 @@ type TeamPickerProps = {
   teamSize?: number;
   /** Mínimo de espécies registadas exigido (ex.: 12 no duelo vs bot). */
   minRegistered?: number;
+  /** Se definido, só estes nºs da Pokédex (∩ registados) podem ser escolhidos. */
+  allowedDexNumbers?: number[];
   value: number[];
   onChange: (team: number[]) => void;
   onSubmit?: () => void;
@@ -26,6 +28,7 @@ type TeamPickerProps = {
 export function TeamPicker({
   teamSize = 6,
   minRegistered,
+  allowedDexNumbers,
   value,
   onChange,
   onSubmit,
@@ -34,8 +37,16 @@ export function TeamPicker({
   loading = false,
   disabled = false,
 }: TeamPickerProps) {
-  const { availablePokemon, loading: inventoryLoading, ready, errorMessage, registeredCount } =
+  const { availablePokemon: registeredPokemon, loading: inventoryLoading, ready, errorMessage, registeredCount } =
     useRegisteredPokedexPokemon();
+
+  const availablePokemon = useMemo(() => {
+    if (!allowedDexNumbers || allowedDexNumbers.length === 0) return registeredPokemon;
+    const allow = new Set(allowedDexNumbers);
+    return registeredPokemon.filter((p) => allow.has(p.number));
+  }, [allowedDexNumbers, registeredPokemon]);
+
+  const poolCount = availablePokemon.length;
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [shuffleTick, setShuffleTick] = useState(0);
@@ -49,15 +60,13 @@ export function TeamPicker({
   const results = useMemo(() => {
     const pool = availablePokemon.filter((p) => !value.includes(p.number));
     const q = debouncedQuery.trim().toLowerCase();
-    if (q.length < 1) return pool.slice(0, 50);
-    return pool
-      .filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          String(p.number).includes(q) ||
-          `#${p.number}`.includes(q),
-      )
-      .slice(0, 20);
+    if (q.length < 1) return pool;
+    return pool.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        String(p.number).includes(q) ||
+        `#${p.number}`.includes(q),
+    );
   }, [availablePokemon, debouncedQuery, value]);
 
   const addPokemon = (p: PokemonDto) => {
@@ -86,18 +95,20 @@ export function TeamPicker({
   const requiredRegistered = minRegistered ?? teamSize;
   const canSubmit =
     value.length === teamSize && !loading && !disabled && !inventoryLoading && ready;
-  const canPickMore = registeredCount >= requiredRegistered;
+  const effectiveRegistered = allowedDexNumbers ? poolCount : registeredCount;
+  const canPickMore = effectiveRegistered >= requiredRegistered;
   const canAddPokemon =
-    registeredCount >= teamSize && value.length < teamSize && !inventoryLoading && !disabled;
+    effectiveRegistered >= teamSize && value.length < teamSize && !inventoryLoading && !disabled;
 
   return (
     <div className={`${styles.teamPicker} ${styles.teamPickerFullscreen}`}>
       {inventoryLoading ? <p className={styles.searchMeta}>A carregar a tua Pokédex…</p> : null}
       {errorMessage ? <p className={styles.teamError}>{errorMessage}</p> : null}
-      {ready && registeredCount < requiredRegistered ? (
+      {ready && effectiveRegistered < requiredRegistered ? (
         <p className={styles.teamError}>
-          Precisas de pelo menos {requiredRegistered} espécies registadas na Pokédex (tens{' '}
-          {registeredCount}). Vai à Área Selvagem capturar mais.
+          Precisas de pelo menos {requiredRegistered} espécies{' '}
+          {allowedDexNumbers ? 'do evento registadas na Pokédex' : 'registadas na Pokédex'} (tens{' '}
+          {effectiveRegistered}). Vai à Área Selvagem capturar mais.
         </p>
       ) : null}
       <div className={styles.teamFieldWrap}>

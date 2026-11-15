@@ -1,5 +1,5 @@
-import { PokemonSprite } from '../../../components/PokemonSprite';
-import { Button, Card, InlineAlert, PageSection } from '../../../ds';
+import { UserAvatar } from '../../../components/UserAvatar';
+import { Button, Card, InlineAlert, PageSection, Spinner } from '../../../ds';
 import { useHome } from '../providers/HomeProvider';
 import styles from './profile-summary.module.css';
 
@@ -17,7 +17,7 @@ export function ProfileSummaryCard() {
   if (loading) {
     return (
       <Card padding="md" className={styles.card}>
-        <p className="ds-body-muted">A carregar perfil…</p>
+        <Spinner label="A carregar perfil…" />
       </Card>
     );
   }
@@ -31,6 +31,17 @@ export function ProfileSummaryCard() {
       </Card>
     );
   }
+
+  const hasCustom =
+    profileMe?.avatarMode === 'CUSTOM' &&
+    Boolean(profileMe.hasCustomAvatar) &&
+    Boolean(profileMe.userId);
+
+  const imageLabel = hasCustom
+    ? 'Imagem personalizada'
+    : profileMe?.favoritePokemonName
+      ? `Pokémon: ${profileMe.favoritePokemonName}`
+      : '—';
 
   return (
     <Card padding="md" className={styles.card}>
@@ -48,7 +59,13 @@ export function ProfileSummaryCard() {
         headingLevel="h2"
         headerSpacing="tight"
         action={
-          <Button type="button" variant="secondary" size="md" className={styles.historyBtn} onClick={goToHistory}>
+          <Button
+            type="button"
+            variant="secondary"
+            size="md"
+            className={styles.historyBtn}
+            onClick={goToHistory}
+          >
             Histórico
           </Button>
         }
@@ -58,23 +75,20 @@ export function ProfileSummaryCard() {
         <div className={styles.header}>
           <div className={styles.avatarWrap}>
             <div className={styles.avatarStage}>
-              {favoriteDex != null && profileMe?.favoritePokemonName ? (
-                <PokemonSprite
-                  dex={favoriteDex}
-                  name={profileMe.favoritePokemonName}
-                  fillHeight
-                />
-              ) : (
-                <PokemonSprite dex={1} name="?" registered={false} fillHeight />
-              )}
+              <UserAvatar
+                userId={profileMe?.userId}
+                hasCustomAvatar={hasCustom}
+                favoriteDex={favoriteDex}
+                avatarVersion={profileMe?.avatarVersion}
+                name={playerName}
+                size={96}
+              />
             </div>
           </div>
           <div className={styles.info}>
             <p className={styles.meta}>
-              Pokémon favorito:{' '}
-              <strong className={styles.metaStrong}>
-                {profileMe?.favoritePokemonName ?? '—'}
-              </strong>
+              Imagem de perfil:{' '}
+              <strong className={styles.metaStrong}>{imageLabel}</strong>
             </p>
             <p className={styles.meta}>
               Explora a Pokédex, o PC e a área selvagem para expandir a tua coleção.

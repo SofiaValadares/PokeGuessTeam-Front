@@ -17,6 +17,18 @@ npm start
 - API: `http://localhost:8080` (proxy em `src/setupProxy.js`)
 - Cookie `JSESSIONID` first-party em dev (não defina `REACT_APP_API_URL` localmente)
 
+### Contas locais de teste (seed do backend)
+
+Com `DEV_TOOLS_ENABLED=true` no backend, estas contas são criadas no arranque (senha `PokeTeam1!`):
+
+| Username    | E-mail                 | Papel         | DEV |
+|-------------|------------------------|---------------|-----|
+| `masterdev` | `masterdev@local.test` | MASTER_ADMIN  | sim |
+| `adminonly` | `admin@local.test`     | ADMIN         | não |
+| `labdev`    | `dev@local.test`       | USER          | sim |
+| `player1`   | `player1@local.test`   | USER          | não |
+| `player2`   | `player2@local.test`   | USER          | não |
+
 ---
 
 ## Arquitetura
@@ -28,7 +40,7 @@ index.tsx
  └─ Redux Provider
      └─ ThemeProvider → PreferencesProvider
          └─ AppRouter
-             └─ ApiAvailabilityGate → AuthProvider → Routes
+             └─ AuthProvider → Routes
 ```
 
 ### Camadas (`src/`)
@@ -57,7 +69,6 @@ src/
 │   ├── home/           dashboard, equipa de treino, lançamento de jogos
 │   ├── config/         perfil, aparência
 │   ├── inventory/      PC, Pokédex, área selvagem (gacha)
-│   ├── cold-start/     página “API a acordar” (Render free tier)
 │   └── game/           ver também pages/game/README.md
 │       ├── shared/
 │       │   ├── components/  MatchBoard, TeamPicker, modais
@@ -128,26 +139,19 @@ Slices de features vivem em `pages/*/slice/` mas são **registados** em `store/s
 
 ### `vercel.json`
 
-Substitua o host do backend pela URL real do Render.
+Substitua o host do backend pela URL real do Render. O ficheiro também envia cabeçalhos HTTPS (`Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`) em todas as rotas.
 
 ### Variáveis
 
 | Variável | Valor |
 |----------|-------|
 | `REACT_APP_API_URL` | *(vazio — proxy no mesmo domínio)* |
-| `REACT_APP_API_WAKE_URL` | `https://SEU-APP.onrender.com` |
-| `REACT_APP_API_COLD_START_AVERAGE_SECONDS` | `50` |
-| `REACT_APP_ENABLE_API_HEALTH_CHECK` | `true` |
 
 ### CORS no backend
 
 ```text
 APP_CORS_ALLOWED_ORIGIN_PATTERNS=https://seu-app.vercel.app
 ```
-
-### Página “API a acordar”
-
-Em produção, se o Render estiver suspenso, `ApiAvailabilityGate` mostra `pages/cold-start/ApiColdStartPage` até `GET /api/meta` responder.
 
 ---
 

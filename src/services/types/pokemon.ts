@@ -36,6 +36,16 @@ export type PokedexEntryPageResponse = {
   last: boolean;
 };
 
+export type PokedexVersionResponse = {
+  pokedexVersion: string;
+};
+
+export type PokedexCatalogResponse = {
+  pokedexVersion: string;
+  species: PokemonDto[];
+  evolutionLines: EvolutionLineDto[];
+};
+
 /** GET /api/pokemon/pc — linha evolutiva no PC do jogador. */
 export type PcLineDto = {
   evolutionLineKey: number;

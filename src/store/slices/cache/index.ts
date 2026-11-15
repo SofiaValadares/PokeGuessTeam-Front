@@ -6,18 +6,22 @@ export {
   refreshUserCacheFromNetwork,
   reloadUserCacheOnLogin,
   clearUserCache,
+  ensurePcCache,
+  ensureGameHistoryCache,
 } from './cacheThunks';
 export {
   applyGachaDraw,
   applyTrainingTeam,
   applyMatchHistoryEntry,
+  applyMatchRewards,
   removeGameHistoryEntry,
   applyFavoritePokemon,
   applyClaimRewards,
   applyPostMatchSync,
+  applyInventory,
   restoreFromStorage,
 } from './cacheSlice';
 export { cacheReducer } from './cacheSlice';
 export * from './selectors';
 export * from './queries';
-export { syncMatchRewardsToCache } from './matchRewardsSync';
+export { applyMatchRewardsToCache, syncMatchRewardsToCache } from './matchRewardsSync';

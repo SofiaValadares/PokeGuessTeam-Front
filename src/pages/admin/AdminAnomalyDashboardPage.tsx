@@ -1,0 +1,158 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Button, InlineAlert } from '../../ds';
+import { ApiError } from '../../services/http';
+import {
+  fetchAdminAnomalyDashboard,
+  scanAdminAnomalies,
+  type AnomalyHit,
+  type DashboardResponse,
+} from '../../services/securityLabService';
+import styles from './admin.module.css';
+import labStyles from './admin-security-lab.module.css';
+
+function BarChart({ items }: { items: { label: string; value: number }[] }) {
+  const max = Math.max(1, ...items.map((i) => i.value));
+  if (items.length === 0) {
+    return <p className={styles.secondaryText}>Sem dados no período.</p>;
+  }
+  return (
+    <div className={labStyles.bars} role="img" aria-label="Gráfico de barras">
+      {items.map((item) => (
+        <div key={item.label} className={labStyles.barRow}>
+          <span className={labStyles.barLabel}>{item.label}</span>
+          <div className={labStyles.barTrack}>
+            <div
+              className={labStyles.barFill}
+              style={{ width: `${Math.round((item.value / max) * 100)}%` }}
+            />
+          </div>
+          <span className={labStyles.barValue}>{item.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function AdminAnomalyDashboardPage() {
+  const [dash, setDash] = useState<DashboardResponse | null>(null);
+  const [scanHits, setScanHits] = useState<AnomalyHit[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      setDash(await fetchAdminAnomalyDashboard());
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Falha ao carregar dashboard');
+    } finally {
+      setBusy(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const totalsBars = useMemo(() => {
+    if (!dash?.totalsByType) return [];
+    return Object.entries(dash.totalsByType)
+      .map(([label, value]) => ({ label, value: Number(value) }))
+      .sort((a, b) => b.value - a.value);
+  }, [dash]);
+
+  const onScan = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await scanAdminAnomalies();
+      setScanHits(res.hits);
+      setDash(await fetchAdminAnomalyDashboard());
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'Falha ao correr scan');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <div className={styles.pageHeader}>
+        <div>
+          <h1 className="ds-h1">Dashboard de anomalias</h1>
+          <p className={styles.pageHeaderLead}>
+            Resumo de eventos de ataque (14 dias), anomalias recentes e scan sob demanda.
+          </p>
+        </div>
+        <div className={styles.headerActions}>
+          <Button type="button" size="sm" variant="secondary" disabled={busy} onClick={() => void load()}>
+            Atualizar
+          </Button>
+          <Button type="button" size="sm" disabled={busy} onClick={() => void onScan()}>
+            Correr scan
+          </Button>
+        </div>
+      </div>
+
+      {error ? (
+        <InlineAlert tone="error" role="alert">
+          {error}
+        </InlineAlert>
+      ) : null}
+
+      {dash ? (
+        <>
+          <p className={styles.conclusion}>{dash.conclusions}</p>
+
+          <section className={styles.panel}>
+            <h2 className={styles.panelTitle}>Eventos por tipo (14 dias)</h2>
+            <BarChart items={totalsBars} />
+          </section>
+
+          <section className={styles.panel}>
+            <h2 className={styles.panelTitle}>Anomalias recentes</h2>
+            {dash.recentAnomalies.length === 0 ? (
+              <p className={styles.secondaryText}>Sem anomalias gravadas.</p>
+            ) : (
+              <ul className={styles.plainList}>
+                {dash.recentAnomalies.map((h, i) => (
+                  <li key={`a-${i}`}>
+                    <strong>{h.code}</strong>
+                    <span className={styles.secondaryText}>
+                      {h.summary} · score {(h.score ?? 0).toFixed(2)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </>
+      ) : (
+        <p className={styles.secondaryText}>{busy ? 'A carregar…' : 'Sem dados.'}</p>
+      )}
+
+      {scanHits != null ? (
+        <section className={styles.panel}>
+          <h2 className={styles.panelTitle}>Resultado do último scan</h2>
+          {scanHits.length === 0 ? (
+            <p className={styles.secondaryText}>
+              Nenhuma anomalia neste scan (tráfego ainda abaixo dos limiares).
+            </p>
+          ) : (
+            <ul className={styles.plainList}>
+              {scanHits.map((h, i) => (
+                <li key={`s-${h.code}-${i}`}>
+                  <strong>{h.code}</strong>
+                  <span className={styles.secondaryText}>
+                    {h.summary} · score {h.score.toFixed(2)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
+    </>
+  );
+}

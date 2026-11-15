@@ -2,13 +2,14 @@ import { useMemo } from 'react';
 import type { PokemonDto } from '../services/types/pokemon';
 import { resolveCurrentMemberDex } from '../lib/pokemon/pcCurrentForm';
 import { useSpeciesMeta } from './useSpeciesMeta';
-import { selectPcLines, selectUserCache } from '../store/slices/cache/selectors';
+import { selectPcLines, selectUserCache } from '../store/slices/cache';
 import { useAppSelector } from '../store/hooks';
 import { FetchStatus } from '../types/fetchStatus';
 
 export function usePcTeamInventory() {
   const lines = useAppSelector(selectPcLines);
-  const cacheStatus = useAppSelector(selectUserCache).status;
+  const cache = useAppSelector(selectUserCache);
+  const cacheStatus = cache.status;
 
   const allMemberDex = useMemo(
     () => lines.flatMap((line) => line.members),

@@ -9,25 +9,61 @@ const navIconProps = {
   'aria-hidden': true as const,
 };
 
+export type AppHeaderVariant = 'default' | 'admin' | 'lab';
+
 export type AppHeaderProps = {
   /** Conteúdo à direita (ex.: menu de utilizador). */
   end?: ReactNode;
   /** Quando `false`, os atalhos do nav principal não são mostrados (visitante). Por omissão `true`. */
   navEnabled?: boolean;
+  /** Substitui o nav padrão (ex.: navegação do painel admin). */
+  nav?: ReactNode;
+  /** Tom visual do shell (Admin / Lab). */
+  variant?: AppHeaderVariant;
+  /** Etiqueta junto à marca (ex.: Admin / Lab). */
+  brandMeta?: ReactNode;
 };
 
-export function AppHeader({ end, navEnabled = true }: AppHeaderProps) {
-  const showTrailing = navEnabled || Boolean(end);
+export function AppHeader({
+  end,
+  navEnabled = true,
+  nav,
+  variant = 'default',
+  brandMeta,
+}: AppHeaderProps) {
+  const showDefaultNav = navEnabled && nav == null;
+  const showCustomNav = nav != null;
+  const showTrailing = showDefaultNav || showCustomNav || Boolean(end);
+  const panel = variant === 'admin' || variant === 'lab';
 
   return (
-    <header className={styles.header}>
-      <div className={styles.inner}>
-        <Link to="/" className={styles.brand}>
-          PokeTeamGuess
-        </Link>
+    <header
+      className={[
+        styles.header,
+        variant === 'admin' ? styles.headerAdmin : '',
+        variant === 'lab' ? styles.headerLab : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <div className={[styles.inner, panel ? styles.innerPanel : ''].filter(Boolean).join(' ')}>
+        <div className={styles.brandBlock}>
+          <Link to="/" className={styles.brand}>
+            PokeTeamGuess
+          </Link>
+          {brandMeta ? <div className={styles.brandMeta}>{brandMeta}</div> : null}
+        </div>
         {showTrailing ? (
           <div className={styles.trailing}>
-            {navEnabled ? (
+            {showCustomNav ? (
+              <nav
+                className={[styles.nav, panel ? styles.navPanel : ''].filter(Boolean).join(' ')}
+                aria-label={variant === 'lab' ? 'Navegação do Lab' : 'Navegação do painel'}
+              >
+                {nav}
+              </nav>
+            ) : null}
+            {showDefaultNav ? (
               <nav className={styles.nav} aria-label="Atalhos principais">
                 <NavLink
                   to="/"

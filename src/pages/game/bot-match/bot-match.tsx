@@ -4,15 +4,18 @@ import { BotMatchProvider, useBotMatch } from './providers/BotMatchProvider';
 import { BotMatchSetupView } from './components/BotMatchSetupView';
 import { BotMatchPlayingView } from './components/BotMatchPlayingView';
 import { prepareNewBotMatch } from './slice/botMatchSlice';
+import { clearPersistedBotMatch } from './slice/botMatchStorage';
 
 function BotMatchContent() {
   const dispatch = useAppDispatch();
   const { phase, clientState } = useBotMatch();
-  const resetFinishedOnEntry = useRef(clientState?.status === 'FINISHED');
+  // Partidas já terminadas no sessionStorage (mesmo sem histórico) bloqueavam o ecrã.
+  const resetStaleOnEntry = useRef(phase === 'playing' && clientState?.status === 'FINISHED');
 
   useEffect(() => {
-    if (!resetFinishedOnEntry.current) return;
-    resetFinishedOnEntry.current = false;
+    if (!resetStaleOnEntry.current) return;
+    resetStaleOnEntry.current = false;
+    clearPersistedBotMatch();
     dispatch(prepareNewBotMatch());
   }, [dispatch]);
 

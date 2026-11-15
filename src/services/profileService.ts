@@ -34,3 +34,36 @@ export async function updateFavoritePokemon(pokedexNumber: number): Promise<Prof
     body: JSON.stringify({ pokedexNumber }),
   });
 }
+
+export async function uploadProfileAvatar(
+  file: File,
+  hiddenMessage?: string,
+): Promise<ProfileMeResponse> {
+  const body = new FormData();
+  body.append('file', file);
+  if (hiddenMessage != null && hiddenMessage.trim() !== '') {
+    body.append('hiddenMessage', hiddenMessage.trim());
+  }
+  return apiFetchJson<ProfileMeResponse>('/api/profile/avatar', {
+    method: 'POST',
+    body,
+  });
+}
+
+export async function extractProfileAvatarStego(): Promise<string> {
+  const res = await apiFetchJson<{ message: string }>('/api/profile/avatar/stego/extract', {
+    method: 'POST',
+    body: '{}',
+  });
+  return res.message ?? '';
+}
+
+export async function switchToPokemonProfileAvatar(): Promise<ProfileMeResponse> {
+  return apiFetchJson<ProfileMeResponse>('/api/profile/avatar/use-pokemon', {
+    method: 'POST',
+    body: '{}',
+  });
+}
+
+/** @deprecated use switchToPokemonProfileAvatar — o prefixo use* dispara rules-of-hooks no build */
+export const usePokemonProfileAvatar = switchToPokemonProfileAvatar;

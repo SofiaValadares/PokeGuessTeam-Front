@@ -3,6 +3,10 @@
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  background:
+    radial-gradient(ellipse 100% 70% at 50% -20%, color-mix(in srgb, var(--ds-color-accent) 20%, transparent), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, color-mix(in srgb, var(--ds-color-gold) 12%, transparent), transparent 50%),
+    var(--ds-color-bg-deep);
 }
 
 .page {
@@ -12,6 +16,7 @@
   flex-direction: column;
   justify-content: center;
   min-height: 0;
+  animation: dsPopIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .loading {

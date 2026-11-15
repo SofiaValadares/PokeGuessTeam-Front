@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect } from 'react';
-import { loadMatchPokemonDex } from '../../../../lib/game/clientMatchView';
+import { dexMapFromPokemonList, loadMatchPokemonDex } from '../../../../lib/game/clientMatchView';
 import { mapToRecord } from '../../../../lib/game/pokemonDexMaps';
 import { readAllPokemonFromCache } from '../../../../store/slices/cache/queries';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
@@ -24,17 +24,19 @@ export function FriendMatchDexProvider({ children }: { children: React.ReactNode
 
   useEffect(() => {
     let cancelled = false;
-    dispatch(setLoadingDex(true));
     const cachedPool = readAllPokemonFromCache();
     if (cachedPool.length > 0) {
       dispatch(setAllPokemon(cachedPool));
+      dispatch(setPokemonDex(mapToRecord(dexMapFromPokemonList(cachedPool))));
+      dispatch(setLoadingDex(false));
+      return;
     }
+    dispatch(setLoadingDex(true));
     void loadMatchPokemonDex()
       .then((dex) => {
         if (cancelled) return;
         dispatch(setPokemonDex(mapToRecord(dex)));
-        const pool = cachedPool.length > 0 ? cachedPool : Array.from(dex.values());
-        dispatch(setAllPokemon(pool));
+        dispatch(setAllPokemon(Array.from(dex.values())));
       })
       .catch(() => {
         /* dex opcional via cache; falha silenciosa */

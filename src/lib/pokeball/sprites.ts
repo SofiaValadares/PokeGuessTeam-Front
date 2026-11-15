@@ -1,6 +1,11 @@
 /** Sprites em `/public/pokeboll/` e tipos do enum Java (`PokeballType`). */
 
-export type PokeballTypeId = 'POKE_BALL' | 'GREAT_BALL' | 'ULTRA_BALL' | 'MASTER_BALL';
+export type PokeballTypeId =
+  | 'POKE_BALL'
+  | 'GREAT_BALL'
+  | 'ULTRA_BALL'
+  | 'MASTER_BALL'
+  | 'FRIEND_BALL';
 
 export type PokeballGachaOption = {
   type: PokeballTypeId;
@@ -13,6 +18,7 @@ export const GACHA_POKEBALLS: PokeballGachaOption[] = [
   { type: 'GREAT_BALL', spriteSrc: '/pokeboll/greatboll.png', label: 'Super Bola' },
   { type: 'ULTRA_BALL', spriteSrc: '/pokeboll/ultraboll.png', label: 'Ultra Bola' },
   { type: 'MASTER_BALL', spriteSrc: '/pokeboll/masterboll.png', label: 'Master Bola' },
+  { type: 'FRIEND_BALL', spriteSrc: '/pokeboll/friendboll.png', label: 'Friend Ball' },
 ];
 
 /** Normaliza variantes antigas do cliente (`POKEBALL` → `POKE_BALL`). */
@@ -27,6 +33,8 @@ export function normalizePokeballType(type: string): PokeballTypeId | null {
       return 'ULTRA_BALL';
     case 'MASTER_BALL':
       return 'MASTER_BALL';
+    case 'FRIEND_BALL':
+      return 'FRIEND_BALL';
     default:
       return null;
   }

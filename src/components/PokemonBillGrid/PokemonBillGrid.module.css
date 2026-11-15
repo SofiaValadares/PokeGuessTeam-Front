@@ -1,41 +1,40 @@
-/* Moldura estilo monitor Bill PC (Gen 2–3) */
+/* Monitor discreto — cores do design system */
 .monitor {
-  --bill-frame: var(--ds-palette-cyan-700);
-  --bill-frame-inner: var(--ds-palette-cyan-900);
-  --bill-screen: var(--ds-palette-gray-100);
-  --bill-screen-border: var(--ds-palette-gray-400);
-  --bill-slot-bg: var(--ds-palette-white-100);
-  --bill-slot-border: var(--ds-palette-gray-500);
-  --bill-slot-empty: var(--ds-palette-gray-200);
+  --bill-frame: color-mix(in srgb, var(--ds-color-accent) 55%, var(--ds-palette-dark-700));
+  --bill-frame-inner: var(--ds-palette-dark-800);
+  --bill-screen: var(--ds-palette-dark-800);
+  --bill-screen-border: var(--ds-color-border-default);
+  --bill-slot-bg: var(--ds-palette-dark-700);
+  --bill-slot-border: var(--ds-color-border-subtle);
+  --bill-slot-empty: var(--ds-palette-dark-900);
+  --bill-cols: 5;
+  --bill-rows: 5;
 
-  border: 3px solid var(--bill-frame);
-  border-radius: var(--ds-radius-md);
-  padding: var(--ds-space-3);
-  background: linear-gradient(
-    165deg,
-    var(--ds-palette-cyan-600) 0%,
-    var(--bill-frame) 45%,
-    var(--bill-frame-inner) 100%
-  );
+  border: 2px solid var(--bill-frame);
+  border-radius: var(--ds-radius-lg);
+  padding: var(--ds-space-2);
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--ds-color-accent) 14%, var(--ds-palette-dark-700)) 0%,
+      var(--bill-frame-inner) 100%
+    );
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--ds-palette-white-100) 25%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 8%, transparent),
     var(--ds-shadow-md);
 }
 
-:global([data-theme='dark']) .monitor {
-  --bill-screen: var(--ds-palette-dark-700);
-  --bill-screen-border: var(--ds-palette-dark-400);
-  --bill-slot-bg: var(--ds-palette-dark-600);
-  --bill-slot-border: var(--ds-palette-dark-300);
-  --bill-slot-empty: var(--ds-palette-dark-800);
+.monitorPc,
+.monitorDex {
+  /* mesma paleta DS — variantes só para API futura */
 }
 
 .screen {
   background: var(--bill-screen);
-  border: 2px solid var(--bill-screen-border);
-  border-radius: var(--ds-radius-sm);
+  border: 1px solid var(--bill-screen-border);
+  border-radius: var(--ds-radius-md);
   padding: var(--ds-space-2);
-  box-shadow: inset 0 2px 8px color-mix(in srgb, var(--ds-palette-black-100) 12%, transparent);
+  box-shadow: inset 0 1px 8px rgb(0 0 0 / 0.25);
 }
 
 .monitorCompact {
@@ -47,21 +46,81 @@
   width: 100%;
 }
 
+.monitorFillHeight {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.monitorFillHeight .screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Grelha base — preenche largura em colunas iguais */
 .grid {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: var(--ds-space-1);
+  grid-template-columns: repeat(var(--bill-cols), minmax(0, 1fr));
+  align-content: start;
+  gap: 0.45rem;
+  width: 100%;
 }
 
 .gridFixedColumns {
   grid-template-columns: repeat(5, 4.75rem);
+  width: max-content;
+  max-width: 100%;
+}
+
+/* Página cheia: cartões esticam; se há demasiadas linhas, scroll interno */
+.gridFill {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  align-content: stretch;
+  grid-template-rows: repeat(var(--bill-rows), minmax(5.1rem, 1fr));
+  gap: clamp(0.3rem, 0.7vh, 0.55rem);
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .grid > li {
   min-width: 0;
+  min-height: 0;
+}
+
+.slotEnter {
+  animation: billSlotIn 0.28s var(--ds-ease-standard) both;
+  min-width: 0;
+  min-height: 0;
+}
+
+.slotEnterStretch {
+  height: 100%;
+  display: flex;
+}
+
+.slotEnterStretch > .slot {
+  flex: 1;
+}
+
+@keyframes billSlotIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .slot {
@@ -70,30 +129,65 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--ds-space-1);
+  gap: 0.12rem;
   width: 100%;
-  min-height: 5.5rem;
-  padding: var(--ds-space-1) var(--ds-space-1) var(--ds-space-2);
+  min-height: 4.6rem;
+  padding: 0.35rem 0.25rem 0.4rem;
   margin: 0;
   font: inherit;
   cursor: pointer;
   background: var(--bill-slot-bg);
-  border: 2px solid var(--bill-slot-border);
-  border-radius: 2px;
-  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--ds-palette-black-100) 8%, transparent);
+  border: 1px solid var(--bill-slot-border);
+  border-radius: var(--ds-radius-sm);
+  box-shadow: inset 0 -1px 0 rgb(0 0 0 / 0.15);
   transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease,
-    transform 0.1s ease;
+    border-color 0.2s var(--ds-ease-standard),
+    box-shadow 0.2s var(--ds-ease-standard),
+    transform 0.2s var(--ds-ease-standard),
+    background 0.2s var(--ds-ease-standard);
+}
+
+.slotStretch {
+  height: 100%;
+  min-height: 0;
+  justify-content: center;
+  padding: clamp(0.2rem, 0.6vh, 0.4rem) clamp(0.15rem, 0.4vw, 0.35rem);
 }
 
 .slot:hover:not(.slotEmpty) {
   border-color: var(--ds-color-accent);
+  background: color-mix(in srgb, var(--ds-color-accent) 14%, var(--bill-slot-bg));
   box-shadow:
-    inset 0 -2px 0 color-mix(in srgb, var(--ds-palette-black-100) 8%, transparent),
-    0 0 0 1px var(--ds-color-accent-muted);
-  transform: translateY(-1px);
-  z-index: 1;
+    0 0 0 1px var(--ds-color-accent-muted),
+    0 10px 22px color-mix(in srgb, var(--ds-color-accent) 22%, transparent),
+    0 0 18px color-mix(in srgb, var(--ds-color-accent) 18%, transparent);
+  transform: translateY(-3px) scale(1.03);
+  z-index: 2;
+}
+
+.slot:hover:not(.slotEmpty) .sprite {
+  transform: translateY(-2px) scale(1.1) rotate(-4deg);
+  filter: drop-shadow(0 6px 8px rgb(0 0 0 / 0.35));
+  animation: spriteHoverBob 0.7s ease-in-out infinite;
+}
+
+.slot:hover:not(.slotEmpty) .name {
+  color: var(--ds-color-accent-hover);
+}
+
+.slot:hover:not(.slotEmpty) .registeredDot {
+  transform: scale(1.35);
+  box-shadow: 0 0 0 2px var(--bill-slot-bg), 0 0 8px var(--ds-color-success);
+}
+
+@keyframes spriteHoverBob {
+  0%,
+  100% {
+    transform: translateY(-2px) scale(1.1) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-6px) scale(1.12) rotate(3deg);
+  }
 }
 
 .slot:focus-visible {
@@ -103,22 +197,31 @@
 
 .slotSelected {
   border-color: var(--ds-color-accent);
-  background: color-mix(in srgb, var(--ds-color-accent-muted) 35%, var(--bill-slot-bg));
+  background: color-mix(in srgb, var(--ds-color-accent) 18%, var(--bill-slot-bg));
   box-shadow:
-    inset 0 -2px 0 color-mix(in srgb, var(--ds-palette-black-100) 8%, transparent),
-    0 0 0 2px var(--ds-color-accent-muted);
+    0 0 0 2px var(--ds-color-accent-muted),
+    0 0 14px color-mix(in srgb, var(--ds-color-accent) 22%, transparent);
 }
 
 .slotEmpty {
   background: var(--bill-slot-empty);
   border-style: dashed;
-  border-color: var(--ds-palette-gray-400);
-  opacity: 0.65;
+  border-color: var(--ds-color-border-subtle);
+  opacity: 0.4;
   pointer-events: none;
 }
 
 .slotUnregistered .name {
   color: var(--ds-color-text-muted);
+}
+
+.slotDense {
+  min-height: 4.25rem;
+}
+
+.monitorDense .slot:not(.slotStretch) {
+  min-height: 4.25rem;
+  padding: 0.28rem 0.18rem 0.32rem;
 }
 
 .spriteWrap {
@@ -127,35 +230,46 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 3rem;
+  min-height: 0;
 }
 
 .sprite {
-  width: 56px;
-  height: 56px;
+  width: clamp(2.75rem, 7.5vh, 4.25rem);
+  height: clamp(2.75rem, 7.5vh, 4.25rem);
   object-fit: contain;
+  image-rendering: pixelated;
+  transition:
+    transform 0.2s var(--ds-ease-standard),
+    filter 0.2s var(--ds-ease-standard);
+  will-change: transform;
+}
+
+.monitorDense .sprite {
+  width: clamp(2.5rem, 7vh, 4rem);
+  height: clamp(2.5rem, 7vh, 4rem);
 }
 
 .name {
   margin: 0;
   width: 100%;
-  font-size: 0.625rem;
+  font-size: clamp(0.58rem, 1.25vh, 0.72rem);
   font-weight: var(--ds-weight-semibold);
-  line-height: 1.2;
+  line-height: 1.15;
   text-align: center;
   color: var(--ds-color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: color 0.2s var(--ds-ease-standard);
 }
 
 .footer {
   margin: 0;
-  font-size: 0.5625rem;
+  font-size: clamp(0.48rem, 1vh, 0.58rem);
   font-variant-numeric: tabular-nums;
   color: var(--ds-color-text-muted);
   text-align: center;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .registeredDot {
@@ -167,23 +281,17 @@
   border-radius: 50%;
   background: var(--ds-color-success);
   box-shadow: 0 0 0 1px var(--bill-slot-bg);
+  transition:
+    transform 0.2s var(--ds-ease-standard),
+    box-shadow 0.2s var(--ds-ease-standard);
 }
 
-@media (min-width: 40rem) {
-  .slot {
-    min-height: 6.25rem;
+@media (max-width: 40rem) {
+  .grid {
+    gap: 0.35rem;
   }
 
-  .sprite {
-    width: 64px;
-    height: 64px;
-  }
-
-  .name {
-    font-size: var(--ds-text-xs);
-  }
-
-  .footer {
-    font-size: 0.625rem;
+  .gridFill {
+    grid-template-rows: repeat(var(--bill-rows), minmax(4.6rem, 1fr));
   }
 }

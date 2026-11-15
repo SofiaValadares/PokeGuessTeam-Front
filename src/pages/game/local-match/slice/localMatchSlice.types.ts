@@ -8,6 +8,9 @@ export type LocalMatchSliceState = {
   opponentName: string;
   player1Team: number[];
   player2Team: number[];
+  hostCommitment: string | null;
+  opponentCommitment: string | null;
+  commitmentVerified: boolean | null;
   clientState: ClientMatchState | null;
   matchView: LocalMatchView | null;
   guessLog: MatchGuessFeedback[];
@@ -21,6 +24,9 @@ export const initialLocalMatchState: LocalMatchSliceState = {
   opponentName: 'Ash',
   player1Team: [],
   player2Team: [],
+  hostCommitment: null,
+  opponentCommitment: null,
+  commitmentVerified: null,
   clientState: null,
   matchView: null,
   guessLog: [],

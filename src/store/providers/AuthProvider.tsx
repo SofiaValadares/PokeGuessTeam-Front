@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect } from 'react';
+import { setSessionExpiredHandler } from '../../auth/sessionGuard';
 import {
   dismissIntroDialogue,
+  forceLocalLogout,
   hydrateAuth,
   loginUser,
   logoutUser,
@@ -15,7 +17,7 @@ export type AuthContextValue = {
   me: MeResponse | null;
   showIntroDialogue: boolean;
   refresh: () => Promise<void>;
-  login: (login: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   dismissIntroDialogue: () => void;
 };
@@ -25,6 +27,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     void dispatch(hydrateAuth());
+  }, [dispatch]);
+
+  useEffect(() => {
+    setSessionExpiredHandler(() => {
+      void dispatch(forceLocalLogout());
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.replace('/login');
+      }
+    });
+    return () => setSessionExpiredHandler(null);
   }, [dispatch]);
 
   return <>{children}</>;
@@ -42,8 +54,8 @@ export function useAuth(): AuthContextValue {
   }, [dispatch]);
 
   const login = useCallback(
-    async (loginStr: string, password: string) => {
-      await dispatch(loginUser({ login: loginStr, password })).unwrap();
+    async (email: string, password: string) => {
+      await dispatch(loginUser({ email, password })).unwrap();
     },
     [dispatch],
   );

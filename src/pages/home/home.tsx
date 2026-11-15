@@ -1,8 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PageShell } from '../../ds';
 import { useSpeciesMeta } from '../../hooks/useSpeciesMeta';
 import { GameLaunchPanel } from './components/GameLaunchPanel';
-import { IntroDialogue } from './components/IntroDialogue';
 import { PokemonDetailModal } from './components/PokemonDetailModal';
 import { ProfileSummaryCard } from './components/ProfileSummaryCard';
 import { TrainingTeamCard } from './components/TrainingTeamCard';
@@ -13,7 +12,6 @@ import styles from './home.module.css';
 
 function HomeContent() {
   const {
-    me,
     showIntroDialogue,
     dismissIntroDialogue,
     trainingTeam,
@@ -33,11 +31,18 @@ function HomeContent() {
   );
   const { speciesByDex, evolutionLevelByDex } = useSpeciesMeta(memberDexList);
 
-  const showIntro = me != null && showIntroDialogue;
+  // História/intro desligada por agora — só descarta o flag de firstLogin.
+  useEffect(() => {
+    if (showIntroDialogue) dismissIntroDialogue();
+  }, [showIntroDialogue, dismissIntroDialogue]);
 
   return (
     <PageShell width="fluid" className={styles.homeShell}>
-      <IntroDialogue open={showIntro} playerName={playerName} onComplete={dismissIntroDialogue} />
+      <header className={`${styles.heroBand} ds-motion-fade-up`}>
+        <p className={styles.heroBrand}>PokeTeamGuess</p>
+        <h1 className={styles.heroTitle}>Olá, {playerName}</h1>
+        <p className={styles.heroSub}>Monta o time, escolhe o modo e adivinha a equipe secreta.</p>
+      </header>
 
       <div className={`${styles.layout} ds-motion-stagger`}>
         <div className={styles.leftColumn}>

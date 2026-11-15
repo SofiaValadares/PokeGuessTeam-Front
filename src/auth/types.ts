@@ -41,9 +41,9 @@ export type PasswordResetConfirmRequest = {
   newPassword: string;
 };
 
-/** Corpo enviado ao backend: campo `login` aceita e-mail ou nome de usuário. */
+/** Corpo enviado ao backend: autenticação exclusiva por e-mail. */
 export type LoginRequest = {
-  login: string;
+  email: string;
   password: string;
 };
 
@@ -94,4 +94,8 @@ export type MeResponse = {
   emailVerified?: boolean;
   /** ISO-8601 (LocalDateTime serializado pelo Jackson). */
   registerDate?: string;
+  role?: 'USER' | 'ADMIN' | 'MASTER_ADMIN' | string;
+  developer?: boolean;
+  siteBanned?: boolean;
+  onlineBanned?: boolean;
 };

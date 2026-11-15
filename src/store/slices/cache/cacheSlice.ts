@@ -1,37 +1,35 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { GachaDrawResult, GameHistoryEntry, TrainingTeam } from '../../../model';
 import type { PcLine } from '../../../model';
-import type { ProfileMe } from '../../../model';
+import type { PokeballInventory, ProfileMe } from '../../../model';
+import type { MatchRewardDto } from '../../../services/types/game';
 import { FetchStatus } from '../../../types/fetchStatus';
 import {
   patchAfterClaimRewards,
   patchAfterFavoritePokemon,
-  patchAfterGachaDraw,
+  patchAfterGachaDraws,
+  patchAfterInventoryUpdate,
   patchAfterMatchFinish,
+  patchAfterMatchRewards,
   patchAfterTrainingTeamUpdate,
   patchAfterPostMatchSync,
   patchAfterHistoryDelete,
 } from './patches';
-import { clearPersistedCache, writePersistedCache } from './storage';
+import { clearPersistedCache, readValidPersistedCache, userCacheToPersisted, writePersistedCache } from './storage';
 import { emptyUserCacheState, type UserCacheState } from './types';
 import {
   clearUserCache,
   hydrateUserCache,
   refreshUserCacheFromNetwork,
   reloadUserCacheOnLogin,
+  ensurePcCache,
+  ensureGameHistoryCache,
 } from './cacheThunks';
 
 function persist(state: UserCacheState): void {
-  if (!state.userId) return;
-  writePersistedCache({
-    userId: state.userId,
-    pokedex: state.pokedex,
-    pcLines: state.pcLines,
-    inventory: state.inventory,
-    trainingTeam: state.trainingTeam,
-    gameHistory: state.gameHistory,
-    profileMe: state.profileMe,
-  });
+  const payload = userCacheToPersisted(state);
+  if (!payload) return;
+  writePersistedCache(payload);
 }
 
 const cacheSlice = createSlice({
@@ -41,8 +39,9 @@ const cacheSlice = createSlice({
     restoreFromStorage(state, action: PayloadAction<UserCacheState>) {
       Object.assign(state, action.payload);
     },
-    applyGachaDraw(state, action: PayloadAction<GachaDrawResult>) {
-      Object.assign(state, patchAfterGachaDraw(state, action.payload));
+    applyGachaDraw(state, action: PayloadAction<GachaDrawResult | GachaDrawResult[]>) {
+      const draws = Array.isArray(action.payload) ? action.payload : [action.payload];
+      Object.assign(state, patchAfterGachaDraws(state, draws));
       persist(state);
     },
     applyTrainingTeam(state, action: PayloadAction<TrainingTeam>) {
@@ -51,6 +50,10 @@ const cacheSlice = createSlice({
     },
     applyMatchHistoryEntry(state, action: PayloadAction<GameHistoryEntry>) {
       Object.assign(state, patchAfterMatchFinish(state, action.payload));
+      persist(state);
+    },
+    applyMatchRewards(state, action: PayloadAction<MatchRewardDto>) {
+      Object.assign(state, patchAfterMatchRewards(state, action.payload));
       persist(state);
     },
     removeGameHistoryEntry(state, action: PayloadAction<string>) {
@@ -73,15 +76,26 @@ const cacheSlice = createSlice({
     },
     applyPostMatchSync(
       state,
-      action: PayloadAction<{ trainingTeam: TrainingTeam; inventory: import('../../../model').PokeballInventory }>,
+      action: PayloadAction<{ trainingTeam: TrainingTeam; inventory: PokeballInventory }>,
     ) {
       Object.assign(state, patchAfterPostMatchSync(state, action.payload.trainingTeam, action.payload.inventory));
+      persist(state);
+    },
+    applyInventory(state, action: PayloadAction<PokeballInventory>) {
+      Object.assign(state, patchAfterInventoryUpdate(state, action.payload));
       persist(state);
     },
   },
   extraReducers(builder) {
     builder
-      .addCase(hydrateUserCache.pending, (state) => {
+      .addCase(hydrateUserCache.pending, (state, action) => {
+        const persisted = readValidPersistedCache(action.meta.arg);
+        if (persisted) {
+          Object.assign(state, persisted);
+          state.status = FetchStatus.Success;
+          state.error = null;
+          return;
+        }
         state.status = FetchStatus.Loading;
         state.error = null;
       })
@@ -92,6 +106,7 @@ const cacheSlice = createSlice({
         persist(state);
       })
       .addCase(hydrateUserCache.rejected, (state, action) => {
+        if (state.status === FetchStatus.Success && state.userId) return;
         state.status = FetchStatus.Error;
         state.error = action.error.message ?? 'Erro ao carregar dados.';
       })
@@ -107,6 +122,18 @@ const cacheSlice = createSlice({
         state.error = null;
         persist(state);
       })
+      .addCase(ensurePcCache.fulfilled, (state, action) => {
+        if (!state.userId) return;
+        state.pcLines = action.payload;
+        state.pcHydrated = true;
+        persist(state);
+      })
+      .addCase(ensureGameHistoryCache.fulfilled, (state, action) => {
+        if (!state.userId) return;
+        state.gameHistory = action.payload;
+        state.historyHydrated = true;
+        persist(state);
+      })
       .addCase(clearUserCache.fulfilled, () => {
         clearPersistedCache();
         return emptyUserCacheState();
@@ -119,10 +146,12 @@ export const {
   applyGachaDraw,
   applyTrainingTeam,
   applyMatchHistoryEntry,
+  applyMatchRewards,
   removeGameHistoryEntry,
   applyFavoritePokemon,
   applyClaimRewards,
   applyPostMatchSync,
+  applyInventory,
 } = cacheSlice.actions;
 
 export const cacheReducer = cacheSlice.reducer;

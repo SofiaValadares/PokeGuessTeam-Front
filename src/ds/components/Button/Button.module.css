@@ -25,14 +25,40 @@
 }
 
 .primary {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   color: var(--ds-color-text-inverse);
   background: linear-gradient(180deg, var(--ds-color-accent-hover) 0%, var(--ds-color-accent) 100%);
   border-color: rgba(255, 255, 255, 0.12);
   box-shadow: var(--ds-shadow-sm), 0 0 0 0 transparent;
 }
 
+.primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 30%,
+    color-mix(in srgb, white 28%, transparent) 48%,
+    transparent 62%
+  );
+  background-size: 220% 100%;
+  opacity: 0;
+  transition: opacity var(--ds-duration-fast) var(--ds-ease-standard);
+  pointer-events: none;
+  z-index: -1;
+}
+
 .primary:not(:disabled):hover {
   box-shadow: var(--ds-shadow-md), var(--ds-shadow-glow);
+  transform: translateY(-1px);
+}
+
+.primary:not(:disabled):hover::after {
+  opacity: 1;
+  animation: dsShimmer 1.4s linear;
 }
 
 .secondary {

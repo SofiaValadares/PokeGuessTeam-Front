@@ -30,7 +30,7 @@ type RawDiscoveredHints = {
   estagioEvolutivo?: string | null;
 };
 
-type RawOpponentKnowledgeSlot = {
+export type RawOpponentKnowledgeSlot = {
   slot?: number;
   adivinhado?: boolean;
   revealed?: boolean;
@@ -52,7 +52,7 @@ function mapSecondaryType(value: string | null | undefined): string | null {
   return value;
 }
 
-function parseOpponentKnowledgeSlot(raw: RawOpponentKnowledgeSlot): OpponentKnowledgeSlotDto {
+export function parseOpponentKnowledgeSlot(raw: RawOpponentKnowledgeSlot): OpponentKnowledgeSlotDto {
   const hasNested = raw.informacoes != null || typeof raw.adivinhado === 'boolean';
 
   if (hasNested) {
@@ -89,9 +89,16 @@ function parseOpponentKnowledgeSlot(raw: RawOpponentKnowledgeSlot): OpponentKnow
   };
 }
 
+export function parseOpponentKnowledgeList(
+  raw: RawOpponentKnowledgeSlot[] | OpponentKnowledgeSlotDto[] | null | undefined,
+): OpponentKnowledgeSlotDto[] {
+  if (!raw?.length) return [];
+  return (raw as RawOpponentKnowledgeSlot[]).map(parseOpponentKnowledgeSlot);
+}
+
 export function parseFriendMatchState(raw: FriendMatchStateDto): FriendMatchStateDto {
-  const opponentKnowledge = (raw.opponentKnowledge as unknown as RawOpponentKnowledgeSlot[]).map(
-    parseOpponentKnowledgeSlot,
+  const opponentKnowledge = parseOpponentKnowledgeList(
+    raw.opponentKnowledge as unknown as RawOpponentKnowledgeSlot[],
   );
 
   const yourTurn = raw.currentTurn === raw.yourSide;

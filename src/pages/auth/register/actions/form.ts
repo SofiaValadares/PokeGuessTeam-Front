@@ -1,6 +1,11 @@
 import type { NavigateFunction } from 'react-router-dom';
 import { toFriendlyUserMessage } from '../../../../api/http';
 import { register as registerUser } from '../../../../auth/authService';
+import { getPasswordPolicyError, PASSWORD_POLICY_HINT } from '../../../../lib/auth/passwordPolicy';
+import {
+  USERNAME_FROM_EMAIL_MESSAGE,
+  usernameConflictsWithEmail,
+} from '../../../../lib/auth/usernameEmail';
 import { FetchStatus } from '../../../../types/fetchStatus';
 
 export type RegisterFormState = {
@@ -37,13 +42,15 @@ export function getRegisterFieldErrors(
 ): RegisterFieldErrors {
   const errors: RegisterFieldErrors = {};
   const username = v.username.trim();
+  const email = v.email.trim();
   if (!username) {
     errors.username = 'Informe um nome de usuário.';
   } else if (username.length > 100) {
     errors.username = 'Máximo de 100 caracteres.';
+  } else if (email && usernameConflictsWithEmail(username, email)) {
+    errors.username = USERNAME_FROM_EMAIL_MESSAGE;
   }
 
-  const email = v.email.trim();
   if (!email) {
     errors.email = 'Informe o e-mail.';
   } else if (!EMAIL_RE.test(email)) {
@@ -52,10 +59,9 @@ export function getRegisterFieldErrors(
 
   if (!v.password) {
     errors.password = 'Informe a senha.';
-  } else if (v.password.length < 6) {
-    errors.password = 'A senha deve ter pelo menos 6 caracteres.';
-  } else if (v.password.length > 72) {
-    errors.password = 'Máximo de 72 caracteres.';
+  } else {
+    const policy = getPasswordPolicyError(v.password);
+    if (policy) errors.password = policy;
   }
 
   if (!v.confirmPassword) {
@@ -94,3 +100,5 @@ export async function submitRegister(
 export function mapRegisterSubmitError(err: unknown): string {
   return toFriendlyUserMessage(err, 'Não foi possível registar. Tenta novamente.');
 }
+
+export { PASSWORD_POLICY_HINT };

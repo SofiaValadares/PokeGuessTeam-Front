@@ -1,8 +1,25 @@
 import { ApiError, apiFetchJson } from './http';
-import type { PokedexEntryDto, PokedexEntryPageResponse } from './types/pokemon';
+import type {
+  PokedexCatalogResponse,
+  PokedexEntryDto,
+  PokedexEntryPageResponse,
+  PokedexVersionResponse,
+} from './types/pokemon';
 
 export const POKEDEX_DEFAULT_PAGE_SIZE = 25;
 export const POKEDEX_MAX_PAGE_SIZE = 100;
+
+export async function fetchPokedexVersion(): Promise<PokedexVersionResponse> {
+  return apiFetchJson<PokedexVersionResponse>('/api/pokedex/version', { method: 'GET' });
+}
+
+export async function fetchPokedexCatalog(): Promise<PokedexCatalogResponse> {
+  return apiFetchJson<PokedexCatalogResponse>('/api/pokedex/catalog', { method: 'GET' });
+}
+
+export async function fetchRegisteredPokedexNumbers(): Promise<number[]> {
+  return apiFetchJson<number[]>('/api/pokedex/registered', { method: 'GET' });
+}
 
 export async function fetchPokedexPage(
   page = 0,
@@ -47,7 +64,7 @@ async function fetchPokedexPageWithRetry(
   throw lastError;
 }
 
-/** Carrega a Pokédex nacional em páginas pequenas — evita timeout do proxy em produção. */
+/** Fallback: carrega a Pokédex nacional em páginas (legado). Preferir {@link fetchPokedexCatalog}. */
 export async function fetchAllPokedexPages(): Promise<PokedexEntryDto[]> {
   const pageSize = POKEDEX_MAX_PAGE_SIZE;
   const first = await fetchPokedexPageWithRetry(0, pageSize);
@@ -69,7 +86,7 @@ export async function fetchAllPokedexPages(): Promise<PokedexEntryDto[]> {
   return all;
 }
 
-/** @deprecated Preferir {@link fetchAllPokedexPages} — `/all` pode dar timeout em produção. */
+/** @deprecated Preferir {@link fetchPokedexCatalog}. */
 export async function fetchPokedexAll(): Promise<PokedexEntryDto[]> {
   return fetchAllPokedexPages();
 }

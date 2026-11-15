@@ -14,14 +14,22 @@ export default function LoginPage() {
     emailVerified,
     passwordResetSuccess,
     accountDeleted,
-    loginFieldError,
+    sessionEndedMessage,
+    emailFieldError,
     passwordFieldError,
     canSubmit,
-    onLoginBlur,
+    onEmailBlur,
     onPasswordBlur,
   } = useLoginForm();
 
   const isSubmitting = form.submitStatus === FetchStatus.Loading;
+  const localHostnames = ['localhost', '127.0.0.1', '::1', '[::1]'];
+  const localLabCredentials =
+    process.env.NODE_ENV === 'development' &&
+    typeof window !== 'undefined' &&
+    localHostnames.includes(window.location.hostname.toLowerCase())
+      ? { email: 'dev@local.test', password: 'PokeTeam1!' }
+      : null;
 
   return (
     <AuthPageLayout
@@ -29,11 +37,12 @@ export default function LoginPage() {
       intro={
         <>
           {accountDeleted ? <InlineAlert tone="success">Conta excluída com sucesso.</InlineAlert> : null}
+          {sessionEndedMessage ? <InlineAlert tone="error">{sessionEndedMessage}</InlineAlert> : null}
           {passwordResetSuccess ? <InlineAlert tone="success">{passwordResetSuccess}</InlineAlert> : null}
           {emailVerified ? (
             <InlineAlert tone="success">E-mail verificado. Já podes entrar.</InlineAlert>
           ) : null}
-          <p className="ds-body-muted">Use seu e-mail ou nome de usuário.</p>
+          <p className="ds-body-muted">Entre com o e-mail da sua conta.</p>
         </>
       }
       footer={
@@ -41,16 +50,55 @@ export default function LoginPage() {
           <Link to="/forgot-password">Esqueci a senha</Link>
         </p>
       }
+      aside={
+        localLabCredentials ? (
+          <aside className={styles.localLabCard} aria-labelledby="local-lab-credentials-title">
+            <p className={styles.localLabWarning}>APAGAR EM PRODUÇÃO DEPOIS</p>
+            <h2 id="local-lab-credentials-title">Conta local do Lab</h2>
+            <p className={styles.localLabDescription}>
+              Perfil <strong>labdev</strong>. Disponível quando <code>DEV_TOOLS_ENABLED=true</code>.
+            </p>
+            <dl className={styles.localLabCredentialList}>
+              <div>
+                <dt>E-mail</dt>
+                <dd><code>{localLabCredentials.email}</code></dd>
+              </div>
+              <div>
+                <dt>Senha</dt>
+                <dd><code>{localLabCredentials.password}</code></dd>
+              </div>
+            </dl>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              fullWidth
+              disabled={isSubmitting}
+              onClick={() =>
+                setForm((previous) => ({
+                  ...previous,
+                  ...localLabCredentials,
+                  error: null,
+                  submitStatus: FetchStatus.Idle,
+                }))
+              }
+            >
+              Preencher login
+            </Button>
+          </aside>
+        ) : undefined
+      }
     >
       <form noValidate onSubmit={handleSubmit}>
         <TextField
-          label="E-mail ou usuário"
-          name="login"
-          autoComplete="username"
-          value={form.login}
-          onChange={(e) => setForm((prev) => ({ ...prev, login: e.target.value }))}
-          onBlur={onLoginBlur}
-          error={loginFieldError}
+          label="E-mail"
+          name="email"
+          type="email"
+          autoComplete="email"
+          value={form.email}
+          onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+          onBlur={onEmailBlur}
+          error={emailFieldError}
         />
         <TextField
           label="Senha"

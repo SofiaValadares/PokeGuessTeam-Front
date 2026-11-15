@@ -1,36 +1,83 @@
-import { useCallback, useEffect, useState } from 'react';
-import { getGameHistoryPage } from '../store/slices/cache/queries';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { GameHistoryPageResponse } from '../services/types/game';
-import { ApiError } from '../services/http';
 import { FetchStatus } from '../types/fetchStatus';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { ensureGameHistoryCache, selectGameHistory, selectUserCache } from '../store/slices/cache';
+import { paginateSpecies } from '../lib/pokedex/nationalCatalog';
 
 export function useGameHistoryPage(initialPage = 0, initialSize = 10) {
+  const dispatch = useAppDispatch();
+  const cache = useAppSelector(selectUserCache);
+  const history = useAppSelector(selectGameHistory);
   const [page, setPage] = useState(initialPage);
   const [pageSize, setPageSize] = useState(initialSize);
-  const [data, setData] = useState<GameHistoryPageResponse | null>(null);
-  const [status, setStatus] = useState(FetchStatus.Loading);
+  const [status, setStatus] = useState(FetchStatus.Idle);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async (p: number, size: number) => {
-    setStatus(FetchStatus.Loading);
-    setError(null);
-    try {
-      setData(await getGameHistoryPage(p, size));
-      setStatus(FetchStatus.Success);
-    } catch (e) {
-      setData(null);
-      setError(e instanceof ApiError ? e.message : 'Erro ao carregar histórico.');
-      setStatus(FetchStatus.Error);
-    }
-  }, []);
-
   useEffect(() => {
-    void load(page, pageSize);
-  }, [load, page, pageSize]);
+    if (!cache.userId) return;
+    if (cache.historyHydrated) {
+      setStatus(FetchStatus.Success);
+      return;
+    }
+    let cancelled = false;
+    setStatus(FetchStatus.Loading);
+    void dispatch(ensureGameHistoryCache())
+      .unwrap()
+      .then(() => {
+        if (!cancelled) {
+          setError(null);
+          setStatus(FetchStatus.Success);
+        }
+      })
+      .catch((e: unknown) => {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : 'Erro ao carregar histórico.');
+          setStatus(FetchStatus.Error);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [cache.userId, cache.historyHydrated, dispatch]);
 
   useEffect(() => {
     setPage(0);
   }, [pageSize]);
+
+  const data = useMemo((): GameHistoryPageResponse | null => {
+    if (!cache.historyHydrated && history.length === 0) return null;
+    const pageData = paginateSpecies(history, page, pageSize);
+    return {
+      content: pageData.content,
+      page: pageData.page,
+      size: pageData.size,
+      totalElements: pageData.totalElements,
+      totalPages: pageData.totalPages,
+      first: pageData.first,
+      last: pageData.last,
+    };
+  }, [cache.historyHydrated, history, page, pageSize]);
+
+  const reload = useCallback(() => {
+    if (!cache.userId) return;
+    if (cache.historyHydrated) {
+      setError(null);
+      setStatus(FetchStatus.Success);
+      return;
+    }
+    setStatus(FetchStatus.Loading);
+    void dispatch(ensureGameHistoryCache())
+      .unwrap()
+      .then(() => {
+        setError(null);
+        setStatus(FetchStatus.Success);
+      })
+      .catch((e: unknown) => {
+        setError(e instanceof Error ? e.message : 'Erro ao carregar histórico.');
+        setStatus(FetchStatus.Error);
+      });
+  }, [cache.historyHydrated, cache.userId, dispatch]);
 
   return {
     page,
@@ -38,8 +85,8 @@ export function useGameHistoryPage(initialPage = 0, initialSize = 10) {
     pageSize,
     setPageSize,
     data,
-    loading: status === FetchStatus.Loading,
+    loading: status === FetchStatus.Loading && !cache.historyHydrated,
     error,
-    reload: () => load(page, pageSize),
+    reload,
   };
 }

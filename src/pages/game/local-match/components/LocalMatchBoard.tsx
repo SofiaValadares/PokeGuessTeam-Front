@@ -1,10 +1,10 @@
 import { MatchBoard, type MatchBoardProps } from '../../shared/components/MatchBoard';
-import { useLocalMatchPlay } from '../providers/LocalMatchPlayProvider';
+import { useNationalDexPokemon } from '../../../../hooks/useNationalDexPokemon';
 
-type LocalMatchBoardProps = Omit<MatchBoardProps, 'registeredPokedexOnly'>;
+type LocalMatchBoardProps = Omit<MatchBoardProps, 'searchablePokemon'>;
 
 export function LocalMatchBoard(props: LocalMatchBoardProps) {
-  const { registeredPokemon } = useLocalMatchPlay();
+  const { availablePokemon } = useNationalDexPokemon();
 
-  return <MatchBoard {...props} registeredPokedexOnly={registeredPokemon} />;
+  return <MatchBoard {...props} searchablePokemon={availablePokemon} />;
 }

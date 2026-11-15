@@ -3,10 +3,14 @@ import type { OpponentKnowledgeSlotDto } from '../../../../api/types/game';
 import { searchPokemon } from '../../../../api/pokemonApi';
 import type { PokemonDto } from '../../../../api/types/pokemon';
 import { PokemonSprite } from '../../../../components/PokemonSprite';
+import { UserAvatar } from '../../../../components/UserAvatar';
 import { Button } from '../../../../ds';
 import { OpponentClueCard } from './OpponentClueCard';
 import { PokemonSearchField, type PokemonSearchFieldState } from './PokemonSearchField';
-import { searchRegisteredPokemonList, listRegisteredPokemon } from '../../../../lib/pokemon/registeredPokedexSearch';
+import {
+  searchRegisteredPokemonList,
+  listRegisteredPokemon,
+} from '../../../../lib/pokemon/registeredPokedexSearch';
 import styles from './game.module.css';
 
 export type MatchBoardProps = {
@@ -27,12 +31,20 @@ export type MatchBoardProps = {
   finishedMessage?: string | null;
   playerAvatarDex?: number | null;
   opponentAvatarDex?: number | null;
+  playerUserId?: string | null;
+  opponentUserId?: string | null;
+  playerHasCustomAvatar?: boolean;
+  opponentHasCustomAvatar?: boolean;
+  playerAvatarVersion?: number | string | null;
+  opponentAvatarVersion?: number | string | null;
   excludedPokedexNumbers?: number[];
   playerTheme?: 'default' | 'guest' | 'waiting';
-  /** When set, search is limited to these Pokémon (e.g. registered Pokédex). */
-  registeredPokedexOnly?: PokemonDto[];
+  /** Lista completa para pesquisa de palpite (Pokédex nacional / evento). */
+  searchablePokemon?: PokemonDto[];
   /** Conteúdo extra abaixo do botão de desistir (ex.: atualizar partida online). */
   actionsBelowSurrender?: ReactNode;
+  /** Substitui o texto do banner de turno (ex.: bot a pensar). */
+  turnBannerText?: string | null;
 };
 
 export function MatchBoard({
@@ -53,42 +65,59 @@ export function MatchBoard({
   finishedMessage,
   playerAvatarDex,
   opponentAvatarDex,
+  playerUserId = null,
+  opponentUserId = null,
+  playerHasCustomAvatar = false,
+  opponentHasCustomAvatar = false,
+  playerAvatarVersion = null,
+  opponentAvatarVersion = null,
   excludedPokedexNumbers = [],
   playerTheme = 'default',
-  registeredPokedexOnly,
+  searchablePokemon,
   actionsBelowSurrender,
+  turnBannerText = null,
 }: MatchBoardProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PokemonDto[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
   const excludedDex = useMemo(() => new Set(excludedPokedexNumbers), [excludedPokedexNumbers]);
+  const hasLocalDex = Boolean(searchablePokemon && searchablePokemon.length > 0);
 
   const search = useCallback(
     async (q: string) => {
-      if (q.trim().length < 1) return;
+      if (q.trim().length < 1) {
+        if (hasLocalDex && searchablePokemon) {
+          setResults(listRegisteredPokemon(searchablePokemon));
+        }
+        return;
+      }
       try {
-        if (registeredPokedexOnly) {
-          setResults(searchRegisteredPokemonList(registeredPokedexOnly, q, 50));
+        if (searchablePokemon && searchablePokemon.length > 0) {
+          setResults(searchRegisteredPokemonList(searchablePokemon, q, 0));
           return;
         }
-        setResults(await searchPokemon(q, 20));
+        setResults(await searchPokemon(q, 50));
       } catch {
         setResults([]);
       }
     },
-    [registeredPokedexOnly],
+    [hasLocalDex, searchablePokemon],
   );
 
   const handleSearchOpen = useCallback(() => {
-    if (registeredPokedexOnly && registeredPokedexOnly.length > 0) {
-      setResults(listRegisteredPokemon(registeredPokedexOnly));
+    if (searchablePokemon && searchablePokemon.length > 0) {
+      setResults(
+        query.trim()
+          ? searchRegisteredPokemonList(searchablePokemon, query, 0)
+          : listRegisteredPokemon(searchablePokemon),
+      );
       return;
     }
     if (query.trim()) {
       void search(query);
     }
-  }, [query, registeredPokedexOnly, search]);
+  }, [query, searchablePokemon, search]);
 
   const handleSearchClose = useCallback(() => {
     setResults([]);
@@ -100,11 +129,14 @@ export function MatchBoard({
 
   useEffect(() => {
     if (!query.trim()) {
+      if (hasLocalDex && searchablePokemon) {
+        setResults(listRegisteredPokemon(searchablePokemon));
+      }
       return;
     }
     const t = window.setTimeout(() => void search(query), 220);
     return () => window.clearTimeout(t);
-  }, [query, search]);
+  }, [query, search, hasLocalDex, searchablePokemon]);
 
   const sending = submitting || guessLoading;
 
@@ -152,6 +184,15 @@ export function MatchBoard({
     >
       <header className={styles.matchShellHeader}>
         <span className={styles.matchShellTitle}>PokéTeamGuess · Partida</span>
+        <div className={styles.matchHeaderScores} aria-hidden={status !== 'ACTIVE'}>
+          <span>
+            {playerName} {userScore}/{maxScore}
+          </span>
+          <span className={styles.matchHeaderScoresSep}>·</span>
+          <span>
+            {opponentName} {opponentScore}/{maxScore}
+          </span>
+        </div>
       </header>
 
       <div className={styles.matchLayout}>
@@ -159,41 +200,41 @@ export function MatchBoard({
           <div className={styles.matchLeftHead}>
             <h2 className={styles.matchPanelTitle}>Campos de palpite</h2>
             <p className={styles.matchPanelSub}>
-              Pistas reais por slot do adversário · {revealedCount}/{maxScore} revelados
+              Pistas por slot do adversário · {revealedCount}/{maxScore} revelados
             </p>
           </div>
+
+          {status === 'ACTIVE' ? (
+            <div className={styles.matchGuessBar}>
+              <PokemonSearchField
+                query={query}
+                onQueryChange={handleQueryChange}
+                results={results}
+                selected={null}
+                onSelect={(p) => void submitGuess(p)}
+                fieldState={guessFieldState}
+                excludedDexNumbers={excludedDex}
+                label="Palpite"
+                placeholder={
+                  hasLocalDex
+                    ? 'Clica para ver todos os Pokémon ou pesquisa por nome'
+                    : undefined
+                }
+                overlay
+                resultsOpenBelow
+                showResultsOnFocus={hasLocalDex}
+                onOpen={handleSearchOpen}
+                onClose={handleSearchClose}
+              />
+            </div>
+          ) : null}
 
           <div className={styles.clueList}>
             {opponentKnowledge.map((slot) => (
               <OpponentClueCard key={slot.slot} slot={slot} />
             ))}
           </div>
-
         </section>
-
-        {status === 'ACTIVE' ? (
-          <div className={styles.matchGuessBar}>
-            <PokemonSearchField
-              query={query}
-              onQueryChange={handleQueryChange}
-              results={results}
-              selected={null}
-              onSelect={(p) => void submitGuess(p)}
-              fieldState={guessFieldState}
-              excludedDexNumbers={excludedDex}
-              label="Palpite"
-              placeholder={
-                registeredPokedexOnly
-                  ? 'Clica para ver a Pokédex ou pesquisa por nome'
-                  : undefined
-              }
-              overlay
-              showResultsOnFocus={Boolean(registeredPokedexOnly?.length)}
-              onOpen={handleSearchOpen}
-              onClose={handleSearchClose}
-            />
-          </div>
-        ) : null}
 
         <aside className={styles.matchRight} aria-label="Controlo de turnos">
           <h2 className={styles.matchPanelTitle}>Controlo de turnos</h2>
@@ -202,14 +243,19 @@ export function MatchBoard({
             <p
               className={[
                 styles.turnBanner,
-                isYourTurn ? styles.turnBannerActive : styles.turnBannerWait,
-              ].join(' ')}
+                isYourTurn && !turnBannerText ? styles.turnBannerActive : styles.turnBannerWait,
+                turnBannerText ? styles.turnBannerBot : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
             >
-              {guessLoading
-                ? 'A enviar palpite…'
-                : isYourTurn
-                  ? 'A tua vez — escolhe um Pokémon na pesquisa.'
-                  : `À espera de ${opponentName}.`}
+              {turnBannerText
+                ? turnBannerText
+                : guessLoading
+                  ? 'A enviar palpite…'
+                  : isYourTurn
+                    ? 'A tua vez — escolhe um Pokémon na pesquisa.'
+                    : `À espera de ${opponentName}.`}
             </p>
           ) : null}
 
@@ -225,8 +271,15 @@ export function MatchBoard({
                 .join(' ')}
             >
               <div className={styles.matchPlayerAvatar}>
-                {playerAvatarDex != null ? (
-                  <PokemonSprite dex={playerAvatarDex} name={playerName} size={48} />
+                {playerHasCustomAvatar || playerAvatarDex != null ? (
+                  <UserAvatar
+                    userId={playerUserId}
+                    hasCustomAvatar={playerHasCustomAvatar}
+                    favoriteDex={playerAvatarDex}
+                    avatarVersion={playerAvatarVersion}
+                    name={playerName}
+                    size={40}
+                  />
                 ) : (
                   <span className={styles.clueUnknownSprite}>?</span>
                 )}
@@ -247,8 +300,15 @@ export function MatchBoard({
                 .join(' ')}
             >
               <div className={styles.matchPlayerAvatar}>
-                {opponentAvatarDex != null ? (
-                  <PokemonSprite dex={opponentAvatarDex} name={opponentName} size={48} />
+                {opponentHasCustomAvatar || opponentAvatarDex != null ? (
+                  <UserAvatar
+                    userId={opponentUserId}
+                    hasCustomAvatar={opponentHasCustomAvatar}
+                    favoriteDex={opponentAvatarDex}
+                    avatarVersion={opponentAvatarVersion}
+                    name={opponentName}
+                    size={40}
+                  />
                 ) : (
                   <span className={styles.clueUnknownSprite}>?</span>
                 )}
@@ -267,11 +327,7 @@ export function MatchBoard({
               {myTeamSlots.map((dex, index) => (
                 <li key={`${index}-${dex ?? 'empty'}`} className={styles.matchHitCell}>
                   {dex != null && opponentHitSet.has(dex) ? (
-                    <PokemonSprite
-                      dex={dex}
-                      name={`#${dex}`}
-                      size={64}
-                    />
+                    <PokemonSprite dex={dex} name={`#${dex}`} size={56} />
                   ) : (
                     <span className={styles.matchHitUnknown}>???</span>
                   )}

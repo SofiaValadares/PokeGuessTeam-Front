@@ -4,6 +4,11 @@ export type ProfileMeResponse = {
   userId: string;
   favoritePokemonId: string | null;
   favoritePokemonName: string | null;
+  avatarMode?: 'POKEMON' | 'CUSTOM' | string;
+  hasCustomAvatar?: boolean;
+  avatarVersion?: number | null;
+  avatarUrl?: string;
+  registeredPokedexCount?: number | null;
 };
 
 /** GET /api/profile/collection — inventário de esferas + fragmentos (gacha). */

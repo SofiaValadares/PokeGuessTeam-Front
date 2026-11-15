@@ -62,32 +62,61 @@ export type MatchRewardDto = {
   trainingTeamXpGranted: number;
   pokeBallsGranted: number;
   pokeballFragmentsGranted: number;
+  /** Tipo da bola concedida (ex. FRIEND_BALL); omitido se 0 bolas. */
+  pokeballTypeGranted?: string | null;
+};
+
+export type TeamOpening = {
+  team: number[];
+  nonce: string;
 };
 
 export type GameFinishResponse = {
   historyEntry: GameHistoryEntryDto;
   reward: MatchRewardDto;
+  hostCommitment?: string | null;
+  opponentCommitment?: string | null;
+  hostOpening?: TeamOpening | null;
+  opponentOpening?: TeamOpening | null;
 };
 
 export type GameBotFinishRequest = {
+  matchId: string;
+  hostTeam: number[];
   userCorrectGuesses: number;
   opponentCorrectGuesses: number;
   result: GameResult;
 };
 
-export type GameLocalFinishRequest = GameBotFinishRequest & {
+export type GameLocalFinishRequest = {
+  matchId: string;
+  hostTeam: number[];
+  opponentTeam: number[];
+  userCorrectGuesses: number;
+  opponentCorrectGuesses: number;
+  result: GameResult;
   opponentName: string;
 };
 
 export type BotMatchSetupResponse = {
+  matchId: string;
   hostTeam: number[];
-  opponentTeam: number[];
+  hostCommitment: string;
+  opponentCommitment: string;
+  startingPlayer: MatchPlayerSide;
+  currentTurn: MatchPlayerSide;
 };
 
 export type LocalMatchSetupRequest = {
   opponentName: string;
   hostTeam: number[];
   opponentTeam: number[];
+};
+
+export type LocalMatchSetupResponse = {
+  matchId: string;
+  hostCommitment: string;
+  opponentCommitment: string;
 };
 
 export type FriendMatchJoinRequest = {
@@ -100,6 +129,9 @@ export type FriendMatchParticipantDto = {
   username: string;
   teamReady: boolean;
   timeoutPenalties?: number;
+  hasCustomAvatar?: boolean;
+  favoritePokedexNumber?: number | null;
+  avatarVersion?: number | null;
 };
 
 export type FriendMatchStateDto = {
@@ -116,6 +148,11 @@ export type FriendMatchStateDto = {
   opponentHitsOnYourTeam: number[];
   yourCorrectGuesses: number;
   opponentCorrectGuesses: number;
+  yourTeamCommitment?: string | null;
+  opponentTeamCommitment?: string | null;
+  yourTeamNonce?: string | null;
+  opponentTeam?: number[] | null;
+  opponentTeamNonce?: string | null;
   host: FriendMatchParticipantDto;
   guest: FriendMatchParticipantDto | null;
   opponentKnowledge: OpponentKnowledgeSlotDto[];
@@ -128,6 +165,8 @@ export type FriendMatchStateDto = {
   turnDeadlineAt?: string | null;
   yourTimeoutPenalties?: number;
   opponentReplacedByBot?: boolean;
+  eventMode?: boolean;
+  eventPokedexNumbers?: number[];
 };
 
 export type FriendMatchActionResponse = {
@@ -158,6 +197,11 @@ export type GameMetaResponse = {
   fragmentsPerPokeBall: number;
   gameModes: string[];
   gameResults: string[];
+  securityLab?: {
+    enabled: boolean;
+    temporaryDeployNotice: boolean;
+    requiresLabProfile: boolean;
+  };
 };
 
 export type PokeballDrawResponse = {
@@ -166,6 +210,10 @@ export type PokeballDrawResponse = {
   pokemon: PokemonDto;
   newInventoryLine: boolean;
   timesObtainedOnLine: number;
+};
+
+export type PokeballMultiDrawResponse = {
+  draws: PokeballDrawResponse[];
 };
 
 export type TrainingTeamSlotDto = {

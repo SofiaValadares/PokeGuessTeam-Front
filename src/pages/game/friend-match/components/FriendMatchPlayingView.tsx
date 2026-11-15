@@ -3,6 +3,7 @@ import { accountDisplayName } from '../../../../auth/accountDisplay';
 import { useAuth } from '../../../../store/providers/AuthProvider';
 import { FriendMatchBoard } from './FriendMatchBoard';
 import { MatchResultModal } from '../../shared/components/MatchResultModal';
+import { TeamCommitmentStrip } from '../../shared/components/TeamCommitmentStrip';
 import { useMatchFinishRedirect } from '../../../../hooks/useMatchFinishRedirect';
 import { guessedDexNumbersForSide } from '../../../../lib/game/matchGuesses';
 import { gameResultLabel } from '../../../../lib/game/labels';
@@ -16,13 +17,12 @@ import {
   useFriendMatch,
 } from '../providers/FriendMatchProvider';
 import { FriendMatchResumeBanner } from './FriendMatchResumeBanner';
-import { FriendMatchSyncAction } from './FriendMatchSyncAction';
 import styles from './friend-match.module.css';
 import layout from '../../shared/layout/matchLayout.module.css';
 
 export function FriendMatchPlayingView() {
   const { me } = useAuth();
-  const { match, finishReward, guessSending, busy, error, guess, surrender, dismissFinishedMatch } =
+  const { match, finishReward, commitmentVerified, guessSending, busy, error, guess, surrender, dismissFinishedMatch } =
     useFriendMatch();
   const playerName = accountDisplayName(me);
 
@@ -37,10 +37,10 @@ export function FriendMatchPlayingView() {
     FINISH_MODAL_SECONDS,
   );
 
-  const opponentName =
-    match?.yourSide === 'HOST'
-      ? (match.guest?.username ?? 'Amigo')
-      : (match?.host.username ?? 'Amigo');
+  const youParticipant = match?.yourSide === 'HOST' ? match.host : match?.guest;
+  const oppParticipant = match?.yourSide === 'HOST' ? match?.guest : match?.host;
+
+  const opponentName = oppParticipant?.username ?? 'Amigo';
 
   const excludedGuesses = useMemo(
     () => guessedDexNumbersForSide(match?.recentGuesses ?? [], match?.yourSide ?? 'HOST'),
@@ -107,6 +107,16 @@ export function FriendMatchPlayingView() {
         .filter(Boolean)
         .join(' ')}
     >
+      <TeamCommitmentStrip
+        hostCommitment={
+          match.yourSide === 'HOST' ? match.yourTeamCommitment : match.opponentTeamCommitment
+        }
+        opponentCommitment={
+          match.yourSide === 'HOST' ? match.opponentTeamCommitment : match.yourTeamCommitment
+        }
+        verified={commitmentVerified}
+      />
+
       <MatchResultModal
         open={showResultModal}
         lines={finishedLines}
@@ -176,16 +186,14 @@ export function FriendMatchPlayingView() {
             guessLoading={guessSending}
             excludedPokedexNumbers={excludedGuesses}
             playerTheme={opponentTurnActive ? 'waiting' : 'default'}
-            actionsBelowSurrender={
-              !showResultModal ? (
-                <FriendMatchSyncAction
-                  mode="refresh"
-                  className={styles.matchBoardSyncAction}
-                  label={opponentTurnActive ? 'Verificar se é a minha vez' : 'Atualizar partida'}
-                  disabled={!opponentTurnActive}
-                />
-              ) : null
-            }
+            playerUserId={youParticipant?.userId}
+            opponentUserId={oppParticipant?.userId}
+            playerHasCustomAvatar={Boolean(youParticipant?.hasCustomAvatar)}
+            opponentHasCustomAvatar={Boolean(oppParticipant?.hasCustomAvatar)}
+            playerAvatarVersion={youParticipant?.avatarVersion ?? null}
+            opponentAvatarVersion={oppParticipant?.avatarVersion ?? null}
+            playerAvatarDex={youParticipant?.favoritePokedexNumber ?? null}
+            opponentAvatarDex={oppParticipant?.favoritePokedexNumber ?? null}
           />
         </div>
       ) : null}

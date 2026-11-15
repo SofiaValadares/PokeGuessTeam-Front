@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import { getPokemonSpeciesBatch } from '../api/pokemonApi';
+import { useMemo } from 'react';
 import type { PokemonDto } from '../api/types/pokemon';
+import { useNationalCatalog } from './useNationalCatalog';
 
 type SpeciesMetaState = {
   speciesByDex: Map<number, PokemonDto>;
@@ -8,63 +8,32 @@ type SpeciesMetaState = {
   loading: boolean;
 };
 
-const emptyState: SpeciesMetaState = {
-  speciesByDex: new Map(),
-  evolutionLevelByDex: new Map(),
-  loading: false,
+const emptyMaps = {
+  speciesByDex: new Map<number, PokemonDto>(),
+  evolutionLevelByDex: new Map<number, number | null>(),
 };
-
-/** Evita pedidos duplicados quando o Strict Mode remonta com a mesma lista de dex. */
-const batchInflight = new Map<string, Promise<Map<number, PokemonDto>>>();
-
-function loadSpeciesBatch(uniqueKey: string, dexList: number[]): Promise<Map<number, PokemonDto>> {
-  const existing = batchInflight.get(uniqueKey);
-  if (existing) return existing;
-
-  const promise = getPokemonSpeciesBatch(dexList).finally(() => {
-    batchInflight.delete(uniqueKey);
-  });
-  batchInflight.set(uniqueKey, promise);
-  return promise;
-}
 
 export function useSpeciesMeta(dexNumbers: number[]): SpeciesMetaState {
   const uniqueKey = useMemo(() => {
-    const unique = Array.from(new Set(dexNumbers)).filter((n) => n > 0).sort((a, b) => a - b);
-    return unique.join(',');
+    return Array.from(new Set(dexNumbers))
+      .filter((n) => n > 0)
+      .sort((a, b) => a - b)
+      .join(',');
   }, [dexNumbers]);
+  const { catalog, loading: catalogLoading } = useNationalCatalog();
 
-  const [state, setState] = useState<SpeciesMetaState>(emptyState);
-
-  useEffect(() => {
-    const unique = uniqueKey ? uniqueKey.split(',').map((s) => Number(s)) : [];
-    if (unique.length === 0) {
-      setState(emptyState);
-      return;
+  return useMemo(() => {
+    if (!catalog) {
+      return { ...emptyMaps, loading: catalogLoading };
     }
-
-    let cancelled = false;
-    setState((prev) => ({ ...prev, loading: true }));
-
-    void loadSpeciesBatch(uniqueKey, unique)
-      .then((speciesByDex) => {
-        if (cancelled) return;
-        const evolutionLevelByDex = new Map<number, number | null>();
-        for (const dex of unique) {
-          evolutionLevelByDex.set(dex, speciesByDex.get(dex)?.evolutionLevel ?? null);
-        }
-        setState({ speciesByDex, evolutionLevelByDex, loading: false });
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setState({ speciesByDex: new Map(), evolutionLevelByDex: new Map(), loading: false });
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [uniqueKey]);
-
-  return state;
+    const wanted = new Set(uniqueKey ? uniqueKey.split(',').map((s) => Number(s)) : []);
+    const speciesByDex = new Map<number, PokemonDto>();
+    const evolutionLevelByDex = new Map<number, number | null>();
+    for (const dto of catalog.species) {
+      if (!wanted.has(dto.number)) continue;
+      speciesByDex.set(dto.number, dto);
+      evolutionLevelByDex.set(dto.number, dto.evolutionLevel ?? null);
+    }
+    return { speciesByDex, evolutionLevelByDex, loading: false };
+  }, [catalog, catalogLoading, uniqueKey]);
 }

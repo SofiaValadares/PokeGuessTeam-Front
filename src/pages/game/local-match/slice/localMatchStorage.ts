@@ -9,6 +9,9 @@ type PersistedLocalMatch = Pick<
   | 'opponentName'
   | 'player1Team'
   | 'player2Team'
+  | 'hostCommitment'
+  | 'opponentCommitment'
+  | 'commitmentVerified'
   | 'clientState'
   | 'matchView'
   | 'guessLog'
@@ -28,6 +31,9 @@ export function readPersistedLocalMatch(): LocalMatchSliceState | null {
       opponentName: data.opponentName ?? initialLocalMatchState.opponentName,
       player1Team: data.player1Team ?? [],
       player2Team: data.player2Team ?? [],
+      hostCommitment: data.hostCommitment ?? null,
+      opponentCommitment: data.opponentCommitment ?? null,
+      commitmentVerified: data.commitmentVerified ?? null,
       clientState: data.clientState,
       matchView: data.matchView,
       guessLog: data.guessLog ?? [],
@@ -48,6 +54,9 @@ export function writePersistedLocalMatch(state: LocalMatchSliceState): void {
     opponentName: state.opponentName,
     player1Team: state.player1Team,
     player2Team: state.player2Team,
+    hostCommitment: state.hostCommitment,
+    opponentCommitment: state.opponentCommitment,
+    commitmentVerified: state.commitmentVerified,
     clientState: state.clientState,
     matchView: state.matchView,
     guessLog: state.guessLog,

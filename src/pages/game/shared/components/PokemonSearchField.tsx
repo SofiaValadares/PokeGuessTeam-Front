@@ -72,6 +72,7 @@ export function PokemonSearchField({
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
+  const [listMaxHeight, setListMaxHeight] = useState<number | null>(null);
 
   const resolvedState: PokemonSearchFieldState =
     fieldState ?? (loading ? 'loading' : disabled ? 'waiting' : 'active');
@@ -157,6 +158,36 @@ export function PokemonSearchField({
     }
   }, [isActive, open, close]);
 
+  /** Lista preenche o espaço livre até ao limite do ecrã; scroll só se o conteúdo passar. */
+  useEffect(() => {
+    if (!showResults) {
+      setListMaxHeight(null);
+      return;
+    }
+
+    const updateMaxHeight = () => {
+      const el = wrapRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const gutter = 12;
+      const minH = 8 * 16;
+      const space = resultsOpenBelow
+        ? window.innerHeight - rect.bottom - gutter
+        : rect.top - gutter;
+      // Mantém pistas visíveis: no máximo ~55vh, sem ultrapassar o espaço livre.
+      const capped = Math.min(space, Math.floor(window.innerHeight * 0.55));
+      setListMaxHeight(Math.max(minH, Math.floor(capped)));
+    };
+
+    updateMaxHeight();
+    window.addEventListener('resize', updateMaxHeight);
+    window.addEventListener('scroll', updateMaxHeight, true);
+    return () => {
+      window.removeEventListener('resize', updateMaxHeight);
+      window.removeEventListener('scroll', updateMaxHeight, true);
+    };
+  }, [showResults, resultsOpenBelow, results.length]);
+
   const stateClass =
     resolvedState === 'active'
       ? styles.pokemonSearchStateActive
@@ -222,6 +253,7 @@ export function PokemonSearchField({
             .filter(Boolean)
             .join(' ')}
           role="listbox"
+          style={listMaxHeight != null ? { maxHeight: listMaxHeight } : undefined}
         >
           {results.map((p) => {
             const used = isExcluded(p);

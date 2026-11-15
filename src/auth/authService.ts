@@ -13,18 +13,17 @@ import type {
   MessageResponse,
   PasswordResetConfirmRequest,
   RegisterRequest,
-  RegisterResponse,
   SessionResponse,
 } from './types';
 
-export async function register(body: RegisterRequest): Promise<RegisterResponse> {
-  return apiFetchJson<RegisterResponse>('/auth/register', {
+export async function register(body: RegisterRequest): Promise<MessageResponse> {
+  return apiFetchJson<MessageResponse>('/auth/register', {
     method: 'POST',
     body: JSON.stringify(body),
   });
 }
 
-/** Login stateful: define JSESSIONID (HttpOnly). Corpo: { login, password }. */
+/** Login stateful: define JSESSIONID (HttpOnly). Corpo: { email, password }. */
 export async function login(body: LoginRequest): Promise<AuthSessionResponse> {
   return apiFetchJson<AuthSessionResponse>('/auth/login', {
     method: 'POST',

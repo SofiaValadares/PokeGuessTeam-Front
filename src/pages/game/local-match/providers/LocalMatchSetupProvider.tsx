@@ -11,6 +11,7 @@ import {
   setPhase,
   setPlayer1Team,
   setPlayer2Team,
+  setPublishedCommitments,
 } from '../slice/localMatchSlice';
 import { selectLocalMatch } from '../slice/localMatchSelectors';
 import { useLocalMatchPlay } from './LocalMatchPlayProvider';
@@ -63,13 +64,20 @@ export function LocalMatchSetupProvider({ hostName, children }: LocalMatchSetupP
     dispatch(setBusy(true));
     dispatch(setError(null));
     try {
-      await validateLocalSetup({
+      const setup = await validateLocalSetup({
         opponentName: name,
         hostTeam: player1Team,
         opponentTeam: player2Team,
       });
+      dispatch(
+        setPublishedCommitments({
+          hostCommitment: setup.hostCommitment,
+          opponentCommitment: setup.opponentCommitment,
+        }),
+      );
       beginMatch(
         createClientMatch(player1Team, player2Team, {
+          matchId: setup.matchId,
           localOpponentName: name,
           hostDisplayName: hostName,
         }),

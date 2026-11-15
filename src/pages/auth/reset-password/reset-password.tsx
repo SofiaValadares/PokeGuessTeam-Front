@@ -1,6 +1,7 @@
 import { FormEvent, useCallback, useMemo, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { toFriendlyUserMessage } from '../../../api/http';
+import { getPasswordPolicyError, PASSWORD_POLICY_HINT } from '../../../lib/auth/passwordPolicy';
 import { confirmPasswordReset } from '../../../auth/authService';
 import { useAuth } from '../../../auth/AuthContext';
 import { AppHeader, Button, Card, InlineAlert, PageShell, TextField } from '../../../ds';
@@ -26,8 +27,9 @@ export default function ResetPasswordPage() {
 
   const fieldErrors = useMemo(() => {
     const errors: { newPassword?: string; confirmPassword?: string } = {};
-    if (newPassword && newPassword.length < 6) {
-      errors.newPassword = 'A senha deve ter pelo menos 6 caracteres.';
+    if (newPassword) {
+      const policy = getPasswordPolicyError(newPassword);
+      if (policy) errors.newPassword = policy;
     }
     if (confirmPassword && newPassword !== confirmPassword) {
       errors.confirmPassword = 'Passwords do not match.';
@@ -39,7 +41,7 @@ export default function ResetPasswordPage() {
     () =>
       email.trim().includes('@') &&
       /^\d{8}$/.test(code.trim()) &&
-      newPassword.length >= 6 &&
+      getPasswordPolicyError(newPassword) == null &&
       newPassword === confirmPassword,
     [code, confirmPassword, email, newPassword],
   );
@@ -112,7 +114,7 @@ export default function ResetPasswordPage() {
               maxLength={8}
             />
             <TextField
-              label="Nova senha (mín. 6 caracteres)"
+              label={`Nova senha (${PASSWORD_POLICY_HINT})`}
               name="newPassword"
               type="password"
               autoComplete="new-password"

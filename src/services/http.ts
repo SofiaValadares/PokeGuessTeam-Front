@@ -1,3 +1,4 @@
+import { notifyAuthFailure } from '../auth/sessionGuard';
 import { getApiBaseUrl } from './apiConfig';
 
 /**
@@ -129,7 +130,11 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
   if (!headers.has('Accept-Language')) {
     headers.set('Accept-Language', 'pt-BR');
   }
-  if (init.body != null && !headers.has('Content-Type')) {
+  if (
+    init.body != null &&
+    !(init.body instanceof FormData) &&
+    !headers.has('Content-Type')
+  ) {
     headers.set('Content-Type', 'application/json');
   }
 
@@ -149,6 +154,7 @@ export async function apiFetchJson<T>(path: string, init: RequestInit = {}): Pro
   const res = await apiFetch(path, init);
   if (!res.ok) {
     const body = await parseErrorBody(res);
+    notifyAuthFailure(path, res.status, body?.code, body?.message);
     const raw = errorMessageFromBody(body, res.statusText || `HTTP ${res.status}`);
     const msg = friendlyApiMessage(raw, res.status);
     throw new ApiError(res.status, msg, body);

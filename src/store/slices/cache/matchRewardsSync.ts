@@ -1,18 +1,27 @@
-import { fetchProfileCollection, fetchTrainingTeam } from '../../../services/profileService';
-import { mapPokeballInventory, mapTrainingTeam } from '../../../model';
+import type { MatchRewardDto } from '../../../services/types/game';
 import type { AppDispatch } from '../../store';
-import { applyPostMatchSync } from './cacheSlice';
+import { applyMatchRewards } from './cacheSlice';
 
-/** Refreshes training team XP and Poké Ball inventory after a match finish. */
-export async function syncMatchRewardsToCache(dispatch: AppDispatch): Promise<void> {
-  const [teamDto, collection] = await Promise.all([
-    fetchTrainingTeam(),
-    fetchProfileCollection(),
-  ]);
-  dispatch(
-    applyPostMatchSync({
-      trainingTeam: mapTrainingTeam(teamDto),
-      inventory: mapPokeballInventory(collection.pokeballs),
-    }),
-  );
+/** Aplica XP/bolas/fragmentos da partida no cache local. Sem GET extra. */
+export function applyMatchRewardsToCache(
+  dispatch: AppDispatch,
+  reward?: MatchRewardDto | null,
+): void {
+  if (!reward) return;
+  if (
+    reward.trainingTeamXpGranted <= 0 &&
+    reward.pokeBallsGranted <= 0 &&
+    reward.pokeballFragmentsGranted <= 0
+  ) {
+    return;
+  }
+  dispatch(applyMatchRewards(reward));
+}
+
+/** @deprecated usar {@link applyMatchRewardsToCache} com o DTO da partida. */
+export function syncMatchRewardsToCache(
+  dispatch: AppDispatch,
+  reward?: MatchRewardDto | null,
+): void {
+  applyMatchRewardsToCache(dispatch, reward);
 }

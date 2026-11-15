@@ -4,44 +4,93 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
 } from 'react';
-import { RIVAL } from '../../../../lib/game/characters';
-import { finishBotMatch } from '../../../../api/gameApi';
-import { ApiError } from '../../../../services/http';
-import { useCacheActions } from '../../../../store/providers/CacheProvider';
-import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
-import { useRegisteredPokedexPokemon } from '../../../../hooks/useRegisteredPokedexPokemon';
-import { chooseBotGuess } from '../../../../lib/game/botAi';
-import { resolveUserResult, type ClientMatchState } from '../../../../lib/game/clientMatchTypes';
-import { toBotMatchView } from '../../../../lib/game/clientMatchView';
-import {
-  dexMapHasAll,
-  mergeDexRecords,
-  resolveMatchDexMap,
-  resolvePokemonForMatch,
-} from '../../../../lib/game/matchPokemonResolve';
-import { BOT_GUESS_DELAY_MS } from '../../../../lib/game/constants';
-import { applyGuess, applySurrender, isGuessAlreadyUsed } from '../../../../lib/game/matchEngine';
-import { mapGameHistoryEntry, type GameHistoryEntry, type Pokemon } from '../../../../model';
-import type { PokemonDto } from '../../../../api/types/pokemon';
+import { finishBotMatch, submitBotGuess } from '../../../../api/gameApi';
+import { verifyOpenedCommitments } from '../../../../lib/game/teamCommitment';
 import {
   appendGuessLog,
   clearGuessLog,
+  prepareNewBotMatch,
   setActiveBotGuess,
+  setActiveHostHit,
   setBotBusy,
   setBusy,
   setClientState,
+  setCommitmentVerified,
   setError,
   setMatchView,
   setPhase,
 } from '../slice/botMatchSlice';
+import { clearPersistedBotMatch } from '../slice/botMatchStorage';
+import { ApiError } from '../../../../services/http';
+import { useCacheActions } from '../../../../store/providers/CacheProvider';
+import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
+import { useRegisteredPokedexPokemon } from '../../../../hooks/useRegisteredPokedexPokemon';
+import { resolveUserResult, type ClientMatchState } from '../../../../lib/game/clientMatchTypes';
+import { toBotMatchView } from '../../../../lib/game/clientMatchView';
+import type {
+  BotMatchGuessFeedbackDto,
+  FriendMatchStateDto,
+  OpponentKnowledgeSlotDto,
+} from '../../../../services/types/game';
+import {
+  dexMapHasAll,
+  mergeDexRecords,
+  resolveMatchDexMap,
+} from '../../../../lib/game/matchPokemonResolve';
+import {
+  BOT_GUESS_DELAY_MS,
+  BOT_THINK_DELAY_MS,
+  HOST_HIT_DELAY_MS,
+} from '../../../../lib/game/constants';
+import { applySurrender, isGuessAlreadyUsed } from '../../../../lib/game/matchEngine';
+import { mapGameHistoryEntry, type GameHistoryEntry, type Pokemon } from '../../../../model';
 import { mergePokemonDex } from '../../shared/slice/matchDexSlice';
 import { selectMatchDex } from '../../shared/slice/matchDexSelectors';
 import { selectBotMatch } from '../slice/botMatchSelectors';
 import { recordToMap } from '../../../../lib/game/pokemonDexMaps';
 
-const BOT_TURN_DISPLAY_MS = BOT_GUESS_DELAY_MS;
+function wait(ms: number) {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+function clientStateFromFriendMatch(
+  match: FriendMatchStateDto,
+  prev: ClientMatchState | null,
+): ClientMatchState {
+  return {
+    matchId: match.matchId,
+    status: match.status,
+    currentTurn: match.currentTurn,
+    startingPlayer: match.startingPlayer,
+    finalResponseFor: match.finalResponseFor,
+    lastCompletingPlayer: prev?.lastCompletingPlayer ?? null,
+    hostTeam: match.yourTeam,
+    opponentTeam: match.opponentTeam ?? prev?.opponentTeam ?? [],
+    hostHits: [...match.yourHits],
+    opponentHits: [...match.opponentHitsOnYourTeam],
+    hostSkipTurns: prev?.hostSkipTurns ?? 0,
+    opponentSkipTurns: prev?.opponentSkipTurns ?? 0,
+    guesses: (match.recentGuesses ?? []).map((g) => ({
+      id: g.id,
+      playerSide: g.playerSide,
+      guessedPokedexNumber: g.guessedPokedexNumber,
+      guessedPokemonName: g.guessedPokemonName,
+      exactMatch: g.exactMatch,
+      matchedPokedexNumbers: g.matchedPokedexNumbers ?? [],
+      outcome: g.outcome ?? 'SWITCH_TURN',
+      message: g.message ?? '',
+      createdAt: g.createdAt,
+    })),
+    winner: match.winner,
+    startedAt: match.startedAt,
+    finishedAt: match.finishedAt,
+    hostDisplayName: prev?.hostDisplayName,
+    opponentTeamHidden: match.opponentTeam == null,
+  };
+}
 
 export type BotMatchPlayContextValue = {
   hostName: string;
@@ -49,12 +98,14 @@ export type BotMatchPlayContextValue = {
   clientState: ClientMatchState | null;
   guessLog: ReturnType<typeof selectBotMatch>['guessLog'];
   activeBotGuess: ReturnType<typeof selectBotMatch>['activeBotGuess'];
+  activeHostHit: ReturnType<typeof selectBotMatch>['activeHostHit'];
   botBusy: boolean;
   busy: boolean;
   error: string | null;
-  registeredPokemon: PokemonDto[];
+  registeredPokemon: ReturnType<typeof useRegisteredPokedexPokemon>['availablePokemon'];
   guess: (dex: number) => Promise<void>;
   surrender: () => Promise<void>;
+  retryFinish: () => Promise<void>;
   beginMatch: (state: ClientMatchState) => void;
 };
 
@@ -77,20 +128,28 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
     [registeredPokemon],
   );
 
-  const botRunningRef = useRef(false);
-  const runBotTurnsRef = useRef<(state: ClientMatchState) => Promise<void>>(async () => {});
-
   const syncView = useCallback(
     (
       state: ClientMatchState,
       historyEntry: GameHistoryEntry | null = null,
       dexMap?: Map<number, Pokemon>,
+      opponentKnowledge?: OpponentKnowledgeSlotDto[] | null,
     ) => {
       const map = dexMap ?? recordToMap(pokemonByDex);
       if (map.size === 0) return;
-      dispatch(setMatchView(toBotMatchView(state, map, historyEntry)));
+      const previousKnowledge = botMatch.matchView?.opponentKnowledge ?? null;
+      dispatch(
+        setMatchView(
+          toBotMatchView(
+            state,
+            map,
+            historyEntry,
+            opponentKnowledge ?? previousKnowledge,
+          ),
+        ),
+      );
     },
-    [pokemonByDex, dispatch],
+    [pokemonByDex, dispatch, botMatch.matchView?.opponentKnowledge],
   );
 
   const applyDexForView = useCallback(
@@ -109,94 +168,60 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
     async (state: ClientMatchState, surrendered: boolean) => {
       const result = resolveUserResult(state, surrendered);
       const response = await finishBotMatch({
+        matchId: state.matchId,
+        hostTeam: state.hostTeam,
         userCorrectGuesses: state.hostHits.length,
         opponentCorrectGuesses: state.opponentHits.length,
         result,
       });
+      const revealedOpponent = response.opponentOpening?.team ?? state.opponentTeam;
+      const revealedState: ClientMatchState = {
+        ...state,
+        opponentTeam: revealedOpponent,
+        opponentTeamHidden: false,
+      };
+      const verified = await verifyOpenedCommitments({
+        hostTeam: response.hostOpening?.team ?? state.hostTeam,
+        opponentTeam: response.opponentOpening?.team ?? revealedOpponent,
+        hostNonce: response.hostOpening?.nonce,
+        opponentNonce: response.opponentOpening?.nonce,
+        hostCommitment: botMatch.hostCommitment ?? response.hostCommitment,
+        opponentCommitment: botMatch.opponentCommitment ?? response.opponentCommitment,
+      });
+      dispatch(setCommitmentVerified(verified));
       const entry = mapGameHistoryEntry(response.historyEntry);
       applyMatchHistory(entry);
-      await syncMatchRewards();
-      dispatch(setClientState(state));
-      await applyDexForView(state, entry);
+      syncMatchRewards(response.reward);
+      dispatch(setClientState(revealedState));
+      await applyDexForView(revealedState, entry);
     },
-    [applyMatchHistory, applyDexForView, dispatch, syncMatchRewards],
+    [applyMatchHistory, applyDexForView, botMatch.hostCommitment, botMatch.opponentCommitment, dispatch, syncMatchRewards],
   );
 
-  const pickBotGuess = useCallback(
-    (state: ClientMatchState) => {
-      const dexMap = recordToMap(pokemonByDex);
-      const pool = registeredPokemon;
-      if (pool.length === 0 || dexMap.size === 0) return null;
-
-      const chosen = chooseBotGuess(pool, state, 'OPPONENT', dexMap);
-      if (chosen) return chosen;
-
-      const used = new Set(
-        state.guesses
-          .filter((g) => g.playerSide === 'OPPONENT')
-          .map((g) => g.guessedPokedexNumber),
-      );
-      const remaining = pool.filter((p) => !used.has(p.number));
-      if (remaining.length === 0) return null;
-      return remaining[Math.floor(Math.random() * remaining.length)] ?? null;
-    },
-    [pokemonByDex, registeredPokemon],
-  );
-
-  const runBotTurns = useCallback(
-    async (initial: ClientMatchState) => {
-      if (Object.keys(pokemonByDex).length === 0 || botRunningRef.current) return;
-      botRunningRef.current = true;
+  const animateBotFeedbacks = useCallback(
+    async (feedbacks: BotMatchGuessFeedbackDto[]) => {
+      const botTurns = feedbacks.filter((f) => f.playerSide === 'OPPONENT');
+      if (botTurns.length === 0) return;
       dispatch(setBotBusy(true));
-
-      let state = initial;
       try {
-        while (state.status === 'ACTIVE' && state.currentTurn === 'OPPONENT') {
-          const botGuess = pickBotGuess(state);
-          if (!botGuess) {
-            dispatch(setError(`${RIVAL.shortName} could not pick a guess.`));
-            break;
-          }
-
-          const { feedback, state: next } = applyGuess(state, 'OPPONENT', botGuess);
-          state = next;
-          dispatch(setClientState(next));
-          await applyDexForView(next);
-          dispatch(appendGuessLog([feedback]));
+        // “A pensar…” antes do primeiro chute — a vez do bot não pode parecer instantânea.
+        await wait(BOT_THINK_DELAY_MS);
+        for (let i = 0; i < botTurns.length; i += 1) {
+          const feedback = botTurns[i]!;
           dispatch(setActiveBotGuess(feedback));
-
-          await new Promise((resolve) => window.setTimeout(resolve, BOT_TURN_DISPLAY_MS));
+          dispatch(appendGuessLog([feedback]));
+          await wait(BOT_GUESS_DELAY_MS);
           dispatch(setActiveBotGuess(null));
-
-          if (next.status === 'FINISHED') {
-            await finishOnServer(next, false);
-            break;
-          }
-          if (feedback.outcome === 'SWITCH_TURN' || next.currentTurn !== 'OPPONENT') {
-            break;
+          if (i < botTurns.length - 1) {
+            await wait(450);
           }
         }
       } finally {
-        botRunningRef.current = false;
         dispatch(setBotBusy(false));
       }
     },
-    [applyDexForView, pokemonByDex, dispatch, finishOnServer, pickBotGuess],
+    [dispatch],
   );
-
-  runBotTurnsRef.current = runBotTurns;
-
-  useEffect(() => {
-    if (botMatch.phase !== 'playing' || Object.keys(pokemonByDex).length === 0) return;
-    const state = botMatch.clientState;
-    if (!state || state.status !== 'ACTIVE' || state.currentTurn !== 'OPPONENT') return;
-    if (botRunningRef.current) return;
-    void runBotTurnsRef.current(state);
-  }, [
-    botMatch.phase,
-    pokemonByDex,
-    botMatch.clientState,
-  ]);
 
   const beginMatch = useCallback(
     (state: ClientMatchState) => {
@@ -233,33 +258,119 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
       if (!clientState || Object.keys(pokemonByDex).length === 0 || botBusy || clientState.currentTurn !== 'HOST') {
         return;
       }
-      if (isGuessAlreadyUsed(clientState, 'HOST', dex)) return;
-      if (!registeredDex.has(dex)) return;
+      if (isGuessAlreadyUsed(clientState, 'HOST', dex)) {
+        dispatch(setError('Já usaste este Pokémon nesta partida.'));
+        return;
+      }
+      if (!registeredDex.has(dex)) {
+        dispatch(setError('Só podes palpitar espécies registadas na tua Pokédex.'));
+        return;
+      }
 
       dispatch(setBusy(true));
       dispatch(setError(null));
       try {
-        let dexMap = await resolveMatchDexMap(pokemonByDex, clientState);
-        const pokemon = await resolvePokemonForMatch(dex, dexMap, (next) => {
-          dexMap = next;
-        });
-        const { feedback, state } = applyGuess(clientState, 'HOST', pokemon);
-        dexMap = await resolveMatchDexMap(mergeDexRecords(pokemonByDex, dexMap), state);
+        const res = await submitBotGuess(clientState.matchId, dex);
+        const next = clientStateFromFriendMatch(res.match, clientState);
+        const dexMap = await resolveMatchDexMap(pokemonByDex, next);
         dispatch(mergePokemonDex(mergeDexRecords(pokemonByDex, dexMap)));
-        dispatch(setClientState(state));
-        syncView(state, null, dexMap);
-        dispatch(appendGuessLog([feedback]));
 
-        if (state.status === 'FINISHED') {
-          await finishOnServer(state, false);
+        const feedbacks = res.turnFeedbacks ?? [];
+        const hostFeedbacks = feedbacks.filter((f) => f.playerSide === 'HOST');
+        const botFeedbacks = feedbacks.filter((f) => f.playerSide === 'OPPONENT');
+
+        if (hostFeedbacks.length) {
+          dispatch(appendGuessLog(hostFeedbacks));
+        }
+
+        const hostHit = hostFeedbacks.find((f) => f.exactMatch) ?? null;
+        if (hostHit) {
+          // Mostra o acerto + pistas atualizadas antes da vez do bot (ou do próximo chute).
+          dispatch(setClientState({ ...clientState, hostHits: next.hostHits, guesses: next.guesses }));
+          syncView(
+            { ...clientState, hostHits: next.hostHits, guesses: next.guesses },
+            null,
+            dexMap,
+            res.match.opponentKnowledge,
+          );
+          dispatch(setActiveHostHit(hostHit));
+          await wait(HOST_HIT_DELAY_MS);
+          dispatch(setActiveHostHit(null));
+        }
+
+        // Congela o tabuleiro na “vez do bot” ANTES de aplicar o estado final do servidor.
+        if (botFeedbacks.length > 0) {
+          const waitingState: ClientMatchState = {
+            ...clientState,
+            currentTurn: 'OPPONENT',
+            hostHits: next.hostHits,
+            finalResponseFor: next.finalResponseFor,
+            guesses: [
+              ...clientState.guesses,
+              ...hostFeedbacks.map((g) => ({
+                id: g.id,
+                playerSide: g.playerSide,
+                guessedPokedexNumber: g.guessedPokedexNumber,
+                guessedPokemonName: g.guessedPokemonName,
+                exactMatch: g.exactMatch,
+                matchedPokedexNumbers: g.matchedPokedexNumbers ?? [],
+                outcome: g.outcome ?? 'SWITCH_TURN',
+                message: g.message ?? '',
+                createdAt: typeof g.createdAt === 'string' ? g.createdAt : String(g.createdAt ?? ''),
+              })),
+            ],
+          };
+          dispatch(setClientState(waitingState));
+          syncView(waitingState, null, dexMap, res.match.opponentKnowledge);
+          await animateBotFeedbacks(feedbacks);
+        }
+
+        dispatch(setClientState(next));
+        syncView(next, null, dexMap, res.match.opponentKnowledge);
+        if (botFeedbacks.length === 0 && feedbacks.length && !hostFeedbacks.length) {
+          dispatch(appendGuessLog(feedbacks));
+        }
+
+        if (next.status === 'FINISHED') {
+          try {
+            await finishOnServer(next, false);
+          } catch (finishErr) {
+            dispatch(
+              setError(
+                finishErr instanceof Error
+                  ? finishErr.message
+                  : 'Partida terminada, mas falhou a gravar o resultado. Tenta de novo.',
+              ),
+            );
+          }
         }
       } catch (e) {
-        dispatch(setError(e instanceof Error ? e.message : 'Palpite inválido.'));
+        const code = e instanceof ApiError ? e.body?.code : null;
+        if (
+          e instanceof ApiError &&
+          (e.status === 404 ||
+            code === 'GAME_MATCH_NOT_FOUND' ||
+            code === 'GAME_MATCH_NOT_ACTIVE')
+        ) {
+          clearPersistedBotMatch();
+          dispatch(prepareNewBotMatch());
+          dispatch(setError('Essa partida já não existe. Escolhe a equipa e começa outra.'));
+        } else {
+          dispatch(setError(e instanceof Error ? e.message : 'Palpite inválido.'));
+        }
       } finally {
         dispatch(setBusy(false));
       }
     },
-    [botMatch, dispatch, finishOnServer, pokemonByDex, registeredDex, syncView],
+    [
+      animateBotFeedbacks,
+      botMatch,
+      dispatch,
+      finishOnServer,
+      pokemonByDex,
+      registeredDex,
+      syncView,
+    ],
   );
 
   const surrender = useCallback(async () => {
@@ -270,11 +381,40 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
       dispatch(setClientState(state));
       await finishOnServer(state, true);
     } catch (e) {
-      dispatch(setError(e instanceof ApiError ? e.message : 'Não foi possível desistir.'));
+      const code = e instanceof ApiError ? e.body?.code : null;
+      if (
+        e instanceof ApiError &&
+        (e.status === 404 ||
+          code === 'GAME_MATCH_NOT_FOUND' ||
+          code === 'GAME_MATCH_NOT_ACTIVE' ||
+          code === 'GAME_MATCH_INVALID_PHASE')
+      ) {
+        clearPersistedBotMatch();
+        dispatch(prepareNewBotMatch());
+        dispatch(setError('Partida inválida no servidor. Podes começar outra.'));
+      } else {
+        dispatch(setError(e instanceof ApiError ? e.message : 'Não foi possível desistir.'));
+      }
     } finally {
       dispatch(setBusy(false));
     }
   }, [botMatch.clientState, dispatch, finishOnServer]);
+
+  const retryFinish = useCallback(async () => {
+    if (!botMatch.clientState || botMatch.clientState.status !== 'FINISHED') return;
+    if (botMatch.matchView?.historyEntry) return;
+    dispatch(setBusy(true));
+    dispatch(setError(null));
+    try {
+      await finishOnServer(botMatch.clientState, false);
+    } catch (e) {
+      dispatch(
+        setError(e instanceof Error ? e.message : 'Não foi possível gravar o resultado.'),
+      );
+    } finally {
+      dispatch(setBusy(false));
+    }
+  }, [botMatch.clientState, botMatch.matchView?.historyEntry, dispatch, finishOnServer]);
 
   const value = useMemo(
     () => ({
@@ -283,15 +423,17 @@ export function BotMatchPlayProvider({ hostName, children }: BotMatchPlayProvide
       clientState: botMatch.clientState,
       guessLog: botMatch.guessLog,
       activeBotGuess: botMatch.activeBotGuess,
+      activeHostHit: botMatch.activeHostHit,
       botBusy: botMatch.botBusy,
       busy: botMatch.busy,
       error: botMatch.error,
       registeredPokemon,
       guess,
       surrender,
+      retryFinish,
       beginMatch,
     }),
-    [hostName, botMatch, registeredPokemon, guess, surrender, beginMatch],
+    [hostName, botMatch, registeredPokemon, guess, surrender, retryFinish, beginMatch],
   );
 
   return <BotMatchPlayContext.Provider value={value}>{children}</BotMatchPlayContext.Provider>;

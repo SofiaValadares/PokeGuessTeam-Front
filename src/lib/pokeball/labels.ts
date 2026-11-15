@@ -10,6 +10,8 @@ export function pokeballLabel(type: string): string {
       return 'Ultra Ball';
     case 'MASTER_BALL':
       return 'Master Ball';
+    case 'FRIEND_BALL':
+      return 'Friend Ball';
     default:
       return type.replace(/_/g, ' ');
   }

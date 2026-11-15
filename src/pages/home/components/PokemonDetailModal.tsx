@@ -5,6 +5,8 @@ import { getGameMeta } from '../../../api/metaApi';
 import { PokemonSprite } from '../../../components/PokemonSprite';
 import { Button } from '../../../ds';
 import { pokeballLabel } from '../../../lib/pokeball/labels';
+import { mapPcLine } from '../../../model';
+import { useCacheActions } from '../../../store/providers/CacheProvider';
 import styles from '../home.module.css';
 
 type PokemonDetailModalProps = {
@@ -47,6 +49,7 @@ export function PokemonDetailModal({
   onClose,
   onLineUpdated,
 }: PokemonDetailModalProps) {
+  const { applyRewards } = useCacheActions();
   const [line, setLine] = useState<PcLineDto | null>(lineProp);
   const [milestones, setMilestones] = useState<Milestones | null>(null);
   const [rewardsOpen, setRewardsOpen] = useState(false);
@@ -103,6 +106,7 @@ export function PokemonDetailModal({
     try {
       const result = await claimEvolutionRewards(line.evolutionLineKey);
       setLine(result.line);
+      applyRewards(mapPcLine(result.line), result.grantedPokeballs ?? {});
       onLineUpdated?.(result.line);
       const granted = formatRewardMap(result.grantedPokeballs);
       setClaimMessage(granted ? `Resgataste: ${granted}.` : 'Recompensa resgatada.');

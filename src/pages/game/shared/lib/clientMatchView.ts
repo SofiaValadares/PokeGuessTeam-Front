@@ -1,5 +1,6 @@
 import type { BotMatchView, LocalMatchView, MatchPlayerSide } from '../../../../model';
 import type { Pokemon } from '../../../../model';
+import type { OpponentKnowledgeSlotDto } from '../../../../services/types/game';
 import type { ClientMatchState } from './clientMatchTypes';
 import { buildTeamKnowledge } from './opponentKnowledge';
 import { hostCorrectGuesses, opponentCorrectGuesses } from './matchEngine';
@@ -8,6 +9,7 @@ export function toBotMatchView(
   state: ClientMatchState,
   pokemonByDex: Map<number, Pokemon>,
   historyEntry: BotMatchView['historyEntry'] = null,
+  opponentKnowledge?: OpponentKnowledgeSlotDto[] | null,
 ): BotMatchView {
   return {
     matchId: state.matchId,
@@ -21,7 +23,8 @@ export function toBotMatchView(
     opponentHits: state.opponentHits,
     hostCorrectGuesses: hostCorrectGuesses(state),
     opponentCorrectGuesses: opponentCorrectGuesses(state),
-    opponentKnowledge: buildTeamKnowledge(state, 'HOST', pokemonByDex),
+    opponentKnowledge:
+      opponentKnowledge ?? buildTeamKnowledge(state, 'HOST', pokemonByDex),
     recentGuesses: state.guesses.map((g) => ({ ...g })),
     winner: state.winner,
     startedAt: state.startedAt,
@@ -61,20 +64,26 @@ export function toLocalMatchView(
   };
 }
 
-export async function loadMatchPokemonDex(maxDex = 151): Promise<Map<number, Pokemon>> {
-  const { getPokemonMapFromCache } = await import('../../../../store/slices/cache/queries');
-  const sessionMap = getPokemonMapFromCache();
-  if (sessionMap.size > 0) {
-    if (maxDex >= sessionMap.size) return sessionMap;
-    const trimmed = new Map<number, Pokemon>();
-    for (let dex = 1; dex <= maxDex; dex += 1) {
-      const pokemon = sessionMap.get(dex);
-      if (pokemon) trimmed.set(dex, pokemon);
-    }
-    return trimmed;
+export function dexMapFromPokemonList(pool: Pokemon[]): Map<number, Pokemon> {
+  const map = new Map<number, Pokemon>();
+  for (const pokemon of pool) {
+    map.set(pokemon.number, pokemon);
+  }
+  return map;
+}
+
+/** Catálogo local; só vai à rede se ainda não houver Pokédex em cache. */
+export async function loadMatchPokemonDex(): Promise<Map<number, Pokemon>> {
+  const { getPokemonMapFromCache, getPokedexAll } = await import('../../../../store/slices/cache/queries');
+  const cached = getPokemonMapFromCache();
+  if (cached.size > 0) {
+    return cached;
   }
 
-  const { getPokemonSpeciesBatch } = await import('../../../../api/pokemonApi');
-  const numbers = Array.from({ length: maxDex }, (_, i) => i + 1);
-  return getPokemonSpeciesBatch(numbers);
+  await getPokedexAll();
+  const afterCatalog = getPokemonMapFromCache();
+  if (afterCatalog.size > 0) {
+    return afterCatalog;
+  }
+  return new Map();
 }

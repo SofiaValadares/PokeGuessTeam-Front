@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { AuthPageLayout } from '../../../components/auth/AuthPageLayout';
 import { Button, InlineAlert, TextField } from '../../../ds';
 import { FetchStatus } from '../../../types/fetchStatus';
+import { PASSWORD_POLICY_HINT } from '../../../lib/auth/passwordPolicy';
 import { useRegisterForm } from './hooks';
 
 export default function RegisterPage() {
@@ -58,7 +59,7 @@ export default function RegisterPage() {
           error={emailFieldError}
         />
         <TextField
-          label="Senha (mín. 6 caracteres)"
+          label={`Senha (${PASSWORD_POLICY_HINT})`}
           name="password"
           type="password"
           autoComplete="new-password"
