@@ -22,6 +22,8 @@ export type StegoEmbedResponse = {
 
 export type BruteForceResponse = {
   keySpaceBits: number;
+  ciphertextBase64: string;
+  nonceBase64: string;
   attempted: number;
   found: boolean;
   elapsedMs: number;
@@ -39,6 +41,7 @@ export type BruteForceResponse = {
 export type DifferentialResponse = {
   originalCipherBase64: string;
   flippedCipherBase64: string;
+  nonceBase64: string;
   flippedBitPositions: number[];
   flippedBitCount: number;
   changedBits: number;
@@ -54,6 +57,7 @@ export type DifferentialSamplesResponse = {
 export type StatisticalResponse = {
   sampleCount: number;
   sampleBytes: number;
+  ciphertexts: { ciphertextBase64: string; nonceBase64: string }[];
   topFrequencies: Record<string, number>;
   chiSquare: number;
   uniformExpected: number;

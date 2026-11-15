@@ -46,6 +46,12 @@ type AttackRun<T> = {
   run: number;
   result: T;
   requestMs: number;
+  context: AttackRunContext;
+};
+
+type AttackRunContext = {
+  plaintext: string;
+  parameters: Record<string, string | number | boolean | null>;
 };
 
 type AttackTestTab = 'brute' | 'differential' | 'statistical';
@@ -108,6 +114,54 @@ function formatPValue(value: number): string {
   if (!Number.isFinite(value)) return 'indeterminado';
   if (value === 0) return '< 1e-300';
   return value < 0.001 ? value.toExponential(2) : value.toFixed(4);
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  for (let index = 0; index < bytes.length; index += 1) {
+    binary += String.fromCharCode(bytes[index]);
+  }
+  return window.btoa(binary);
+}
+
+function encodePlaintext(plaintext: string) {
+  const bytes = new TextEncoder().encode(plaintext);
+  return {
+    encoding: 'UTF-8',
+    base64: bytesToBase64(bytes),
+    hex: Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join(''),
+  };
+}
+
+function flipPlaintextBits(plaintext: string, bitPositions: number[]) {
+  const bytes = new TextEncoder().encode(plaintext);
+  for (const position of bitPositions) {
+    const zeroBasedPosition = position - 1;
+    const byteIndex = Math.floor(zeroBasedPosition / 8);
+    if (byteIndex < 0 || byteIndex >= bytes.length) continue;
+    bytes[byteIndex] ^= 1 << (7 - (zeroBasedPosition % 8));
+  }
+  return {
+    decodedText: new TextDecoder().decode(bytes),
+    bytesBase64: bytesToBase64(bytes),
+    bytesHex: Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join(''),
+  };
+}
+
+function downloadJson(filename: string, data: unknown) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+}
+
+function exportTimestamp(): string {
+  return new Date().toISOString().replace(/[:.]/g, '-');
 }
 
 const TEST_OBJECTIVES: Objective[] = [
@@ -324,6 +378,7 @@ export default function AdminSecurityLabPage() {
       resultTab: AttackTestTab,
       runCountValue: string,
       setRows: Dispatch<SetStateAction<AttackRun<T>[]>>,
+      context: AttackRunContext,
       action: (runDurationMs?: number) => Promise<T>,
       perRunDurationMs?: number,
       stopAfter?: {
@@ -365,6 +420,7 @@ export default function AdminSecurityLabPage() {
               run: index,
               result,
               requestMs: performance.now() - startedAt,
+              context,
             });
             setRows([...completed]);
             setAttackProgress({
@@ -831,6 +887,14 @@ export default function AdminSecurityLabPage() {
                     'brute',
                     requestedRuns,
                     setBruteRuns,
+                    {
+                      plaintext: attackPlain,
+                      parameters: {
+                        searchableBits: requestedBits,
+                        requestedExecutions: Number(requestedRuns),
+                        maxSearchDurationMs: requestedBits > 16 ? MAX_BRUTE_RUN_DURATION_MS : null,
+                      },
+                    },
                     async (runDurationMs) => {
                       const result = await labBruteForce(attackPlain, requestedBits, runDurationMs);
                       if (result.keySpaceBits !== requestedBits) {
@@ -872,6 +936,46 @@ export default function AdminSecurityLabPage() {
                       {((bruteFoundCount / bruteRuns.length) * 100).toFixed(0)}%)
                     </p>
                   </div>
+                </div>
+                <div className={styles.actions}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      if (bruteRuns.some(({ result }) => !result.ciphertextBase64)) {
+                        setError('Atualize ou reinicie o backend para incluir o ciphertext alvo no arquivo.');
+                        return;
+                      }
+                      downloadJson(`lab-forca-bruta-${exportTimestamp()}.json`, {
+                        format: 'PokeTeamGuess Security Lab run data',
+                        version: 1,
+                        test: 'brute-force',
+                        exportedAt: new Date().toISOString(),
+                        summary: {
+                          averageAttempts: bruteAverageAttempts,
+                          averageElapsedMs: bruteAverageTime,
+                          seedsFound: bruteFoundCount,
+                          completedExecutions: bruteRuns.length,
+                          requestedExecutions: bruteRequestedRunCount,
+                        },
+                        executions: bruteRuns.map(({ run: runNumber, result, requestMs, context }) => ({
+                          execution: runNumber,
+                          plaintext: context.plaintext,
+                          plaintextBytes: encodePlaintext(context.plaintext),
+                          parameters: context.parameters,
+                          targetCiphertext: {
+                            encoding: 'Base64',
+                            value: result.ciphertextBase64,
+                          },
+                          nonceBase64: result.nonceBase64,
+                          requestElapsedMs: requestMs,
+                          result,
+                        })),
+                      });
+                    }}
+                  >
+                    Baixar dados (.json)
+                  </Button>
                 </div>
                 {shouldShowBruteBatchForecast ? (
                   <div className={styles.attackForecast}>
@@ -1097,6 +1201,25 @@ export default function AdminSecurityLabPage() {
                     'differential',
                     requestedRuns,
                     setDiffRuns,
+                    {
+                      plaintext: differentialPlaintext,
+                      parameters: {
+                        mode: diffMode,
+                        samplesPerRound: Number(
+                          normalizeIntegerInput(diffSamplesPerRound, 1, maxDiffSamplesPerRound, 1),
+                        ),
+                        simultaneousBitsPerComparison: Number(
+                          normalizeIntegerInput(
+                            diffSimultaneousBitCount,
+                            2,
+                            maxDiffSamplesPerRound,
+                            2,
+                          ),
+                        ),
+                        generalRounds: Number(requestedRuns),
+                        seedSupplied: Boolean(seed),
+                      },
+                    },
                     async (): Promise<DifferentialAttackResult> => {
                       if (diffMode === 'individual') {
                         const requestedSamples = normalizeIntegerInput(
@@ -1157,6 +1280,61 @@ export default function AdminSecurityLabPage() {
                       </p>
                     )}
                   </div>
+                </div>
+                <div className={styles.actions}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      downloadJson(`lab-diferencial-avalanche-${exportTimestamp()}.json`, {
+                        format: 'PokeTeamGuess Security Lab run data',
+                        version: 1,
+                        test: 'differential-avalanche',
+                        exportedAt: new Date().toISOString(),
+                        summary: {
+                          averageAvalanchePercent: diffAverageAvalanche,
+                          averageRequestMsPerGeneralRound: diffAverageRequestTime,
+                          comparisons: diffTotalSamples,
+                          generalRounds: diffRuns.length,
+                        },
+                        generalRounds: diffRuns.map(({ run: runNumber, result, requestMs, context }) => ({
+                          round: runNumber,
+                          plaintext: context.plaintext,
+                          plaintextBytes: encodePlaintext(context.plaintext),
+                          parameters: context.parameters,
+                          averageAvalanchePercent: result.samples.reduce(
+                            (sum, sample) => sum + sample.avalanchePercent,
+                            0,
+                          ) / Math.max(1, result.samples.length),
+                          requestElapsedMs: requestMs,
+                          samples: result.samples.map((sample, sampleIndex) => ({
+                            sample: sampleIndex + 1,
+                            plaintextOriginal: context.plaintext,
+                            plaintextVariant: flipPlaintextBits(
+                              context.plaintext,
+                              sample.flippedBitPositions,
+                            ),
+                            flippedBitPositions: sample.flippedBitPositions,
+                            nonceBase64: sample.nonceBase64,
+                            originalCiphertext: {
+                              encoding: 'Base64',
+                              value: sample.originalCipherBase64,
+                            },
+                            variantCiphertext: {
+                              encoding: 'Base64',
+                              value: sample.flippedCipherBase64,
+                            },
+                            changedBits: sample.changedBits,
+                            totalBitsCompared: sample.totalBitsCompared,
+                            avalanchePercent: sample.avalanchePercent,
+                            strongAvalanche: sample.strongAvalanche,
+                          })),
+                        })),
+                      });
+                    }}
+                  >
+                    Baixar dados (.json)
+                  </Button>
                 </div>
                 <details key={`diff-${attackResultRevision.differential}`} className={styles.attackRunsDisclosure}>
                   <summary className={styles.attackRunsToggle}>
@@ -1310,6 +1488,14 @@ export default function AdminSecurityLabPage() {
                     'statistical',
                     requestedRuns,
                     setStatRuns,
+                    {
+                      plaintext: attackPlain,
+                      parameters: {
+                        ciphertextsPerExecution: Number(requestedSamples),
+                        requestedExecutions: Number(requestedRuns),
+                        seedSupplied: Boolean(seed),
+                      },
+                    },
                     () => labStatistical(attackPlain, Number(requestedSamples), seed),
                   );
                 }}
@@ -1337,6 +1523,63 @@ export default function AdminSecurityLabPage() {
                     <p><strong>Cifras por amostra:</strong> {statRuns[0].result.sampleCount}</p>
                     <p><strong>Tempo médio:</strong> {statAverageRequestTime.toFixed(1)} ms</p>
                   </div>
+                </div>
+                <div className={styles.actions}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      if (statRuns.some(({ result }) =>
+                        !Array.isArray(result.ciphertexts) || result.ciphertexts.length !== result.sampleCount
+                      )) {
+                        setError('Atualize ou reinicie o backend para incluir os ciphertexts no arquivo.');
+                        return;
+                      }
+                      downloadJson(`lab-estatistico-${exportTimestamp()}.json`, {
+                        format: 'PokeTeamGuess Security Lab run data',
+                        version: 1,
+                        test: 'statistical',
+                        exportedAt: new Date().toISOString(),
+                        summary: {
+                          averageChiSquare: statAverageChiSquare,
+                          noSignificantDeviation: statNoDeviationCount,
+                          evaluableExecutions: statEvaluableCount,
+                          inconclusiveExecutions: statInsufficientCount,
+                          averageRequestMs: statAverageRequestTime,
+                          executions: statRuns.length,
+                        },
+                        executions: statRuns.map(({ run: runNumber, result, requestMs, context }) => ({
+                          execution: runNumber,
+                          plaintext: context.plaintext,
+                          plaintextBytes: encodePlaintext(context.plaintext),
+                          parameters: context.parameters,
+                          requestElapsedMs: requestMs,
+                          result: {
+                            sampleCount: result.sampleCount,
+                            sampleBytes: result.sampleBytes,
+                            chiSquare: result.chiSquare,
+                            uniformExpected: result.uniformExpected,
+                            pValue: result.pValue,
+                            sufficientSample: result.sufficientSample,
+                            looksUniform: result.looksUniform,
+                            analysis: result.analysis,
+                            topFrequencies: result.topFrequencies,
+                          },
+                          ciphertextSamples: result.ciphertexts.map((sample, sampleIndex) => ({
+                            sample: sampleIndex + 1,
+                            plaintext: context.plaintext,
+                            nonceBase64: sample.nonceBase64,
+                            ciphertext: {
+                              encoding: 'Base64',
+                              value: sample.ciphertextBase64,
+                            },
+                          })),
+                        })),
+                      });
+                    }}
+                  >
+                    Baixar dados (.json)
+                  </Button>
                 </div>
                 <details key={`stat-${attackResultRevision.statistical}`} className={styles.attackRunsDisclosure}>
                   <summary className={styles.attackRunsToggle}>
