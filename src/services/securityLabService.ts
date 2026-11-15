@@ -25,6 +25,13 @@ export type BruteForceResponse = {
   attempted: number;
   found: boolean;
   elapsedMs: number;
+  timeLimited: boolean;
+  attemptsPerSecond: number;
+  expectedSecondsAtObservedRate: number;
+  worstCaseSecondsAtObservedRate: number;
+  expectedSecondsAtPowerfulRate: number;
+  worstCaseSecondsAtPowerfulRate: number;
+  powerfulMachineAssessment: string;
   viability: string;
   recoveredSeedHint: string | null;
 };
@@ -32,17 +39,26 @@ export type BruteForceResponse = {
 export type DifferentialResponse = {
   originalCipherBase64: string;
   flippedCipherBase64: string;
+  flippedBitPositions: number[];
+  flippedBitCount: number;
   changedBits: number;
   totalBitsCompared: number;
   avalanchePercent: number;
   strongAvalanche: boolean;
 };
 
+export type DifferentialSamplesResponse = {
+  samples: DifferentialResponse[];
+};
+
 export type StatisticalResponse = {
+  sampleCount: number;
   sampleBytes: number;
   topFrequencies: Record<string, number>;
   chiSquare: number;
   uniformExpected: number;
+  pValue: number;
+  sufficientSample: boolean;
   looksUniform: boolean;
   analysis: string;
 };
@@ -121,24 +137,50 @@ export function labSampleDownloadUrl(id: string): string {
 export async function labBruteForce(
   plaintext: string,
   searchableBits = 12,
+  maxSearchDurationMs?: number,
 ): Promise<BruteForceResponse> {
   return apiFetchJson(`${LAB}/attacks/brute-force`, {
     method: 'POST',
-    body: JSON.stringify({ plaintext, searchableBits }),
+    body: JSON.stringify({ plaintext, searchableBits, maxSearchDurationMs }),
   });
 }
 
-export async function labDifferential(plaintext: string, seed?: string): Promise<DifferentialResponse> {
+export async function labDifferential(
+  plaintext: string,
+  flippedBitPosition = 1,
+  flippedBitCount = 1,
+  seed?: string,
+): Promise<DifferentialResponse> {
   return apiFetchJson(`${LAB}/attacks/differential`, {
     method: 'POST',
-    body: JSON.stringify({ plaintext, seed: seed || null }),
+    body: JSON.stringify({
+      plaintext,
+      seed: seed || null,
+      differentialBitPosition: flippedBitPosition,
+      differentialBitCount: flippedBitCount,
+    }),
   });
 }
 
-export async function labStatistical(plaintext: string, seed?: string): Promise<StatisticalResponse> {
+export async function labDifferentialSamples(
+  plaintext: string,
+  sampleCount: number,
+  seed?: string,
+): Promise<DifferentialSamplesResponse> {
+  return apiFetchJson(`${LAB}/attacks/differential/samples`, {
+    method: 'POST',
+    body: JSON.stringify({ plaintext, seed: seed || null, sampleCount }),
+  });
+}
+
+export async function labStatistical(
+  plaintext: string,
+  sampleCount = 100,
+  seed?: string,
+): Promise<StatisticalResponse> {
   return apiFetchJson(`${LAB}/attacks/statistical`, {
     method: 'POST',
-    body: JSON.stringify({ plaintext, seed: seed || null }),
+    body: JSON.stringify({ plaintext, seed: seed || null, sampleCount }),
   });
 }
 

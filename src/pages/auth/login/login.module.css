@@ -40,3 +40,77 @@
 .createAccountBtn {
   margin-top: var(--ds-space-3);
 }
+
+.localLabCard {
+  margin: 0;
+  padding: var(--ds-space-4);
+  border: 2px solid #f87171;
+  border-radius: var(--ds-radius-lg);
+  background: linear-gradient(145deg, #7f1d1d, #450a0a);
+  color: #fff7ed;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, #ef4444 20%, transparent),
+    0 12px 26px color-mix(in srgb, #450a0a 48%, transparent);
+}
+
+.localLabWarning {
+  display: inline-flex;
+  margin: 0 0 var(--ds-space-2);
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--ds-radius-sm);
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: var(--ds-weight-bold);
+  letter-spacing: 0.07em;
+  transform: rotate(-1deg);
+}
+
+.localLabCard h2 {
+  margin: 0;
+  color: inherit;
+  font-family: var(--ds-font-display);
+  font-size: var(--ds-text-lg);
+}
+
+.localLabDescription {
+  margin: var(--ds-space-2) 0 var(--ds-space-3);
+  color: #fee2e2;
+  font-size: var(--ds-text-sm);
+  line-height: 1.5;
+}
+
+.localLabDescription code,
+.localLabCredentialList code {
+  color: #fff;
+  font-family: var(--ds-font-mono);
+}
+
+.localLabCredentialList {
+  display: grid;
+  gap: var(--ds-space-2);
+  margin: 0 0 var(--ds-space-4);
+}
+
+.localLabCredentialList > div {
+  display: grid;
+  gap: 0.2rem;
+  padding: var(--ds-space-2) var(--ds-space-3);
+  border: 1px solid color-mix(in srgb, #fecaca 34%, transparent);
+  border-radius: var(--ds-radius-md);
+  background: color-mix(in srgb, #450a0a 65%, transparent);
+}
+
+.localLabCredentialList dt {
+  color: #fecaca;
+  font-size: var(--ds-text-xs);
+  font-weight: var(--ds-weight-semibold);
+}
+
+.localLabCredentialList dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #fff;
+  font-size: var(--ds-text-sm);
+  font-weight: var(--ds-weight-bold);
+}

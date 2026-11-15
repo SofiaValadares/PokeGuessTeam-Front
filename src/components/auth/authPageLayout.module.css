@@ -14,6 +14,19 @@
   min-height: 0;
 }
 
+.panelGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 28rem) minmax(18rem, 22rem);
+  align-items: center;
+  justify-content: center;
+  gap: var(--ds-space-6);
+  width: 100%;
+}
+
+.panelGrid > * {
+  min-width: 0;
+}
+
 .loading {
   box-sizing: border-box;
   flex: 1;
@@ -42,4 +55,12 @@
 
 .footer :global(.ds-body-muted) {
   margin-bottom: 0;
+}
+
+@media (max-width: 54rem) {
+  .panelGrid {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 36rem;
+    margin-inline: auto;
+  }
 }

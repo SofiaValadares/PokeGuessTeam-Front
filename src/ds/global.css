@@ -13,6 +13,16 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html.security-lab-hide-scrollbar,
+html.security-lab-hide-scrollbar body {
+  scrollbar-width: none;
+}
+
+html.security-lab-hide-scrollbar::-webkit-scrollbar,
+html.security-lab-hide-scrollbar body::-webkit-scrollbar {
+  display: none;
+}
+
 html[data-theme='light'] {
   color-scheme: light;
 }

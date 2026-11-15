@@ -10,9 +10,10 @@ type AuthPageLayoutProps = {
   intro?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
+  aside?: ReactNode;
 };
 
-export function AuthPageLayout({ title, intro, children, footer }: AuthPageLayoutProps) {
+export function AuthPageLayout({ title, intro, children, footer, aside }: AuthPageLayoutProps) {
   const { sessionFetchStatus, authenticated } = useAuth();
 
   if (sessionFetchStatus === FetchStatus.Loading) {
@@ -31,13 +32,16 @@ export function AuthPageLayout({ title, intro, children, footer }: AuthPageLayou
   return (
     <div className={styles.layout}>
       <AppHeader navEnabled={false} />
-      <PageShell className={styles.page}>
-        <Card padding="lg" glow>
-          <h1 className="ds-h1">{title}</h1>
-          {intro ? <div className={styles.intro}>{intro}</div> : null}
-          {children}
-          {footer ? <div className={styles.footer}>{footer}</div> : null}
-        </Card>
+      <PageShell width={aside ? 'full' : 'default'} className={styles.page}>
+        <div className={aside ? styles.panelGrid : undefined}>
+          <Card padding="lg" glow>
+            <h1 className="ds-h1">{title}</h1>
+            {intro ? <div className={styles.intro}>{intro}</div> : null}
+            {children}
+            {footer ? <div className={styles.footer}>{footer}</div> : null}
+          </Card>
+          {aside}
+        </div>
       </PageShell>
     </div>
   );
