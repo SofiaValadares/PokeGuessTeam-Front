@@ -342,12 +342,17 @@ export function FriendMatchProvider({
 
   const guess = useCallback(async (pokedexNumber: number) => {
     if (guessInFlightRef.current) return;
+    const matchId = matchIdRef.current;
+    if (!matchId) {
+      setError('Partida inválida — recarrega ou volta ao lobby.');
+      return;
+    }
     guessInFlightRef.current = true;
     setGuessSending(true);
     setError(null);
     setMatch((prev) => (prev ? withOptimisticTurnHandoff(prev) : prev));
     try {
-      const res = await submitFriendGuess(pokedexNumber);
+      const res = await submitFriendGuess(matchId, pokedexNumber);
       if (res.match.status === 'FINISHED' && res.match.historyEntry) {
         markShowingResults(res.match);
       }
@@ -602,27 +607,36 @@ export function FriendMatchProvider({
     };
   }, [me?.userId, applyRemoteMatch]);
 
-  // Fallback silencioso: sala / turno do adversário sem botão manual.
+  // Fallback silencioso: sala / turno do adversário, ou FINISHED à espera de historyEntry.
   useEffect(() => {
-    if (!match || match.status === 'FINISHED') return;
+    if (!match) return;
+    const pendingHistory = match.status === 'FINISHED' && !match.historyEntry;
     const waitingOnOpponent =
       match.status === 'SETUP' ||
       (match.status === 'ACTIVE' && match.currentTurn !== match.yourSide);
-    if (!waitingOnOpponent) return;
+    if (!pendingHistory && !waitingOnOpponent) return;
 
     const timer = window.setInterval(() => {
-      if (
-        guessInFlightRef.current ||
-        refreshInFlightRef.current ||
-        showingResultsRef.current ||
-        isFinishedMatchStatus(matchStatusRef.current)
-      ) {
+      if (guessInFlightRef.current || refreshInFlightRef.current || showingResultsRef.current) {
+        return;
+      }
+      if (!pendingHistory && isFinishedMatchStatus(matchStatusRef.current)) {
         return;
       }
       void refreshMatch({ force: true });
     }, 2000);
     return () => window.clearInterval(timer);
   }, [match, refreshMatch]);
+
+  // Escape: FINISHED sem histórico não pode prender o ecrã para sempre.
+  useEffect(() => {
+    if (!match || match.status !== 'FINISHED' || match.historyEntry) return;
+    const timer = window.setTimeout(() => {
+      if (showingResultsRef.current) return;
+      void abandonAndGoHome();
+    }, 12000);
+    return () => window.clearTimeout(timer);
+  }, [match, abandonAndGoHome]);
 
   const value = useMemo(
     (): FriendMatchContextValue => ({

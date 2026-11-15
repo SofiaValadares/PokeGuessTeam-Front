@@ -129,6 +129,9 @@ export type FriendMatchParticipantDto = {
   username: string;
   teamReady: boolean;
   timeoutPenalties?: number;
+  hasCustomAvatar?: boolean;
+  favoritePokedexNumber?: number | null;
+  avatarVersion?: number | null;
 };
 
 export type FriendMatchStateDto = {

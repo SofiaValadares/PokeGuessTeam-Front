@@ -5,6 +5,7 @@ export type ProfileMe = {
   favoritePokemonName: string | null;
   avatarMode?: 'POKEMON' | 'CUSTOM' | string;
   hasCustomAvatar?: boolean;
+  avatarVersion?: number | null;
   avatarUrl?: string;
   /** Contagem leve do backend; evita carregar a Pokédex nacional no boot. */
   registeredPokedexCount?: number | null;

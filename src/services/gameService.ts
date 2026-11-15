@@ -139,10 +139,13 @@ export async function submitFriendTeam(team: number[]): Promise<FriendMatchActio
   return parseFriendMatchActionResponse(raw);
 }
 
-export async function submitFriendGuess(pokedexNumber: number): Promise<FriendMatchActionResponse> {
+export async function submitFriendGuess(
+  matchId: string,
+  pokedexNumber: number,
+): Promise<FriendMatchActionResponse> {
   const raw = await apiFetchJson<FriendMatchActionResponse>(`${FRIEND}/guess`, {
     method: 'POST',
-    body: JSON.stringify({ pokedexNumber }),
+    body: JSON.stringify({ matchId, pokedexNumber }),
   });
   return parseFriendMatchActionResponse(raw);
 }

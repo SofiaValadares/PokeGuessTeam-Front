@@ -12,9 +12,6 @@ import {
   labStatistical,
   labListSamples,
   labSampleDownloadUrl,
-  labStegoAttack,
-  labStegoEmbed,
-  labStegoExtract,
   type AnomalyHit,
   type StegoSample,
   type BruteForceResponse,
@@ -59,25 +56,25 @@ const TEST_OBJECTIVES: Objective[] = [
     expect: 'Documento: lab = didático; produção = AES/BCrypt intactos.',
   },
   {
-    id: 'stego-avatar',
-    title: 'Esteganografia no avatar',
-    goal: 'Esconder e revelar mensagem no fluxo de perfil do jogador.',
+    id: 'xss-svg-avatar',
+    title: 'XSS via imagem de perfil (SVG)',
+    goal: 'Mostrar script no SVG do avatar (<object>) — console, DOM, fetch à API.',
     steps: [
-      'Perfil → mensagem oculta + enviar imagem.',
-      'Revelar mensagem no mesmo ecrã.',
-      'Opcional: no lab, Ataque estego sobre a mesma imagem.',
+      'Separador Estego: baixa um sample XSS (ex. lab-xss-taunt.svg).',
+      'Perfil → Upload → envia o SVG.',
+      'Abre partida/home noutro browser → DevTools → Console.',
     ],
-    expect: 'Mensagem recuperada; evento STEGO_* no relatório Admin.',
+    expect: 'Mensagem/ataque no console; fetch-profile/match mostram dados da sessão da vítima.',
   },
   {
-    id: 'stego-samples',
-    title: 'Estego com amostras do lab',
-    goal: 'Usar imagens de teste do lab para embed/extract sem inventar ficheiros.',
+    id: 'stego-lsb-profile',
+    title: 'Esteganografia LSB no perfil',
+    goal: 'Esconder/revelar mensagem LSB no upload de imagem (PNG) do perfil.',
     steps: [
-      'Separador Estego: gera imagem com mensagem.',
-      'Extrai a mensagem; descarrega uma amostra e testa extract/ataque.',
+      'Perfil → mensagem oculta + enviar PNG.',
+      'Revelar mensagem no mesmo ecrã.',
     ],
-    expect: 'Extract coerente; falhas de extract malformado registadas se aplicável.',
+    expect: 'Mensagem recuperada; evento STEGO_* no relatório Admin.',
   },
   {
     id: 'attack-brute',
@@ -121,15 +118,6 @@ const TEST_OBJECTIVES: Objective[] = [
     expect: 'Eventos visíveis; anomalias aparecem se limiares forem atingidos.',
   },
 ];
-
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
 
 function BarChart({
   items,
@@ -179,15 +167,8 @@ export default function AdminSecurityLabPage() {
   const [enc, setEnc] = useState<EncryptResponse | null>(null);
   const [dec, setDec] = useState<DecryptResponse | null>(null);
 
-  // Stego
-  const [stegoMsg, setStegoMsg] = useState('pista escondida');
-  const [stegoSrc, setStegoSrc] = useState<string | null>(null);
-  const [stegoOut, setStegoOut] = useState<string | null>(null);
-  const [stegoExtracted, setStegoExtracted] = useState<string | null>(null);
-  const [stegoMeta, setStegoMeta] = useState<string | null>(null);
+  // Estego / XSS samples
   const [samples, setSamples] = useState<StegoSample[]>([]);
-  const [attackSrc, setAttackSrc] = useState<string | null>(null);
-  const [attackResult, setAttackResult] = useState<string | null>(null);
 
   // Attacks
   const [attackPlain, setAttackPlain] = useState('Pikachu#25');
@@ -223,11 +204,19 @@ export default function AdminSecurityLabPage() {
   }, [tab, loadDashboard]);
 
   useEffect(() => {
-    if (tab !== 'stego' && tab !== 'stego-attack') return;
+    if (tab !== 'stego') return;
     void run(async () => {
       setSamples(await labListSamples());
     });
   }, [tab, run]);
+
+  const xssSamples = useMemo(
+    () =>
+      samples.filter(
+        (s) => s.kind === 'xss' || (s.contentType ?? '').includes('svg') || s.id.startsWith('xss-'),
+      ),
+    [samples],
+  );
 
   const totalsBars = useMemo(() => {
     if (!dash) return [];
@@ -381,156 +370,30 @@ export default function AdminSecurityLabPage() {
 
       {tab === 'stego' ? (
         <section className={styles.panel}>
-          <TextField
-            label="Mensagem a ocultar"
-            name="stegoMsg"
-            value={stegoMsg}
-            onChange={(e) => setStegoMsg(e.target.value)}
-          />
-          <label className={styles.fileLabel}>
-            Imagem (PNG/JPG — ideal sprite Pokémon)
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (!f) return;
-                void fileToBase64(f).then((b64) => {
-                  setStegoSrc(b64);
-                  setStegoOut(null);
-                  setStegoExtracted(null);
-                });
-              }}
-            />
-          </label>
-          <div className={styles.previewRow}>
-            {stegoSrc ? <img src={stegoSrc} alt="Original" className={styles.preview} /> : null}
-            {stegoOut ? (
-              <img
-                src={`data:image/png;base64,${stegoOut}`}
-                alt="Com mensagem"
-                className={styles.preview}
-              />
-            ) : null}
-          </div>
-          <div className={styles.actions}>
-            <Button
-              type="button"
-              disabled={busy || !stegoSrc}
-              onClick={() =>
-                void run(async () => {
-                  if (!stegoSrc) return;
-                  const res = await labStegoEmbed(stegoSrc, stegoMsg);
-                  setStegoOut(res.imageBase64Png);
-                  setStegoMeta(`${res.usedBits} / ${res.capacityBits} bits`);
-                  setStegoExtracted(null);
-                })
-              }
-            >
-              Embutir
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={busy || !stegoOut}
-              onClick={() =>
-                void run(async () => {
-                  if (!stegoOut) return;
-                  const res = await labStegoExtract(stegoOut);
-                  setStegoExtracted(res.message);
-                })
-              }
-            >
-              Extrair
-            </Button>
-          </div>
-          {stegoMeta ? <p className={styles.meta}>Capacidade usada: {stegoMeta}</p> : null}
-          {stegoExtracted != null ? (
-            <div className={styles.result}>
-              <p>
-                <strong>Extraído:</strong> {stegoExtracted}
-              </p>
-            </div>
-          ) : null}
-
-          <h2 className={styles.sub}>Imagens de teste (download)</h2>
-          <ul className={styles.sampleList}>
-            {samples.map((s) => (
-              <li key={s.id} className={styles.sampleItem}>
-                <div>
-                  <strong>{s.filename}</strong>
-                  <p className={styles.meta}>{s.description}</p>
-                </div>
-                <a href={labSampleDownloadUrl(s.id)} download={s.filename}>
-                  <Button type="button" size="sm" variant="secondary">
-                    Baixar
-                  </Button>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      {tab === 'stego-attack' ? (
-        <section className={styles.panel}>
+          <h2 className={styles.sub}>XSS no SVG</h2>
           <p className={styles.lead}>
-            Simula ataque: tentar extrair mensagem oculta de uma imagem suspeita (avatar
-            customizado, sample do lab, etc.).
+            Baixa um SVG → Perfil → Upload → na partida/home o avatar em{' '}
+            <code>&lt;object&gt;</code> executa o script (console, DOM, fetch com a sessão da
+            vítima). LSB do perfil continua só no ecrã de Perfil.
           </p>
           <ul className={styles.sampleList}>
-            {samples.map((s) => (
+            {xssSamples.map((s) => (
               <li key={s.id} className={styles.sampleItem}>
                 <div>
                   <strong>{s.filename}</strong>
                   <p className={styles.meta}>{s.description}</p>
                 </div>
                 <a href={labSampleDownloadUrl(s.id)} download={s.filename}>
-                  <Button type="button" size="sm" variant="secondary">
+                  <Button type="button" size="sm" variant="secondary" disabled={busy}>
                     Baixar
                   </Button>
                 </a>
               </li>
             ))}
+            {xssSamples.length === 0 && !busy ? (
+              <li className={styles.meta}>Sem samples XSS — atualiza o backend / recarrega.</li>
+            ) : null}
           </ul>
-          <label className={styles.fileLabel}>
-            Imagem alvo do ataque
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (!f) return;
-                void fileToBase64(f).then((b64) => {
-                  setAttackSrc(b64);
-                  setAttackResult(null);
-                });
-              }}
-            />
-          </label>
-          {attackSrc ? <img src={attackSrc} alt="Alvo" className={styles.preview} /> : null}
-          <div className={styles.actions}>
-            <Button
-              type="button"
-              disabled={busy || !attackSrc}
-              onClick={() =>
-                void run(async () => {
-                  if (!attackSrc) return;
-                  const res = await labStegoAttack(attackSrc);
-                  setAttackResult(res.message);
-                })
-              }
-            >
-              Executar ataque (extract LSB)
-            </Button>
-          </div>
-          {attackResult != null ? (
-            <div className={styles.result}>
-              <p>
-                <strong>Mensagem recuperada:</strong> {attackResult}
-              </p>
-            </div>
-          ) : null}
         </section>
       ) : null}
 

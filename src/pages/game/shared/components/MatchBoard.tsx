@@ -3,6 +3,7 @@ import type { OpponentKnowledgeSlotDto } from '../../../../api/types/game';
 import { searchPokemon } from '../../../../api/pokemonApi';
 import type { PokemonDto } from '../../../../api/types/pokemon';
 import { PokemonSprite } from '../../../../components/PokemonSprite';
+import { UserAvatar } from '../../../../components/UserAvatar';
 import { Button } from '../../../../ds';
 import { OpponentClueCard } from './OpponentClueCard';
 import { PokemonSearchField, type PokemonSearchFieldState } from './PokemonSearchField';
@@ -30,6 +31,12 @@ export type MatchBoardProps = {
   finishedMessage?: string | null;
   playerAvatarDex?: number | null;
   opponentAvatarDex?: number | null;
+  playerUserId?: string | null;
+  opponentUserId?: string | null;
+  playerHasCustomAvatar?: boolean;
+  opponentHasCustomAvatar?: boolean;
+  playerAvatarVersion?: number | string | null;
+  opponentAvatarVersion?: number | string | null;
   excludedPokedexNumbers?: number[];
   playerTheme?: 'default' | 'guest' | 'waiting';
   /** Lista completa para pesquisa de palpite (Pokédex nacional / evento). */
@@ -58,6 +65,12 @@ export function MatchBoard({
   finishedMessage,
   playerAvatarDex,
   opponentAvatarDex,
+  playerUserId = null,
+  opponentUserId = null,
+  playerHasCustomAvatar = false,
+  opponentHasCustomAvatar = false,
+  playerAvatarVersion = null,
+  opponentAvatarVersion = null,
   excludedPokedexNumbers = [],
   playerTheme = 'default',
   searchablePokemon,
@@ -258,8 +271,15 @@ export function MatchBoard({
                 .join(' ')}
             >
               <div className={styles.matchPlayerAvatar}>
-                {playerAvatarDex != null ? (
-                  <PokemonSprite dex={playerAvatarDex} name={playerName} size={40} />
+                {playerHasCustomAvatar || playerAvatarDex != null ? (
+                  <UserAvatar
+                    userId={playerUserId}
+                    hasCustomAvatar={playerHasCustomAvatar}
+                    favoriteDex={playerAvatarDex}
+                    avatarVersion={playerAvatarVersion}
+                    name={playerName}
+                    size={40}
+                  />
                 ) : (
                   <span className={styles.clueUnknownSprite}>?</span>
                 )}
@@ -280,8 +300,15 @@ export function MatchBoard({
                 .join(' ')}
             >
               <div className={styles.matchPlayerAvatar}>
-                {opponentAvatarDex != null ? (
-                  <PokemonSprite dex={opponentAvatarDex} name={opponentName} size={40} />
+                {opponentHasCustomAvatar || opponentAvatarDex != null ? (
+                  <UserAvatar
+                    userId={opponentUserId}
+                    hasCustomAvatar={opponentHasCustomAvatar}
+                    favoriteDex={opponentAvatarDex}
+                    avatarVersion={opponentAvatarVersion}
+                    name={opponentName}
+                    size={40}
+                  />
                 ) : (
                   <span className={styles.clueUnknownSprite}>?</span>
                 )}

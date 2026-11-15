@@ -10,6 +10,7 @@ export function mapProfileMe(dto: ProfileMeResponse): ProfileMe {
     favoritePokemonName: dto.favoritePokemonName,
     avatarMode: dto.avatarMode ?? 'POKEMON',
     hasCustomAvatar: Boolean(dto.hasCustomAvatar),
+    avatarVersion: dto.avatarVersion ?? 0,
     avatarUrl: dto.avatarUrl,
     registeredPokedexCount: dto.registeredPokedexCount ?? null,
   };

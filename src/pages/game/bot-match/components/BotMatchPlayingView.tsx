@@ -11,6 +11,7 @@ import { guessedDexNumbersForSide } from '../../../../lib/game/matchGuesses';
 import { gameResultLabel } from '../../../../lib/game/labels';
 import { Button, InlineAlert } from '../../../../ds';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
+import { selectProfileMe } from '../../../../store/slices/cache';
 import { prepareNewBotMatch } from '../slice/botMatchSlice';
 import { selectBotMatch } from '../slice/botMatchSelectors';
 import { useBotMatchPlay } from '../providers/BotMatchPlayProvider';
@@ -18,6 +19,7 @@ import layout from '../../shared/layout/matchLayout.module.css';
 
 export function BotMatchPlayingView() {
   const dispatch = useAppDispatch();
+  const profileMe = useAppSelector(selectProfileMe);
   const { hostCommitment, opponentCommitment, commitmentVerified } = useAppSelector(selectBotMatch);
   const {
     hostName,
@@ -151,6 +153,15 @@ export function BotMatchPlayingView() {
             busy={busy || botTurnActive || pendingServerFinish || celebratingHit}
             excludedPokedexNumbers={excludedGuesses}
             playerTheme={botTurnActive || celebratingHit ? 'waiting' : 'default'}
+            playerUserId={profileMe?.userId}
+            playerHasCustomAvatar={
+              profileMe?.avatarMode === 'CUSTOM' && Boolean(profileMe.hasCustomAvatar)
+            }
+            playerAvatarVersion={profileMe?.avatarVersion ?? null}
+            playerAvatarDex={
+              profileMe?.favoritePokemonId ? Number(profileMe.favoritePokemonId) : null
+            }
+            opponentAvatarDex={25}
             turnBannerText={
               celebratingHit
                 ? 'Acertaste! A revelar o slot…'

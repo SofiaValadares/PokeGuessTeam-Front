@@ -63,7 +63,13 @@ export type DashboardResponse = {
 
 const LAB = '/api/dev/security-lab';
 
-export type StegoSample = { id: string; filename: string; description: string };
+export type StegoSample = {
+  id: string;
+  filename: string;
+  description: string;
+  contentType?: string;
+  kind?: string;
+};
 
 export async function labEncrypt(plaintext: string, seed?: string): Promise<EncryptResponse> {
   return apiFetchJson(`${LAB}/encrypt`, {
