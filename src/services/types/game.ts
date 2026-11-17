@@ -55,6 +55,9 @@ export type GameHistoryEntryDto = {
   gameMode: GameMode;
   playedAt: string;
   opponentName: string | null;
+  anomalyScore?: number;
+  anomalyReasons?: string | null;
+  anomalyAnalysisStatus?: string | null;
   players: GameHistoryPlayerDto[];
 };
 

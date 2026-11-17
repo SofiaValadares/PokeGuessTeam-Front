@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import type { GameHistoryEntry } from '../../../model';
 import { useGameHistoryPage } from '../../../hooks/useGameHistoryPage';
 import { useAuth } from '../../../store/providers/AuthProvider';
 import { useAppSelector } from '../../../store/hooks';
@@ -12,6 +13,7 @@ import { ApiError } from '../../../services/http';
 import { useAppDispatch } from '../../../store/hooks';
 import { removeGameHistoryEntry } from '../../../store/slices/cache';
 import { HistoryAssistant } from './components/HistoryAssistant';
+import { AIAnalysisPreview } from './components/AIAnalysisPreview';
 import { HistoryRow } from './components/HistoryRow';
 import styles from './historico.module.css';
 
@@ -22,6 +24,9 @@ export default function HistoricoPage() {
   const { page, setPage, pageSize, setPageSize, data, loading, error, reload } = useGameHistoryPage();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [selectedAnalysis, setSelectedAnalysis] = useState<GameHistoryEntry | null>(null);
+
+  const closeAnalysis = useCallback(() => setSelectedAnalysis(null), []);
 
   const handleDelete = useCallback(
     async (gameId: string) => {
@@ -86,7 +91,8 @@ export default function HistoricoPage() {
                     <th>Jogadores</th>
                     <th>Placar</th>
                     <th>Resultado</th>
-                    <th aria-label="Ações" />
+                    <th className={styles.aiHeader}>Avaliação da IA</th>
+                    <th className={styles.actionsHeader}>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -98,6 +104,7 @@ export default function HistoricoPage() {
                       username={me?.username ?? null}
                       deleting={deletingId === entry.id}
                       onDelete={handleDelete}
+                      onShowAnalysis={setSelectedAnalysis}
                     />
                   ))}
                 </tbody>
@@ -122,6 +129,7 @@ export default function HistoricoPage() {
           ) : null}
         </PageSection>
       </Card>
+      <AIAnalysisPreview entry={selectedAnalysis} onClose={closeAnalysis} />
     </PageShell>
   );
 }

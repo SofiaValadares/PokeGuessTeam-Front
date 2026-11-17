@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react';
+import { Eye, Trash2 } from 'lucide-react';
 import type { GameHistoryEntry } from '../../../../model';
 import { findHistoryPlayerForUser } from '../../../../lib/game/historyPlayer';
 import { gameModeLabel, gameResultLabel } from '../../../../lib/game/labels';
@@ -11,13 +11,14 @@ type Props = {
   username: string | null;
   deleting: boolean;
   onDelete: (gameId: string) => void;
+  onShowAnalysis?: (entry: GameHistoryEntry) => void;
 };
 
 function playerName(slot: number, username: string | null): string {
   return username ?? `Jogador ${slot}`;
 }
 
-export function HistoryRow({ entry, profileId, username, deleting, onDelete }: Props) {
+export function HistoryRow({ entry, profileId, username, deleting, onDelete, onShowAnalysis }: Props) {
   const date = new Date(entry.playedAt).toLocaleString('pt-PT');
   const names = entry.players.map((p) => playerName(p.slot, p.username)).join(' · ');
   const me = findHistoryPlayerForUser(entry, profileId, username);
@@ -31,6 +32,23 @@ export function HistoryRow({ entry, profileId, username, deleting, onDelete }: P
   const mySelectedNames = me && me.selectedTeam && me.selectedTeam.length > 0
     ? me.selectedTeam.map((d) => dexToName.get(d) ?? `#${d}`).join(', ')
     : null;
+  const isAiAnalyzed = entry.anomalyAnalysisStatus === 'ANALYZED'
+    || entry.anomalyAnalysisStatus === 'ANOMALY_DETECTED';
+  const aiScore = isAiAnalyzed && Number.isFinite(entry.anomalyScore)
+    ? Math.max(0, Math.min(100, Math.round(entry.anomalyScore ?? 0)))
+    : null;
+  const aiStatusLabel = entry.anomalyAnalysisStatus === 'ANOMALY_DETECTED'
+    ? 'Cancelada'
+    : entry.anomalyAnalysisStatus === 'ANALYZED'
+      ? 'Aprovada'
+      : entry.anomalyAnalysisStatus === 'UNAVAILABLE'
+        ? 'Indisponível'
+        : 'Não avaliada';
+  const aiStatusClass = entry.anomalyAnalysisStatus === 'ANOMALY_DETECTED'
+    ? styles.aiStatusCancelled
+    : entry.anomalyAnalysisStatus === 'ANALYZED'
+      ? styles.aiStatusApproved
+      : styles.aiStatusNeutral;
 
   return (
     <>
@@ -41,6 +59,20 @@ export function HistoryRow({ entry, profileId, username, deleting, onDelete }: P
         <td>{names}</td>
         <td className={styles.scoreCell}>{myScore}</td>
         <td className={styles.resultCell}>{myResult}</td>
+        <td className={styles.aiCell}>
+          <button
+            type="button"
+            className={`${styles.aiReviewButton} ${aiStatusClass}`}
+            title={aiScore == null ? aiStatusLabel : `${aiScore}% de sinal de anomalia indicado pela IA`}
+            aria-label={`Abrir avaliação da IA: ${aiStatusLabel}${aiScore == null ? '' : `, ${aiScore}% de sinal de anomalia`}`}
+            disabled={!onShowAnalysis}
+            onClick={() => onShowAnalysis?.(entry)}
+          >
+            <Eye size={15} aria-hidden />
+            <span>{aiStatusLabel}</span>
+            {aiScore != null ? <span className={styles.aiScore}>({aiScore}%)</span> : null}
+          </button>
+        </td>
         <td className={styles.actionsCell}>
           <button
             type="button"
@@ -57,7 +89,7 @@ export function HistoryRow({ entry, profileId, username, deleting, onDelete }: P
       {mySelectedNames ? (
         <tr>
           <td />
-          <td colSpan={6} style={{ fontSize: '0.9em', color: 'var(--ds-body-muted)' }}>
+          <td colSpan={7} style={{ fontSize: '0.9em', color: 'var(--ds-body-muted)' }}>
             <strong>Equipa usada:</strong> {mySelectedNames}
           </td>
         </tr>
